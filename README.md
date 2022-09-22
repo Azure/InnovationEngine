@@ -1,10 +1,22 @@
-# Project
+---
+title: 'Quickstart: Use the Azure CLI to create a Linux VM'
+description: In this quickstart, you learn how to use the Azure CLI to create a Linux virtual machine
+author: cynthn
+ms.service: virtual-machines
+ms.collection: linux
+ms.topic: quickstart
+ms.workload: infrastructure
+ms.date: 06/01/2022
+ms.author: cynthn
+ms.custom: mvc, seo-javascript-september2019, seo-javascript-october2019, seo-python-october2019, devx-track-azurecli, mode-api
+---
+
+# Project **testing**
 
 > This repo has been populated by an initial template to help get you started. Please
 > make sure to update the content to build a great experience for community-building.
 
 As the maintainer of this project, please make a few updates:
-
 - Improving this README.MD file to provide a great experience
 - Updating SUPPORT.MD with content about this project's support experience
 - Understanding the security reporting process in SECURITY.MD
@@ -31,3 +43,18 @@ trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
+
+
+# Test Code block
+
+```bash
+echo "Hello World"
+```
+
+# Testing multi Line code block
+
+```bash
+echo "Hello \
+world"
+```
+

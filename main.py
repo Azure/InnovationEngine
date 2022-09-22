@@ -1,8 +1,9 @@
 from parser import Parser 
 
 def main():
-    parser = Parser("/test/testing")
-    print("Hello World")
-    parser.parse_markdown()
+    parser = Parser("README.md")
+
+
+
 
 main()
