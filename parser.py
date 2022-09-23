@@ -6,14 +6,13 @@ class Parser:
     def __init__(self, markdownFilepath):
         self.markdownFile = open(markdownFilepath)
         self.markdownElements = []
+        
+
+        self.codeBlockType = '```'
+        self.headingType = '#'
+        self.paragraphType = 'p'
 
         self.parseMarkdown()
-
-        for item in self.markdownElements:
-            print(item[0])
-            print(item[1].subtype)
-            print(item[1].value)
-        #print(self.markdownElements)
         self.markdownFile.close()
         
 
@@ -42,16 +41,16 @@ class Parser:
     # Creates a markdown element storing the subtype and text value. Appends to all markdown elements.
     def processHeading(self, char):
         text = ""
-        headingType = 0
+        headingCount = 0
         while char != '\n':
             if char == '#':
-                headingType += 1
+                headingCount += 1
            
             text += char
             char = self.markdownFile.read(1)
         
-        subtype = "h" + str(headingType)
-        self.createAndAppendElement('#', subtype, text)
+        subtype = "h" + str(headingCount)
+        self.createAndAppendElement(self.headingType, subtype, text)
 
     # Iterates through text until 3 back ticks ``` are found signifying the end of code block
     def processCodeSample(self, char):
@@ -76,7 +75,7 @@ class Parser:
 
         subtype = subtype.strip()
         command = command.strip()
-        self.createAndAppendElement('```', subtype, command)
+        self.createAndAppendElement(self.codeBlockType, subtype, command)
      
     # Iterates until we find a heading or back-tick. If heading is found a paragraph element
     # is created with the existing text, and 
@@ -85,22 +84,15 @@ class Parser:
         while char != '#' and char != '':
             if char == '`':
                 if self.checkForCodeBlock(char):
-                    self.createAndAppendElement('p', 'paragraph', paragraph.strip())
+                    self.createAndAppendElement(self.paragraphType, 'paragraph', paragraph.strip())
                     self.processCodeSample(char)
 
             paragraph += char
             char = self.markdownFile.read(1)
         
         if char == '#':
-            self.createAndAppendElement('p', 'paragraph', paragraph.strip())
+            self.createAndAppendElement(self.paragraphType, 'paragraph', paragraph.strip())
             self.processHeading(char)
-
-    def processBoldText(self,char):
-        pass
-
-
-    def processDash(self, char):
-        pass
 
 
     def createAndAppendElement(self, type, subtype, value):
@@ -118,6 +110,15 @@ class Parser:
         else:
             self.markdownFile.seek(currentPosition)
             return False
+    
+    
+    # If we want to add process for bold and italicized text
+    def processBoldText(self,char):
+        pass
+
+    # If want to process dashes for hidden titles etc. 
+    def processDash(self, char):
+        pass
 
 class MarkdownElement:
 
