@@ -4,19 +4,18 @@ class Parser:
   
 
     def __init__(self, markdownFilepath):
-        self.markdownFile = open(markdownFilepath)
+        self.markdownFilepath = markdownFilepath
         self.markdownElements = []
-        
-
         self.codeBlockType = '```'
         self.headingType = '#'
         self.paragraphType = 'p'
 
-        self.parseMarkdown()
-        self.markdownFile.close()
+       
+
         
 
     def parseMarkdown(self):
+        self.markdownFile = open(self.markdownFilepath)
         special_characters = ["#", "`", "~" ,"-" ]
 
         char = self.markdownFile.read(1)
@@ -35,7 +34,7 @@ class Parser:
                 char = self.markdownFile.read(1)
 
         
-
+        self.markdownFile.close()
 
     # Iterates through line adding each character to heading string. Also collects the heading type.
     # Creates a markdown element storing the subtype and text value. Appends to all markdown elements.
@@ -56,21 +55,26 @@ class Parser:
     def processCodeSample(self, char):
         command = ""
         subtype = ""
-        tripleBackTick = False
+        endOfCodeBlock = False
         self.markdownFile.read(2)
         # Reading through initial backtick line to see what the subtype is
         while char != '\n':
             char = self.markdownFile.read(1)
             subtype += char
 
-        while not tripleBackTick:
+        while not endOfCodeBlock:
             if (char == '`'):
                 if self.checkForCodeBlock(char):
-                    tripleBackTick = True
+                    endOfCodeBlock = True
+                    # Read the remaining bash ticks
+                    
+                    self.markdownFile.read(2)
+                    
+                    
 
             else:
                 command += char
-
+            # Read all 3 back ticks
             char = self.markdownFile.read(1)
 
         subtype = subtype.strip()
@@ -86,6 +90,7 @@ class Parser:
                 if self.checkForCodeBlock(char):
                     self.createAndAppendElement(self.paragraphType, 'paragraph', paragraph.strip())
                     self.processCodeSample(char)
+                    char = self.markdownFile.read(1)
 
             paragraph += char
             char = self.markdownFile.read(1)
