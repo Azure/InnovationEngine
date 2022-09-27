@@ -19,7 +19,11 @@ class Executor:
         self.executableCodeList = {"bash", "terraform", 'azurecli-interactive' , 'azurecli'}
         self.shell = self.get_shell()
 
-
+    # Fairly straight forward main loop. While markdownData is not empty
+    # Checks type for heading, code block, or paragrpah. 
+    # If Heading it outputs the heading, pops the item and prompts input from user
+    # If paragraph it outputs paragraph and pops item from list and continues with no pause
+    # If Code block, it calls ExecuteCode helper function to print and execute the code block
     def runMainLoop(self):
         beginningHeading = True
         fromCodeBlock = False
@@ -53,21 +57,10 @@ class Executor:
                 
             else:
                 self.markdownData.pop(0)
-            
 
-    
-    def outputMarkdownElement(self):
-        pass
 
-    # Goes through markdown elements until it reaches a code block or next heading 
-    def outputHeading(self, headingElement):
-
-        pass
-
-    
-    def outputCodeblock(self, codeblockElement):
-        pass
-
+    # Checks to see if code block is executable i.e, bash, terraform, azurecli-interactive, azurecli
+    # If it is it will wait for input and call run command which passes the command to the repl
     def executeCode(self):
         if self.markdownData[0][1].subtype in self.executableCodeList:
             print("\n\nPress any key to execute the above code block... Press b to exit the program \n \n")
@@ -85,6 +78,9 @@ class Executor:
                 print("Exiting program on b key press")
                 exit()
 
+    # Function takes a command and uses the shell which was instantiated at run time using the 
+    # Local shell information to execute that command. If the user is logged into az cli on 
+    # The authentication will carry over to this environment as well 
     def runCommand(self):
         command = self.markdownData[0][1].value
 
@@ -142,8 +138,8 @@ class Executor:
 
         
     def get_shell(self):
-        """Gets or creates the shell in which to run commands for the
-        supplied demo
+        """Creates the shell in which to run commands for the 
+            innovation engine 
         """
         if self.shell == None:
             child = pexpect.spawnu('/bin/bash', echo=False, timeout=None)
