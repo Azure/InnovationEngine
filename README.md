@@ -11,7 +11,7 @@ ms.author: cynthn
 ms.custom: mvc, seo-javascript-september2019, seo-javascript-october2019, seo-python-october2019, devx-track-azurecli, mode-api
 ---
 
-# Project **testing**
+# TEST BY RUNNING PYTHON3 MAIN.PY
 
 > This repo has been populated by an initial template to help get you started. Please
 > make sure to update the content to build a great experience for community-building.
