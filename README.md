@@ -142,6 +142,16 @@ spec:
 
 ```
 
+<!--This is a test comment in markdown -->
+
+
+<!--This is a multi line comment in markdown
+
+
+ in markdown -->
+
+
+
 # Testing multi Line code block
 
 ```azurecli-interactive
@@ -149,8 +159,15 @@ echo "Hello \
 world"
 ```
 
+# This is what the output should be
+<!--expected_similarity=0.8-->
+```text
+Hello world
+```
+
 # Testing an Azure command
 
 ```azurecli-interactive
-az group create -l westus -n MyResourceGroup
+az group exists --name MyResourceGroup
 ```
+

@@ -1,3 +1,5 @@
 colorama
 pexpect
 envsubst
+fuzzywuzy
+levenshtein

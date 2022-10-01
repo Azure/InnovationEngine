@@ -1,8 +1,9 @@
 from parser import Parser 
 from executor import Executor
+import sys
 
 def main():
-    parser = Parser("README.md")
+    parser = Parser(str(sys.argv[1]))
     parser.parseMarkdown()
 
     # for item in parser.markdownElements:

@@ -5,6 +5,8 @@ from unittest import result
 import pexpect
 import pexpect.replwrap
 import time
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
 
 PEXPECT_PROMPT = u'[PEXPECT_PROMPT>'
 PEXPECT_CONTINUATION_PROMPT = u'[PEXPECT_PROMPT+'
@@ -83,14 +85,39 @@ class Executor:
     # The authentication will carry over to this environment as well 
     def runCommand(self):
         command = self.markdownData[0][1].value
+        expectedResult = self.markdownData[0][1].results
+        expectedSimilarity = self.markdownData[0][1].similarity
 
-        print("debug", "Execute command: '" + command + "'\n")
+        #print("debug", "Execute command: '" + command + "'\n")
         startTime = time.time()
-        response = self.shell.run_command(command)
+        response = self.shell.run_command(command).strip()
         timeToExecute = time.time() - startTime
+        print("\n" + response + "\n" + "Time to Execute - " + str(timeToExecute))
 
-        print(response + "\n" + str(timeToExecute))
+        print("Expected Results - " + expectedResult)
+        if expectedResult is not None:
+            self.testResponse(response, expectedResult, expectedSimilarity)
+        
+        print("\n\nPress any key to continue... Press b to exit the program \n \n")
+        keyPressed = self.getInstructionKey()
+        if keyPressed == 'b':
+            print("Exiting program on b key press")
+            exit()
 
+    def testResponse(self, response, expectedResult, expectedSimilarity):
+        # Todo... try to implement more than just fuzzy matching. Can we look and see if the command returned 
+        # A warning or an error? Problem I am having is calls can return every type of response... I could 
+        # Hard code something for Azure responses, but it wouldn't be extendible
+
+        #print("\n```output\n" + expectedResult + "\n```")
+
+        actualSimilarity = fuzz.ratio(response, expectedResult) / 100
+        if actualSimilarity < float(expectedSimilarity):
+            print("The output is NOT correct. The remainder of the document may not function properly")
+            print("Expected Similarity - " + expectedSimilarity)
+            print("Similarity score is " + str(actualSimilarity))
+           
+    
     
     def getInstructionKey(self):
         """Waits for a single keypress on stdin.
