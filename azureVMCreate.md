@@ -31,10 +31,10 @@ If you prefer to install and use the CLI locally, this quickstart requires Azure
 
 ## Create a resource group
 
-Create a resource group with the [az group create](/cli/azure/group) command. An Azure resource group is a logical container into which Azure resources are deployed and managed. The following example creates a resource group named *myResourceGroup2* in the *eastus* location:
+Create a resource group with the [az group create](/cli/azure/group) command. An Azure resource group is a logical container into which Azure resources are deployed and managed. The following example creates a resource group named *myResourceGroup* in the *eastus* location:
 
 ```bash
-az group create --name myResourceGroup2 --location eastus
+az group create --name myResourceGroup --location eastus
 ```
 
 ## Create virtual machine
@@ -45,7 +45,7 @@ The following example creates a VM named *myVM* and adds a user account named *a
 
 ```bash
 az vm create \
-  --resource-group myResourceGroup2 \
+  --resource-group myResourceGroup \
   --name myVM \
   --image Debian \
   --admin-username azureuser \
@@ -57,13 +57,13 @@ It takes a few minutes to create the VM and supporting resources. The following 
 ```Output
 {
   "fqdns": "",
-  "id": "/subscriptions/<guid>/resourceGroups/myResourceGroup2/providers/Microsoft.Compute/virtualMachines/myVM",
+  "id": "/subscriptions/<guid>/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM",
   "location": "eastus",
   "macAddress": "00-0D-3A-23-9A-49",
   "powerState": "VM running",
   "privateIpAddress": "10.0.0.4",
   "publicIpAddress": "40.68.254.142",
-  "resourceGroup": "myResourceGroup2"
+  "resourceGroup": "myResourceGroup"
 }
 ```
 
@@ -75,7 +75,7 @@ To see your VM in action, install the NGINX web server. Update your package sour
 
 ```bash
 az vm run-command invoke \
-   -g myResourceGroup2 \
+   -g myResourceGroup \
    -n myVM \
    --command-id RunShellScript \
    --scripts "sudo apt-get update && sudo apt-get install -y nginx"
@@ -86,7 +86,7 @@ az vm run-command invoke \
 By default, only SSH connections are opened when you create a Linux VM in Azure. Use [az vm open-port](/cli/azure/vm) to open TCP port 80 for use with the NGINX web server:
 
 ```bash
-az vm open-port --port 80 --resource-group myResourceGroup2 --name myVM
+az vm open-port --port 80 --resource-group myResourceGroup --name myVM
 ```
 
 ## View the web server in action
@@ -98,7 +98,7 @@ Use a web browser of your choice to view the default NGINX welcome page. Use the
 Or Run the following command to see the NGINX welcome page in terminal
 
 ```bash
- curl $(az vm show -d -g myResourceGroup2 -n myVM --query "publicIps" -o tsv)
+ curl $(az vm show -d -g myResourceGroup -n myVM --query "publicIps" -o tsv)
 ```
 
 <!--expected_similarity=0.8-->
@@ -135,7 +135,7 @@ Commercial support is available at
 When no longer needed, you can use the [az group delete](/cli/azure/group) command to remove the resource group, VM, and all related resources. 
 
 ```bash
-az group delete --name myResourceGroup2 --no-wait --yes --verbose
+az group delete --name myResourceGroup --no-wait --yes --verbose
 ```
 
 ## Next steps
