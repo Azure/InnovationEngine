@@ -1,4 +1,4 @@
-name: 00-automated-testing
+name: 00-testing
 
 on:
   workflow_dispatch:
