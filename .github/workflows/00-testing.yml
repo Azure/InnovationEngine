@@ -9,7 +9,7 @@ on:
         required: false
   push:
     branches:
-    - main
+    - ParserAndExecutor
 
 jobs:
   deploy:
