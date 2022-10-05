@@ -16,28 +16,39 @@ class Executor:
     markdownData = None
     executableCodeList = None
 
-    def __init__(self, markdownData):
+    def __init__(self, markdownData, modeOfOperation):
         self.markdownData = markdownData
         self.executableCodeList = {"bash", "terraform", 'azurecli-interactive' , 'azurecli'}
         self.shell = self.get_shell()
+        self.modeOfOperation = modeOfOperation
+        self.numberOfTestsPassed = 0
 
     # Fairly straight forward main loop. While markdownData is not empty
     # Checks type for heading, code block, or paragrpah. 
     # If Heading it outputs the heading, pops the item and prompts input from user
     # If paragraph it outputs paragraph and pops item from list and continues with no pause
     # If Code block, it calls ExecuteCode helper function to print and execute the code block
+
     def runMainLoop(self):
+        if self.modeOfOperation == "interactive":
+            self.runMainLoopInteractive()
+        elif self.modeOfOperation == "test":
+            self.runMainLoopTest()
+        else:
+            self.runMainLoopInteractive()
+
+
+
+    def runMainLoopInteractive(self):
         beginningHeading = True
         fromCodeBlock = False
-        while len(self.markdownData) > 0:
 
-            if (self.markdownData[0][0] == '#'):
+        for markdownItem in self.markdownData:
+            if markdownItem[0] == '#':
                 if beginningHeading or fromCodeBlock:
-                    print(self.markdownData[0][1].value)
-                    self.markdownData.pop(0)
+                    print(markdownItem[1].value)
                     beginningHeading = False
                     fromCodeBlock = False
-                
                 else:
                     beginningHeading = True
                     print("\n\nPress any key to continue... Press b to exit the program \n \n")
@@ -45,32 +56,34 @@ class Executor:
                     if keyPressed == 'b':
                         print("Exiting program on b key press")
                         break
-
-            elif (self.markdownData[0][0] == 'p'):
-                print(self.markdownData[0][1].value)
-                self.markdownData.pop(0)
-
-
-            elif (self.markdownData[0][0] == '```'):
-                print('```' + self.markdownData[0][1].subtype + '\n' + self.markdownData[0][1].value + '\n```')
-                self.executeCode()
-                self.markdownData.pop(0)
+            elif markdownItem[0] == 'p':
+                print(markdownItem[1].value)
+            
+            elif markdownItem[0] == '```':
+                print('\n```' + markdownItem[1].subtype + '\n' + markdownItem[1].value + '\n```')
+                self.executeCode(markdownItem)
                 fromCodeBlock = True
-                
-            else:
-                self.markdownData.pop(0)
-
+            
+    def runMainLoopTest(self):
+        for markdownItem in self.markdownData:
+            if markdownItem[0] == '```':
+                print('\n```' + markdownItem[1].subtype + '\n' + markdownItem[1].value + '\n```')
+                if markdownItem[1].subtype in self.executableCodeList:
+                    self.runCommand(markdownItem)
+        
+        print("All {} Tests Passed!".format(str(self.numberOfTestsPassed)))
 
     # Checks to see if code block is executable i.e, bash, terraform, azurecli-interactive, azurecli
     # If it is it will wait for input and call run command which passes the command to the repl
-    def executeCode(self):
-        if self.markdownData[0][1].subtype in self.executableCodeList:
+    def executeCode(self, markdownItem):
+        if markdownItem[1].subtype in self.executableCodeList:
             print("\n\nPress any key to execute the above code block... Press b to exit the program \n \n")
             keyPressed = self.getInstructionKey()
+            print("Executing Command...")
             if keyPressed == 'b':
                 print("Exiting program on b key press")
                 exit()
-            self.runCommand()
+            self.runCommand(markdownItem)
            
             
         else:
@@ -83,10 +96,10 @@ class Executor:
     # Function takes a command and uses the shell which was instantiated at run time using the 
     # Local shell information to execute that command. If the user is logged into az cli on 
     # The authentication will carry over to this environment as well 
-    def runCommand(self):
-        command = self.markdownData[0][1].value
-        expectedResult = self.markdownData[0][1].results
-        expectedSimilarity = self.markdownData[0][1].similarity
+    def runCommand(self, markdownItem):
+        command = markdownItem[1].value
+        expectedResult = markdownItem[1].results
+        expectedSimilarity = markdownItem[1].similarity
 
         #print("debug", "Execute command: '" + command + "'\n")
         startTime = time.time()
@@ -94,15 +107,10 @@ class Executor:
         timeToExecute = time.time() - startTime
         print("\n" + response + "\n" + "Time to Execute - " + str(timeToExecute))
 
-        print("Expected Results - " + expectedResult)
         if expectedResult is not None:
+            print("Expected Results - " + expectedResult)
             self.testResponse(response, expectedResult, expectedSimilarity)
-        
-        print("\n\nPress any key to continue... Press b to exit the program \n \n")
-        keyPressed = self.getInstructionKey()
-        if keyPressed == 'b':
-            print("Exiting program on b key press")
-            exit()
+            
 
     def testResponse(self, response, expectedResult, expectedSimilarity):
         # Todo... try to implement more than just fuzzy matching. Can we look and see if the command returned 
@@ -111,11 +119,32 @@ class Executor:
 
         #print("\n```output\n" + expectedResult + "\n```")
 
-        actualSimilarity = fuzz.ratio(response, expectedResult) / 100
-        if actualSimilarity < float(expectedSimilarity):
-            print("The output is NOT correct. The remainder of the document may not function properly")
-            print("Expected Similarity - " + expectedSimilarity)
-            print("Similarity score is " + str(actualSimilarity))
+        if self.modeOfOperation == "interactive":
+            actualSimilarity = fuzz.ratio(response, expectedResult) / 100
+
+            if actualSimilarity < float(expectedSimilarity):
+                print("The output is NOT correct. The remainder of the document may not function properly")
+                print("The Actual similarity was {} \n The expected similarity was {}".format(str(actualSimilarity), expectedSimilarity))
+
+
+            print("\n\nPress any key to continue... Press b to exit the program \n \n")
+            keyPressed = self.getInstructionKey()
+            if keyPressed == 'b':
+                print("Exiting program on b key press")
+                exit()
+
+        elif self.modeOfOperation == "test":
+            actualSimilarity = fuzz.ratio(response, expectedResult) / 100
+
+            if actualSimilarity < float(expectedSimilarity):
+                print("The test failed")
+                print("\n The expected result was - \n" + expectedResult)
+                print("\n the actual result was - \n" + response)
+                print("The Actual similarity was {} \n The expected similarity was {}".format(str(actualSimilarity), expectedSimilarity))
+                exit(1)
+            else:
+                self.numberOfTestsPassed += 1
+
            
     
     

@@ -111,15 +111,12 @@ class Parser:
             currentPosition = self.markdownFile.tell()
             char = self.markdownFile.read(1)
         
-        if char == '#':
-            self.createAndAppendElement(self.paragraphType, 'paragraph', paragraph.strip())
-            self.processHeading(char)
-        
-
+        self.createAndAppendElement(self.paragraphType, 'paragraph', paragraph.strip())
 
     def processComment(self, char):
         endOfComment = False
         comment = "<"
+     
         while not endOfComment and char != '':
             currentPosition = self.markdownFile.tell()
             if self.markdownFile.read(1) == '-' and self.markdownFile.read(1) == '-' and self.markdownFile.read(1) == '>':
@@ -143,12 +140,13 @@ class Parser:
                 if markdownElement[0] == self.codeBlockType:
                     self.markdownElements[i][1].results = results
                     self.markdownElements[i][1].similarity = similarity
+            
                     break
-
+            self.createAndAppendElement(self.codeBlockType, subtype, results)
         else:
             self.createAndAppendElement(self.commentType, None, comment)
 
-        self.createAndAppendElement(self.codeBlockType, subtype, results)
+   
 
 
     def createAndAppendElement(self, type, subtype, value):
