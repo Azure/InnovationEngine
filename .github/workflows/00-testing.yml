@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       manual_trigger:
-        description: 'Use this to manually trigger Action'
+        description: 'Manually Trigger Testing Action'
         default: ''
-        required: false
+        required: true
   push:
     branches:
     - ParserAndExecutor
