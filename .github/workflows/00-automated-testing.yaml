@@ -2,11 +2,11 @@ name: 00-automated-testing
 
 on:
   workflow_dispatch:
-  inputs:
-    manual_trigger:
-      description: 'Use this to manually trigger Action'
-      default: ''
-      required: false
+    inputs:
+      manual_trigger:
+        description: 'Use this to manually trigger Action'
+        default: ''
+        required: false
 
 jobs:
   deploy:
