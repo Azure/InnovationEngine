@@ -26,8 +26,8 @@ class Parser:
                 
             elif char == '`':
                 if self.checkForCodeBlock(char):
-                    self.processCodeSample(char)
-                    
+                    subtype, command = self.processCodeSample(char)
+                    self.createAndAppendElement(self.codeBlockType, subtype, command)
 
             elif char == '<':
                 if self.checkForComment():
@@ -83,7 +83,8 @@ class Parser:
         # Should we read a new line here?
         subtype = subtype.strip()
         command = command.strip()
-        self.createAndAppendElement(self.codeBlockType, subtype, command)
+        return subtype, command
+        
      
     # Iterates until we find a heading or back-tick. If a heading is found it creates paragraph
     # and leaves the function. If a code block or comment is found, it creates a paragraph
@@ -110,8 +111,17 @@ class Parser:
             
             currentPosition = self.markdownFile.tell()
             char = self.markdownFile.read(1)
-        
-        self.createAndAppendElement(self.paragraphType, 'paragraph', paragraph.strip())
+            
+        if len(self.markdownElements) != 0 and "prerequisites" in self.markdownElements[-1][1].value.lower():
+            self.createAndAppendElement(self.paragraphType, 'prerequisites', paragraph.strip())
+
+        elif len(self.markdownElements) != 0 and "next steps" in self.markdownElements[-1][1].value.lower():
+            self.createAndAppendElement(self.paragraphType, 'next steps', paragraph.strip())
+
+        else:
+            self.createAndAppendElement(self.paragraphType, 'paragraph', paragraph.strip())
+
+        self.markdownFile.seek(currentPosition)
 
     def processComment(self, char):
         endOfComment = False
@@ -123,6 +133,11 @@ class Parser:
                 comment += char + '-->'
                 endOfComment = True
                 continue
+            elif self.markdownFile.read(1) == '`':
+                if self.checkForCodeBlock(char):
+                    subtype, command = self.processCodeSample(char)
+                    self.createAndAppendElement(self.commentType, subtype, command)
+                    comment += command
             else:
                 self.markdownFile.seek(currentPosition)
                 comment += char

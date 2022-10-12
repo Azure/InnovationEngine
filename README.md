@@ -1,15 +1,16 @@
 ---
 title: 'Quickstart: Use the Azure CLI to create a Linux VM'
-description: In this quickstart, you learn how to use the Azure CLI to create a Linux virtual machine
-author: cynthn
-ms.service: virtual-machines
-ms.collection: linux
-ms.topic: quickstart
-ms.workload: infrastructure
-ms.date: 06/01/2022
-ms.author: cynthn
-ms.custom: mvc, seo-javascript-september2019, seo-javascript-october2019, seo-python-october2019, devx-track-azurecli, mode-api
 ---
+
+# Prerequisites
+
+You must have the following prerequisites met to complete this tutorial
+
+You must have completed [Fuzzy Matching Test](fuzzyMatchTest.md) and you must have completed [Comment Test](CommentTest.md)
+
+You also need to have completed [This is a fake file](fakefile.md)
+
+And there are going to be additional \ and ( to throw off the algorithm... 
 
 # TEST BY RUNNING PYTHON3 MAIN.PY
 
@@ -171,3 +172,6 @@ Hello world
 az group exists --name MyResourceGroup
 ```
 
+# Next Steps
+
+These are the next steps... at some point we need to do something here
