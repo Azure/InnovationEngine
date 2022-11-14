@@ -22,4 +22,4 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/
         pip3 install -r requirements.txt
-        python3 main.py test README.md
+        python3 main.py test test.md

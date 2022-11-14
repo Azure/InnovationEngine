@@ -4,7 +4,8 @@ title: 'Quickstart: Use the Azure CLI to create a Linux VM'
 
 # Prerequisites
 
-You must have the following prerequisites met to complete this tutorial
+Innovation Engine can process prerequisites for documents. This code section tests that the pre requisites functionality works in Innovation Engine.
+It will run the following real prerequisites along with a look for and fail to run a fake prerequisite.
 
 You must have completed [Fuzzy Matching Test](fuzzyMatchTest.md) and you must have completed [Comment Test](CommentTest.md)
 
@@ -12,47 +13,32 @@ You also need to have completed [This is a fake file](fakefile.md)
 
 And there are going to be additional \ and ( to throw off the algorithm... 
 
-# TEST BY RUNNING PYTHON3 MAIN.PY
+# Running simple bash commands
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+Innovation engine can execute bash commands. For example
 
-As the maintainer of this project, please make a few updates:
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
-
-## Contributing
-
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
-
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
-## Trademarks
-
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
-
-
-# Test Code block
 
 ```bash
 echo "Hello World"
 ```
 
-# Example YAML File
+# Test Code block with expected output
+
+```azurecli-interactive
+echo "Hello \
+world"
+```
+
+It also can test the output to make sure everything ran as planned.
+<!--expected_similarity=0.8-->
+```
+Hello world
+```
+
+# Test non-executable code blocks
+If a code block does not have an executable tag it will simply render the codeblock as text
+
+For example:
 
 ```YAML
 apiVersion: apps/v1
@@ -143,6 +129,11 @@ spec:
 
 ```
 
+# Testing regular comments 
+
+Innovation engine is able to handle comments and actual do fancy things with special comments.
+
+There are comments you can't see here.
 <!--This is a test comment in markdown -->
 
 
@@ -151,23 +142,27 @@ spec:
 
  in markdown -->
 
+# Testing Declaring Environment Variables from Comments
+Innovation Engine can declare environment variables via hidden inline comments. This feature is useful for running documents E2E as part of CI/CD
 
-
-# Testing multi Line code block
+<!!--
+```variables
+export MY_VARIABLE=willBeChanged
+```
+ -->
+<!--
+Here is an example of that
+```variables
+export MY_VARIABLE=myVariable
+```
+-->
 
 ```azurecli-interactive
-echo "Hello \
-world"
+echo $MY_VARIABLE
 ```
 
-# This is what the output should be
-<!--expected_similarity=0.8-->
-```text
-Hello world
-```
 
-# Testing an Azure command
-
+# Test Running an Azure Command
 ```azurecli-interactive
 az group exists --name MyResourceGroup
 ```

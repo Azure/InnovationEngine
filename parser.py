@@ -106,6 +106,8 @@ class Parser:
                     self.markdownFile.seek(currentPosition)
                     return
                     #self.processComment(char)
+                else:
+                    paragraph += char
             else: 
                 paragraph += char
             
