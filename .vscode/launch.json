@@ -13,7 +13,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["test", "azureVMCreateCommentVariables.md"]
+            "args": ["interactive", "nonCLI.md"]
 
         }
     ]

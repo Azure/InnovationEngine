@@ -136,7 +136,14 @@ class Executor:
 
         #print("debug", "Execute command: '" + command + "'\n")
         startTime = time.time()
-        response = self.shell.run_command(command).strip()
+        try:
+            # Setting a 20 minute timeout...Need a better way to discover broken commands
+            response = self.shell.run_command(command, 1200).strip()
+        except ValueError as ex:
+            print("Exception raised when running " + command)
+            print(ex)
+            
+
         timeToExecute = time.time() - startTime
         print("\n" + response + "\n" + "Time to Execute - " + str(timeToExecute))
 
