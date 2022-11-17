@@ -138,10 +138,15 @@ class Executor:
         startTime = time.time()
         try:
             # Setting a 20 minute timeout...Need a better way to discover broken commands
-            response = self.shell.run_command(command, 1200).strip()
-        except ValueError as ex:
-            print("Exception raised when running " + command)
+            response = self.shell.run_command(command, 1).strip()
+        except ValueError as ve:
+            print("Continuation prompt required for command " + command)
             print(ex)
+            response = command + " failed to run"
+        except Exception as ex:
+            print("command timed out")
+            print(ex)
+            response =  command + " failed to run"
             
 
         timeToExecute = time.time() - startTime
