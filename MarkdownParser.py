@@ -1,7 +1,7 @@
 #Given a markdown file, this should break out the headings, paragraphs, executable commands etc. 
 import re
 
-class Parser:
+class MarkdownParser:
   
 
     def __init__(self, markdownFilepath):

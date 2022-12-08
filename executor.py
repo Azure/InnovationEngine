@@ -138,7 +138,7 @@ class Executor:
         startTime = time.time()
         try:
             # Setting a 20 minute timeout...Need a better way to discover broken commands
-            response = self.shell.run_command(command, 1).strip()
+            response = self.shell.run_command(command, 1200).strip()
         except ValueError as ve:
             print("Continuation prompt required for command " + command)
             print(ex)

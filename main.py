@@ -1,4 +1,4 @@
-from parser import Parser 
+from MarkdownParser import MarkdownParser 
 from executor import Executor
 import signal
 import time
@@ -7,7 +7,7 @@ import sys
 def main():
 
     if sys.argv[2].endswith(".md"):
-        parser = Parser(str(sys.argv[2]))
+        parser = MarkdownParser(str(sys.argv[2]))
         signal.signal( signal.SIGALRM, timeoutHandler)
         signal.alarm(2)
     
