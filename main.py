@@ -16,7 +16,8 @@ def main():
             signal.alarm(0)
         except Exception as ex:
             if str(ex) == "Not Executable":
-                exit(1)
+                # exit(1)
+                exit(0)
     else:
         print("Currently Innovation Engine can only parse Markdown. The Input file '" + sys.argv[2] + "' is not a markdown file." )
         # Removing exit(1) as it will prematurely terminate the github action if there are multiple files being tested
