@@ -19,7 +19,8 @@ def main():
                 exit(1)
     else:
         print("Currently Innovation Engine can only parse Markdown. The Input file '" + sys.argv[2] + "' is not a markdown file." )
-        exit(1)
+        # Removing exit(1) as it will prematurely terminate the github action if there are multiple files being tested
+        # exit(1)
 
     executor = Executor(parser.markdownElements, str(sys.argv[1]), str(sys.argv[2]))
     executor.runMainLoop()
