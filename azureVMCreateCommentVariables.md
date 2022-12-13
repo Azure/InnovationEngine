@@ -13,7 +13,7 @@ ms.custom: mvc, seo-javascript-september2019, seo-javascript-october2019, seo-py
 
 <!-- 
 ```variables
-export MY_RESOURCE_GROUP_NAME=myResourceGroup22323
+export MY_RESOURCE_GROUP_NAME=myResourceGroup
 export MY_LOCATION=eastus
 export MY_VM_NAME=myVM
 export MY_VM_IMAGE=debian

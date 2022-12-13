@@ -8,6 +8,7 @@ import time
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 import re
+import random
 from os.path import exists
 
 PEXPECT_PROMPT = u'[PEXPECT_PROMPT>'
@@ -22,12 +23,15 @@ class Executor:
         self.markdownData = markdownData
         self.fileName = fileName
         self.executableCodeList = {"bash", "terraform", 'azurecli-interactive' , 'azurecli'}
-        self.shell = self.get_shell()
-        self.readEnvVariables()
         self.modeOfOperation = modeOfOperation
         self.numberOfTestsPassed = 0
         self.totalNumberOfTests = 0
         self.failedTests = []
+        self.randomIdentifierSet = False
+        self.randomIdentifier = random.randint(100,10000)
+        self.shell = self.get_shell()
+        self.readEnvVariables()
+
 
     # Fairly straight forward main loop. While markdownData is not empty
     # Checks type for heading, code block, or paragrpah. 
@@ -85,10 +89,13 @@ class Executor:
             if markdownItem[0] == '```':
                 print('\n```' + markdownItem[1].subtype + '\n' + markdownItem[1].value + '\n```')
                 if markdownItem[1].subtype in self.executableCodeList:
+                    if not self.randomIdentifierSet and self.modeOfOperation == "test":
+                        self.randomIdentifierSet = True
+                        setRandomIdentifierCommand = 'export MY_RESOURCE_GROUP_NAME=testResourceGroup' + str(self.randomIdentifier)
+                        self.shell.run_command(setRandomIdentifierCommand, 1200).strip()
+
                     self.runCommand(markdownItem)
-            elif markdownItem[0] == "<!--" and markdownItem[1].subtype == 'variables':
-                print('\nSetting Environment Variables - \n' + markdownItem[1].value + '\n')
-                self.runCommand(markdownItem)
+
             elif markdownItem[0] == 'p' and markdownItem[1].subtype == 'prerequisites':
                 self.executePrerequisites(markdownItem)
 
@@ -261,7 +268,8 @@ class Executor:
         return ret
 
     # Function looks for file named 
-    def readEnvVariables(self):
+    def readEnvVariables(self):   
+     
         if exists(self.fileName[:-3] + '.ini'):
             envFile = open(self.fileName[:-3] + '.ini')
             lines = envFile.readlines()
@@ -271,6 +279,11 @@ class Executor:
                 value = line.split()[2]
                 command = variableName + '=' + value
                 self.shell.run_command(command).strip()
+        # Comment block variables goes after the .ini declaration and thus overrides
+        for markdownItem in self.markdownData:
+            if markdownItem[0] == "<!--" and markdownItem[1].subtype == 'variables':
+                print('\nSetting Environment Variables - \n' + markdownItem[1].value + '\n')
+                self.runCommand(markdownItem)
 
 
     def get_shell(self):
