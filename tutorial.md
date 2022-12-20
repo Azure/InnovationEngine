@@ -1,22 +1,9 @@
----
-title: 'Quickstart: Use the Azure CLI to create a Linux VM'
----
-
-# Prerequisites
-
-Innovation Engine can process prerequisites for documents. This code section tests that the pre requisites functionality works in Innovation Engine.
-It will run the following real prerequisites along with a look for and fail to run a fake prerequisite.
-
-You must have completed [Fuzzy Matching Test](fuzzyMatchTest.md) and you must have completed [Comment Test](CommentTest.md)
-
-You also need to have completed [This is a fake file](fakefile.md)
-
-And there are going to be additional \ and ( to throw off the algorithm... 
+# Welcome to the innovation Engine Tutorial
+## *TODO ADD MORE DETAIL TO IMPROVE TUTORIAL*
 
 # Running simple bash commands
 
 Innovation engine can execute bash commands. For example
-
 
 ```bash
 echo "Hello World"
@@ -35,8 +22,10 @@ It also can test the output to make sure everything ran as planned.
 Hello world
 ```
 
-# Test non-executable code blocks
-If a code block does not have an executable tag it will simply render the codeblock as text
+# Executable vs non-executable code blocks
+Innovation engine supports code blocks which are both executable and non-executable. A code block is executable if the label/tag after the bash scripts is one of the supported executable tags. Those tags are: bash, terraform, azurecli-interactive, and azurecli.
+
+If a code block has a non supported tag like YAML or HTML it will simply render the code block as text and continue parsing the document. 
 
 For example:
 
@@ -129,43 +118,6 @@ spec:
 
 ```
 
-# Testing regular comments 
-
-Innovation engine is able to handle comments and actual do fancy things with special comments.
-
-There are comments you can't see here.
-<!--This is a test comment in markdown -->
-
-
-<!--This is a multi line comment in markdown
-
-
- in markdown -->
-
-# Testing Declaring Environment Variables from Comments
-Innovation Engine can declare environment variables via hidden inline comments. This feature is useful for running documents E2E as part of CI/CD
-
-<!!--
-```variables
-export MY_VARIABLE=willBeChanged
-```
- -->
-<!--
-Here is an example of that
-```variables
-export MY_VARIABLE=myVariable
-```
--->
-
-```azurecli-interactive
-echo $MY_VARIABLE
-```
-
-
-# Test Running an Azure Command
-```azurecli-interactive
-az group exists --name MyResourceGroup
-```
 
 # Next Steps
 

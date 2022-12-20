@@ -13,7 +13,7 @@ Open [Azure Cloud Shell](https://ms.portal.azure.com/#cloudshell/) and select Ba
 >**Note** This snippet clones the Innovation Engine repo, installs necessary dependencies, and runs the interactive Innovation Engine tutorial script.
 
 ```bash
-git clone https://github.com/Azure/InnovationEngine/tree/ParserAndExecutor
+git clone https://github.com/Azure/InnovationEngine
 
 cd innovationEngine
 
@@ -28,11 +28,11 @@ The general format to run an executable document is:
 ### Modes of Operation
 Today, executable documentation can be run in 3 modes of operation:
 
-Interactive: Displays the descriptive text of the tutorial and pauses at code blocks and headings to allow user interaction `python3 main.py interactive tutorial`
+Interactive: Displays the descriptive text of the tutorial and pauses at code blocks and headings to allow user interaction `python3 main.py interactive tutorial.md`
 
-Test: Runs the commands and then verifies that the output is sufficiently similar to the expected results (recorded in the markdown file) to be considered correct. `python3 main.py test tutorial`
+Test: Runs the commands and then verifies that the output is sufficiently similar to the expected results (recorded in the markdown file) to be considered correct. `python3 main.py test tutorial.md`
 
-Execute: Reads the document and executes all of the code blocks not pausing for input or testing output. Essentially executes a markdown file as a script. `python3 main.py execute tutorial`
+Execute: Reads the document and executes all of the code blocks not pausing for input or testing output. Essentially executes a markdown file as a script. `python3 main.py execute tutorial.md`
 ## Use Executable documentation for Automated Testing
 One of the core benefits of executable documentation is the ability to run automated testing on markdown file. This can be used to ensure freshness of content.
 
@@ -125,7 +125,7 @@ jobs:
 
 ## Use Executable Documentation for Interactive Documentation 
 
-Innovation Engine can also be used for interactive tutorials via a local or remote shell environment. Innovation Engine can be used to do this by simply using the interactive flag when executing the program. For example, `python3 main.py interactive tutorial`
+Innovation Engine can also be used for interactive tutorials via a local or remote shell environment. After cloning the project and running `pip3 install -r requirements.txt`, Innovation Engine can be used for interactive tutorials by simply using the interactive flag when executing the program. For example, `python3 main.py interactive tutorial.md`
 
 As it is written the code will pause and wait for input on any header or code block. Any document written in standard markdown can be run as an interactive document.
 

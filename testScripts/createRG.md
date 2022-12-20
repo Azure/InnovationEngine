@@ -3,9 +3,6 @@
 ```variables
 export MY_RESOURCE_GROUP_NAME=myResourceGroup
 export MY_LOCATION=eastus
-export MY_VM_NAME=myVM
-export MY_VM_IMAGE=debian
-export MY_ADMIN_USERNAME=azureuser
 ```
 -->
 
@@ -15,4 +12,18 @@ Create a resource group with the [az group create](/cli/azure/group) command. An
 
 ```bash
 az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
+```
+
+<!--expected_similarity=0.2-->
+```Output
+{
+  "fqdns": "",
+  "id": "/subscriptions/<guid>/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM",
+  "location": "eastus",
+  "macAddress": "00-0D-3A-23-9A-49",
+  "powerState": "VM running",
+  "privateIpAddress": "10.0.0.4",
+  "publicIpAddress": "40.68.254.142",
+  "resourceGroup": "myResourceGroup"
+}
 ```

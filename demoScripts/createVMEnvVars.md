@@ -1,15 +1,5 @@
----
-title: 'Quickstart: Use the Azure CLI to create a Linux VM'
-description: In this quickstart, you learn how to use the Azure CLI to create a Linux virtual machine
-author: cynthn
-ms.service: virtual-machines
-ms.collection: linux
-ms.topic: quickstart
-ms.workload: infrastructure
-ms.date: 06/01/2022
-ms.author: cynthn
-ms.custom: mvc, seo-javascript-september2019, seo-javascript-october2019, seo-python-october2019, devx-track-azurecli, mode-api
----
+
+The following example uses a .ini file which is named azureVmCreateEnvVariables.ini to set environment variables which are used throughout the file as one of the acceptable patterns for an executable document.
 
 # Quickstart: Create a Linux virtual machine with the Azure CLI
 

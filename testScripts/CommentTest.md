@@ -8,7 +8,6 @@ The text in here should not show up
  in markdown -->
 
 
-
 # Testing multi Line code block
 
 ```azurecli-interactive
