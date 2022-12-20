@@ -7,9 +7,9 @@ title: 'Quickstart: Use the Azure CLI to create a Linux VM'
 Innovation Engine can process prerequisites for documents. This code section tests that the pre requisites functionality works in Innovation Engine.
 It will run the following real prerequisites along with a look for and fail to run a fake prerequisite.
 
-You must have completed [Fuzzy Matching Test](fuzzyMatchTest.md) and you must have completed [Comment Test](CommentTest.md)
+You must have completed [Fuzzy Matching Test](testScripts/fuzzyMatchTest.md) and you must have completed [Comment Test](testScripts/CommentTest.md)
 
-You also need to have completed [This is a fake file](fakefile.md)
+You also need to have completed [This is a fake file](testScripts/fakefile.md)
 
 And there are going to be additional \ and ( to throw off the algorithm... 
 
