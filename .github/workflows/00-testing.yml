@@ -1,0 +1,25 @@
+name: 00-testing
+
+on:
+  push:
+    branches:
+    - ParserAndExecutor
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Deploy
+      env:
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        GITHUB_SHA: ${{ github.sha }}
+      run: |
+        cd $GITHUB_WORKSPACE/
+        pip3 install -r requirements.txt
+        python3 main.py test test.md
