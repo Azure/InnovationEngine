@@ -1,5 +1,6 @@
 # Welcome to the innovation Engine Tutorial
-## *TODO ADD MORE DETAIL TO IMPROVE TUTORIAL*
+
+## _TODO ADD MORE DETAIL TO IMPROVE TUTORIAL_
 
 # Running simple bash commands
 
@@ -17,15 +18,18 @@ world"
 ```
 
 It also can test the output to make sure everything ran as planned.
+
 <!--expected_similarity=0.8-->
+
 ```
 Hello world
 ```
 
 # Executable vs non-executable code blocks
+
 Innovation engine supports code blocks which are both executable and non-executable. A code block is executable if the label/tag after the bash scripts is one of the supported executable tags. Those tags are: bash, terraform, azurecli-interactive, and azurecli.
 
-If a code block has a non supported tag like YAML or HTML it will simply render the code block as text and continue parsing the document. 
+If a code block has a non supported tag like YAML or HTML it will simply render the code block as text and continue parsing the document.
 
 For example:
 
@@ -117,7 +121,6 @@ spec:
     app: azure-vote-front
 
 ```
-
 
 # Next Steps
 

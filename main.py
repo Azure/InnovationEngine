@@ -30,7 +30,7 @@ def main():
 def timeoutHandler(num, stack):
         print("Document named " + sys.argv[2] + " could not be parsed \n")
         print("Check for errors in the markdown file like non closed codeblocks")
-        raise Exception("Not Executable")
+ #       raise Exception("Not Executable")
 
 
 main()

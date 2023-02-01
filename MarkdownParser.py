@@ -83,6 +83,8 @@ class MarkdownParser:
         # Should we read a new line here?
         subtype = subtype.strip()
         command = command.strip()
+        if 'EOF' in command:
+            command = self.removeSpacesBeforeEOF(command)
         return subtype, command
         
      
@@ -225,6 +227,18 @@ class MarkdownParser:
     # If want to process dashes for hidden titles etc. 
     def processDash(self, char):
         pass
+
+    def removeSpacesBeforeEOF(self, command):
+        numSpacesToRemove = 0
+        for char in reversed(command):
+            if char == '\n':
+                break
+            else:
+                numSpacesToRemove += 1
+        command = command[:-numSpacesToRemove]
+        command += 'EOF'
+
+        return command
 
 class MarkdownElement:
 
