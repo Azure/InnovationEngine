@@ -73,16 +73,36 @@ In this step, you create a basic Node.js application and ensure it runs on your 
     cd $EXPRESS_APP_NAME && npm install
     ```
 
-1. Start the development server with debug information.
-
-    ```npm
-    DEBUG=myexpressapp:* npm start &
-    ```
-
-1. In a browser, navigate to `http://localhost:3000`. You should see something like this:
+1. If you are running through this manually, run `DEBUG=myexpressapp:* npm start` and open a browser and navigate to `http://localhost:3000`. You should see something like this:
 
     ![Running Express Application](./media/quickstart-nodejs/express.png)
 
+* If you would prefer to check this in an automated manner run the following script:
+
+    ```bash
+    npm start&
+    runtime="30 seconds"
+    endtime=$(date -ud "$runtime" +%s)
+    while [[ $(date -u +%s) -le $endtime ]]; \
+    do response=$(curl -sL -w "%{http_code}" localhost:3000 -o /dev/null); \
+    if [ "$response" == "200" ]; then break; \
+    else sleep 5; \
+    fi; \
+    done
+    echo $response
+    PID=$(lsof -t -i tcp:3000) 
+    kill $PID
+    ```
+    <!--expected_similarity=0.5-->
+    ```Output
+    [1] 11339
+
+    > myexpressapp@0.0.0 start
+    > node ./bin/www
+
+    GET / 200 5.991 ms - 207
+    200
+    ```
 :::zone target="docs" pivot="development-environment-vscode"
 > [!div class="nextstepaction"]
 > [I ran into an issue](https://www.research.net/r/PWZWZ52?tutorial=node-deployment-azure-app-service&step=create-app)
@@ -101,7 +121,7 @@ Before you continue, ensure that you have all the prerequisites installed and co
 
 1. In the terminal, ensure you're in the *myExpressApp* directory, then start Visual Studio Code with the following command:
 
-    ```terminal
+    ```bash
     code .
     ```
 
