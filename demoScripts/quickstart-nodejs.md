@@ -81,15 +81,15 @@ In this step, you create a basic Node.js application and ensure it runs on your 
 
     ```bash
     npm start&
-    runtime="30 seconds"
-    endtime=$(date -ud "$runtime" +%s)
-    while [[ $(date -u +%s) -le $endtime ]]; \
-    do response=$(curl -sL -w "%{http_code}" localhost:3000 -o /dev/null); \
-    if [ "$response" == "200" ]; then break; \
+    RUNTIME="30 seconds"
+    END_TIME=$(date -ud "$RUNTIME" +%s)
+    while [[ $(date -u +%s) -le $END_TIME ]]; \
+    do RESPONSE=$(curl -sL -w "%{http_code}" localhost:3000 -o /dev/null); \
+    if [ "$RESPONSE" == "200" ]; then break; \
     else sleep 5; \
     fi; \
     done
-    echo $response
+    echo $RESPONSE
     PID=$(lsof -t -i tcp:3000) 
     kill $PID
     ```
