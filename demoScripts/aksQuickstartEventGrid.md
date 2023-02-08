@@ -28,7 +28,7 @@ In this quickstart, you'll create an AKS cluster and subscribe to AKS events.
 export RESOURCE_GROUP_NAME=myResourceGroup
 export RESOURCE_LOCATION=eastus
 export AKS_CLUSTER_NAME=myAKSCluster
-export NAMESPACE_NAME=myNamespace
+export NAMESPACE_NAME="myNamespace$(printf "%08d" $((RANDOM%100000000)))"
 export EVENT_GRID_HUB_NAME=myEventGridHub
 export EVENT_GRID_SUBSCRIPTION_NAME=myEventGridSubscription
 ```
@@ -61,7 +61,61 @@ Create a namespace and event hub using [az eventhubs namespace create][az-eventh
 az eventhubs namespace create --location $RESOURCE_LOCATION --name $NAMESPACE_NAME --resource-group $RESOURCE_GROUP_NAME
 az eventhubs eventhub create --name $EVENT_GRID_HUB_NAME --namespace-name $NAMESPACE_NAME --resource-group $RESOURCE_GROUP_NAME
 ```
-
+<!--expected_similarity=0.7-->
+```output
+{
+  "alternateName": null,
+  "clusterArmId": null,
+  "createdAt": "2023-02-07T23:41:18.287000+00:00",
+  "disableLocalAuth": false,
+  "encryption": null,
+  "id": "/subscriptions/f7a60fca-9977-4899-b907-005a076adbb6/resourceGroups/myResourceGroup3/providers/Microsoft.EventHub/namespaces/myNamespace00022998",
+  "identity": null,
+  "isAutoInflateEnabled": false,
+  "kafkaEnabled": true,
+  "location": "East US",
+  "maximumThroughputUnits": 0,
+  "metricId": "f7a60fca-9977-4899-b907-005a076adbb6:mynamespace00022998",
+  "minimumTlsVersion": "1.2",
+  "name": "myNamespace00022998",
+  "privateEndpointConnections": null,
+  "provisioningState": "Succeeded",
+  "publicNetworkAccess": "Enabled",
+  "resourceGroup": "myResourceGroup3",
+  "serviceBusEndpoint": "https://myNamespace00022998.servicebus.windows.net:443/",
+  "sku": {
+    "capacity": 1,
+    "name": "Standard",
+    "tier": "Standard"
+  },
+  "status": "Active",
+  "systemData": null,
+  "tags": {},
+  "type": "Microsoft.EventHub/Namespaces",
+  "updatedAt": "2023-02-07T23:42:11.013000+00:00",
+  "zoneRedundant": false
+}
+{
+  "captureDescription": null,
+  "createdAt": "2023-02-07T23:42:23.190000+00:00",
+  "id": "/subscriptions/f7a60fca-9977-4899-b907-005a076adbb6/resourceGroups/myResourceGroup3/providers/Microsoft.EventHub/namespaces/myNamespace00022998/eventhubs/myEventGridHub",
+  "location": "eastus",
+  "messageRetentionInDays": 7,
+  "name": "myEventGridHub",
+  "partitionCount": 4,
+  "partitionIds": [
+    "0",
+    "1",
+    "2",
+    "3"
+  ],
+  "resourceGroup": "myResourceGroup3",
+  "status": "Active",
+  "systemData": null,
+  "type": "Microsoft.EventHub/namespaces/eventhubs",
+  "updatedAt": "2023-02-07T23:42:23.427000+00:00"
+}
+```
 > [!NOTE]
 > The *name* of your namespace must be unique.
 
@@ -83,7 +137,7 @@ az eventgrid event-subscription list --source-resource-id $SOURCE_RESOURCE_ID
 ```
 
 The following example output shows you're subscribed to events from the *MyAKS* cluster and those events are delivered to the *MyEventGridHub* event hub:
-
+<!--expected_similarity=0.7-->
 ```output
 [
   {
@@ -185,7 +239,7 @@ When AKS events occur, you'll see those events appear in your event hub. For exa
 Use the [az group delete][az-group-delete] command to remove the resource group, the AKS cluster, namespace, and event hub, and all related resources.
 
 ```azurecli-interactive
-az group delete --name MyResourceGroup --yes --no-wait
+az group delete --name $RESOURCE_GROUP_NAME --yes --no-wait
 ```
 
 ### [Azure PowerShell](#tab/azure-powershell)
