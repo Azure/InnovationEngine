@@ -292,6 +292,7 @@ class Executor:
         """
         if self.shell == None:
             child = pexpect.spawnu('/bin/bash', echo=False, timeout=None)
+            child.sendline("bind 'set enable-bracketed-paste off'")
             ps1 = PEXPECT_PROMPT[:5] + u'\[\]' + PEXPECT_PROMPT[5:]
             ps2 = PEXPECT_CONTINUATION_PROMPT[:5] + u'\[\]' + PEXPECT_CONTINUATION_PROMPT[5:]
             prompt_change = u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''".format(ps1, ps2)
