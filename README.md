@@ -21,7 +21,7 @@ pip3 install -r requirements.txt;
 Now you can run the interactive Innovation Engine tutorial with the following command:
 
 ```bash
-python3 main.py test tutorial.md
+python3 main.py interactive tutorial.md
 ```
 
 The general format to run an executable document is: 
