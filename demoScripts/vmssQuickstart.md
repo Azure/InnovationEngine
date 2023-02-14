@@ -28,18 +28,22 @@ A Virtual Machine Scale Set allows you to deploy and manage a set of auto-scalin
 
 ## Define Environment Variables
 
+Throughout this document we use environment variables to facilitate cut and paste reuse. 
+The default values below will enable you to work through this document in most cases. The meaning of each 
+environment variable will be addressed as they are used in the steps below.
+
 ```azurecli-interactive
-export RESOURCE_GROUP_NAME=myResourceGroup
+export RESOURCE_GROUP_NAME=vmssQuickstartRG
 export RESOURCE_LOCATION=eastus
-export SCALE_SET_NAME=myScaleSet 
+export SCALE_SET_NAME=vmssQuickstart
 export BASE_VM_IMAGE=UbuntuLTS
 export ADMIN_USERNAME=azureuser
-export LOAD_BALANCER_NAME=myScaleSetLB 
-export BACKEND_POOL_NAME=myScaleSetLBBEPool
-export LOAD_BALANCER_RULE_NAME=myLoadBalancerRuleWeb
-export FRONT_END_IP_NAME=loadBalancerFrontEnd 
-export CUSTOM_SCRIPT_NAME=customScript
-export SCALE_SET_PUBLIC_IP=myScaleSetLBPublicIP
+export LOAD_BALANCER_NAME=vmssQuickstartLB 
+export BACKEND_POOL_NAME=vmssQuickstartPool
+export LOAD_BALANCER_RULE_NAME=vmssQuickstartRule
+export FRONT_END_IP_NAME=vmssQuickstartLoadBalancerFrontEnd 
+export CUSTOM_SCRIPT_NAME=vmssQuickstartCustomScript
+export SCALE_SET_PUBLIC_IP=vmssQuickstartPublicIP
 ```
 
 ## Create a scale set
