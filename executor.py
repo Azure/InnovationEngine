@@ -10,6 +10,8 @@ from fuzzywuzzy import process
 import re
 import random
 from os.path import exists
+import traceback
+import sys
 
 PEXPECT_PROMPT = u'[PEXPECT_PROMPT>'
 PEXPECT_CONTINUATION_PROMPT = u'[PEXPECT_PROMPT+'
@@ -38,6 +40,10 @@ class Executor:
     # If Heading it outputs the heading, pops the item and prompts input from user
     # If paragraph it outputs paragraph and pops item from list and continues with no pause
     # If Code block, it calls ExecuteCode helper function to print and execute the code block
+
+    def my_excepthook(type, value, tb):
+        traceback.print_exception(type, value, tb)
+    sys.excepthook = my_excepthook
 
     def runMainLoop(self):
         if self.modeOfOperation == "interactive":
@@ -290,11 +296,30 @@ class Executor:
         """Creates the shell in which to run commands for the 
             innovation engine 
         """
+        print("TRYING TO CREATE A SHELL")
         if self.shell == None:
             child = pexpect.spawnu('/bin/bash', echo=False, timeout=None)
+            print("EXECUTED LINE 1")
             child.sendline("bind 'set enable-bracketed-paste off'")
+            print("EXECUTED LINE 2")
             ps1 = PEXPECT_PROMPT[:5] + u'\[\]' + PEXPECT_PROMPT[5:]
+            print("EXECUTED LINE 3")
             ps2 = PEXPECT_CONTINUATION_PROMPT[:5] + u'\[\]' + PEXPECT_CONTINUATION_PROMPT[5:]
+            print("EXECUTED LINE 4")
             prompt_change = u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''".format(ps1, ps2)
-            shell = pexpect.replwrap.REPLWrapper(child, u'\$', prompt_change)
+            print("PS1 \n" + ps1, "\n PS2 \n" + ps2)
+            print("EXECUTED LINE 5")
+            print(child, prompt_change)
+            try:
+                shell = pexpect.replwrap.REPLWrapper(child, u'\$', prompt_change)
+            except pexpect.ExceptionPexpect as e:
+                print("An error occurred while creating the shell:", e)
+                return None
+
+            except pexpect.exceptions.TIMEOUT:
+                print("Timeout occurred while setting up shell")
+
+            except pexpect.exceptions.ExceptionPexpect:
+                print("Exception occurred while setting up shell")
+            print("EXECUTED LINE 6")
         return shell
