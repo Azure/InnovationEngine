@@ -109,8 +109,8 @@ class Executor:
             for failedTest in self.failedTests:
                 print(failedTest[0][1].value + '\n')
                 print(failedTest[1])
-            #Taking out the exit 1 command as this will end the testing if we are testing multiple files   
-            #exit(1)
+                
+            exit(1)
 
     # This function runs through and executes not pausing for any input or failing.
     # The primary intention of this is for executing pre requisites 
