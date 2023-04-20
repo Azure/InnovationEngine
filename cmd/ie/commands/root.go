@@ -12,6 +12,7 @@ var rootCommand = &cobra.Command{
 	Short: "The innovation engine.",
 }
 
+// Entrypoint into the Innovation Engine CLI.
 func ExecuteCLI() {
 	if err := rootCommand.Execute(); err != nil {
 		fmt.Println(err)
