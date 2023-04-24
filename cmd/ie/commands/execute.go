@@ -2,29 +2,28 @@ package commands
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/spf13/cobra"
 )
 
-var markdownFile string
-
 // / Register the command with our command runner.
 func init() {
 	rootCommand.AddCommand(executeCommand)
-	executeCommand.Flags().StringVar(&markdownFile, "markdown", "", "The markdown file to execute.")
 }
 
 var executeCommand = &cobra.Command{
-	Use:   "execute",
-	Short: "Execute a document.",
+	Use:   "execute [markdown file]",
+	Args:  cobra.MinimumNArgs(1),
+	Short: "Execute the commands for an Azure deployment scenario.",
 	Run: func(cmd *cobra.Command, args []string) {
+		markdownFile := args[0]
 		if markdownFile == "" {
 			cmd.Help()
 			return
 		}
-		source, err := ioutil.ReadFile(markdownFile)
+		source, err := os.ReadFile(markdownFile)
 
 		if err != nil {
 			panic(err)
