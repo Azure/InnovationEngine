@@ -47,6 +47,7 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 	return commands
 }
 
+// Extracts the command text from an already parsed markdown code block.
 func extractCommandFromCodeBlock(codeBlock *ast.FencedCodeBlock, source []byte) string {
 	lines := codeBlock.Lines()
 	var command strings.Builder
