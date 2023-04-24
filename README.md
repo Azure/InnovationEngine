@@ -8,20 +8,18 @@ Executable documentation takes standard markdown language and amplifies it by al
 # Try Out Executable Documentation 
 Azure Cloud Shell provides an environment with all of the prerequisites installed to run Executable Documentation. This is the recommended method for new users to try and develop tutorials for Innovation Engine. 
 
-Open [Azure Cloud Shell](https://ms.portal.azure.com/#cloudshell/) and select Bash as the environment. Paste the following commands into the shell, this will clone the Innovation Engine repo, create a virtual environment and install the necessary dependencies.
+Open [Azure Cloud Shell](https://ms.portal.azure.com/#cloudshell/) and select Bash as the environment. Paste the following commands into the shell, this will clone the Innovation Engine repo, install the requirements, and build out the innovation engine executable.
 
 ```bash
 git clone https://github.com/Azure/InnovationEngine;
 cd InnovationEngine;
-virtualenv innovationEngine;
-source innovationEngine/bin/activate
-pip3 install -r requirements.txt;
+make build-ie;
 ```
 
 Now you can run the interactive Innovation Engine tutorial with the following command:
 
 ```bash
-python3 main.py interactive tutorial.md
+./bin/ie interactive tutorial.md
 ```
 
 The general format to run an executable document is: 
