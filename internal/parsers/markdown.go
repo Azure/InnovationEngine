@@ -22,6 +22,23 @@ var markdownParser = goldmark.New(
 	),
 )
 
+type MarkdownElementType string
+
+const (
+	ElementHeading    MarkdownElementType = "heading"
+	ElementCodeBlock  MarkdownElementType = "code_block"
+	ElementList       MarkdownElementType = "list"
+	ElementBlockQuote MarkdownElementType = "block_quote"
+	ElementParagraph  MarkdownElementType = "paragraph"
+)
+
+// Represents a markdown element.
+type MarkdownElement struct {
+	Type    MarkdownElementType
+	Content string
+	Result  string
+}
+
 // Parses a markdown file into an AST representing the markdown document.
 func ParseMarkdownIntoAst(source []byte) ast.Node {
 	document := markdownParser.Parser().Parse(text.NewReader(source))
