@@ -3,9 +3,12 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
+	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -24,14 +27,41 @@ var executeCommand = &cobra.Command{
 			cmd.Help()
 			return
 		}
-		source, err := os.ReadFile(markdownFile)
 
+		// Load the markdown file.
+		if utils.FileExists(markdownFile) == false {
+			fmt.Println("File does not exist.")
+			return
+		}
+
+		source, err := os.ReadFile(markdownFile)
 		if err != nil {
 			panic(err)
 		}
 
+		// Load environment variables
+		markdownINI := strings.TrimSuffix(markdownFile, filepath.Ext(markdownFile)) + ".ini"
+		environmentVariables := make(map[string]string)
+
+		// Check if the INI file exists & load it.
+		if !utils.FileExists(markdownINI) {
+			fmt.Println("INI file does not exist: ", markdownINI)
+		} else {
+			fmt.Println("INI file exists. Loading: ", markdownINI)
+			environmentVariables = parsers.ParseINIFile(markdownINI)
+
+			for key, value := range environmentVariables {
+				fmt.Printf("Setting %s=%s\n", key, value)
+			}
+		}
+
+		fmt.Println(environmentVariables)
+
 		markdown := parsers.ParseMarkdownIntoAst(source)
+		scenarioVariables := parsers.ExtractScenarioVariablesFromAst(markdown, source)
 		commands := parsers.ExtractCodeBlocksFromAst(markdown, source, []string{"bash", "azurecli", "azurecli-init", "azurecli-interactive", "terraform", "terraform-interactive"})
+
+		fmt.Println(scenarioVariables)
 
 		for _, command := range commands {
 			fmt.Println(command)
