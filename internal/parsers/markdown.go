@@ -1,6 +1,8 @@
 package parsers
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/yuin/goldmark"
@@ -64,9 +66,46 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 	return commands
 }
 
+// This regex matches HTML comments within markdown blocks that contain
+// variables to use within The regex is designed to match the following:
+var variableCommentBlockRegex = regexp.MustCompile(`(?s)<!--\s*\x60\x60\x60variables(.*?)\x60\x60\x60\s*-->`)
+
+// Extracts the variables from a provided markdown AST.
+func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) []string {
+	var inlineVariableBlocks []string
+	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if entering && node.Kind() == ast.KindHTMLBlock {
+			htmlNode := node.(*ast.HTMLBlock)
+			blockContent := extractVariablesFromHTMLBlock(htmlNode, source)
+			fmt.Printf("Found HTML block with the content: %s\n", blockContent)
+			match := variableCommentBlockRegex.FindStringSubmatch(blockContent)
+			if len(match) > 1 {
+				fmt.Println("Found: ", match[1])
+				inlineVariableBlocks = append(inlineVariableBlocks, strings.TrimSpace(match[1]))
+			}
+		}
+		return ast.WalkContinue, nil
+	})
+
+	return inlineVariableBlocks
+}
+
 // Extracts the command text from an already parsed markdown code block.
 func extractCommandFromCodeBlock(codeBlock *ast.FencedCodeBlock, source []byte) string {
 	lines := codeBlock.Lines()
+	var command strings.Builder
+
+	for i := 0; i < lines.Len(); i++ {
+		line := lines.At(i)
+		command.WriteString(string(line.Value(source)))
+	}
+
+	return command.String()
+}
+
+// TODO: Merge this with the above function.
+func extractVariablesFromHTMLBlock(htmlBlock *ast.HTMLBlock, source []byte) string {
+	lines := htmlBlock.Lines()
 	var command strings.Builder
 
 	for i := 0; i < lines.Len(); i++ {
