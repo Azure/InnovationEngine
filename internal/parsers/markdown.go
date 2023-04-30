@@ -47,16 +47,36 @@ func ParseMarkdownIntoAst(source []byte) ast.Node {
 	return document
 }
 
+type CodeBlock struct {
+	Language string
+	Content  string
+	Header   string
+}
+
 // Extracts the code blocks from a provided markdown AST that match the
 // languagesToExtract.
-func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract []string) []string {
-	var commands []string
+func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract []string) []CodeBlock {
+	var lastHeader string
+	var commands []CodeBlock
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
-		if entering && node.Kind() == ast.KindFencedCodeBlock {
-			codeBlock := node.(*ast.FencedCodeBlock)
-			for _, language := range languagesToExtract {
-				if string(codeBlock.Language(source)) == language {
-					commands = append(commands, extractTextFromCodeBlock(&codeBlock.BaseBlock, source))
+		if entering {
+			switch n := node.(type) {
+			case *ast.Heading:
+				lastHeader = string(n.Text(source))
+
+			case *ast.FencedCodeBlock:
+
+				language := string(n.Language((source)))
+				for _, desiredLanguage := range languagesToExtract {
+					if language == desiredLanguage {
+						command := CodeBlock{
+							Language: language,
+							Content:  extractTextFromCodeBlock(&n.BaseBlock, source),
+							Header:   lastHeader,
+						}
+						commands = append(commands, command)
+						break
+					}
 				}
 			}
 		}
