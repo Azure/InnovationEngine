@@ -59,13 +59,17 @@ var executeCommand = &cobra.Command{
 
 		markdown := parsers.ParseMarkdownIntoAst(source)
 		scenarioVariables := parsers.ExtractScenarioVariablesFromAst(markdown, source)
+		for key, value := range scenarioVariables {
+			environmentVariables[key] = value
+		}
+
 		commands := parsers.ExtractCodeBlocksFromAst(markdown, source, []string{"bash", "azurecli", "azurecli-init", "azurecli-interactive", "terraform", "terraform-interactive"})
 
 		fmt.Println(scenarioVariables)
 
 		for _, command := range commands {
 			fmt.Println(command)
-			out, error := shells.ExecuteBashCommand(command, nil, true)
+			out, error := shells.ExecuteBashCommand(command, environmentVariables, true)
 			if error != nil {
 				fmt.Println(error)
 			}
