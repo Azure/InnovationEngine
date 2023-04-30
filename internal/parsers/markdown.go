@@ -67,27 +67,54 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 }
 
 // This regex matches HTML comments within markdown blocks that contain
-// variables to use within The regex is designed to match the following:
-var variableCommentBlockRegex = regexp.MustCompile(`(?s)<!--\s*\x60\x60\x60variables(.*?)\x60\x60\x60\s*-->`)
+// variables to use within the scenario.
+var variableCommentBlockRegex = regexp.MustCompile("(?s)<!--.*?```variables(.*?)```.*?")
 
 // Extracts the variables from a provided markdown AST.
-func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) []string {
-	var inlineVariableBlocks []string
+func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) map[string]string {
+	scenarioVariables := make(map[string]string)
+
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering && node.Kind() == ast.KindHTMLBlock {
 			htmlNode := node.(*ast.HTMLBlock)
 			blockContent := extractVariablesFromHTMLBlock(htmlNode, source)
 			fmt.Printf("Found HTML block with the content: %s\n", blockContent)
 			match := variableCommentBlockRegex.FindStringSubmatch(blockContent)
+			fmt.Printf("Found %d matches\n", len(match))
+
+			// Extract the variables from the comment block.
 			if len(match) > 1 {
 				fmt.Println("Found: ", match[1])
-				inlineVariableBlocks = append(inlineVariableBlocks, strings.TrimSpace(match[1]))
+				variables := convertScenarioVariablesToMap(match[1])
+				for key, value := range variables {
+					scenarioVariables[key] = value
+				}
 			}
 		}
 		return ast.WalkContinue, nil
 	})
 
-	return inlineVariableBlocks
+	return scenarioVariables
+}
+
+func convertScenarioVariablesToMap(variableBlock string) map[string]string {
+	variableMap := make(map[string]string)
+
+	// Only process statements that begin with export.
+	for _, variable := range strings.Split(variableBlock, "\n") {
+		if strings.HasPrefix(variable, "export") {
+			parts := strings.SplitN(variable, "=", 2)
+			if len(parts) == 2 {
+				key := strings.TrimPrefix(parts[0], "export ")
+				value := parts[1]
+				fmt.Printf("Found variable: %s=%s\n", key, value)
+				variableMap[key] = value
+			}
+		}
+
+	}
+
+	return variableMap
 }
 
 // Extracts the command text from an already parsed markdown code block.
