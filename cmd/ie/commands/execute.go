@@ -68,6 +68,9 @@ var executeCommand = &cobra.Command{
 		fmt.Println(scenarioVariables)
 
 		for _, command := range codeBlocks {
+			fmt.Println("Stages to execute: ", command.Header)
+		}
+		for _, command := range codeBlocks {
 			fmt.Println(command)
 			out, error := shells.ExecuteBashCommand(command.Content, environmentVariables, true)
 			if error != nil {
