@@ -56,7 +56,7 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 			codeBlock := node.(*ast.FencedCodeBlock)
 			for _, language := range languagesToExtract {
 				if string(codeBlock.Language(source)) == language {
-					commands = append(commands, extractCommandFromCodeBlock(codeBlock, source))
+					commands = append(commands, extractTextFromCodeBlock(&codeBlock.BaseBlock, source))
 				}
 			}
 		}
@@ -77,14 +77,13 @@ func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) map[string]st
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering && node.Kind() == ast.KindHTMLBlock {
 			htmlNode := node.(*ast.HTMLBlock)
-			blockContent := extractVariablesFromHTMLBlock(htmlNode, source)
+			blockContent := extractTextFromCodeBlock(&htmlNode.BaseBlock, source)
 			fmt.Printf("Found HTML block with the content: %s\n", blockContent)
 			match := variableCommentBlockRegex.FindStringSubmatch(blockContent)
 			fmt.Printf("Found %d matches\n", len(match))
 
 			// Extract the variables from the comment block.
 			if len(match) > 1 {
-				fmt.Println("Found: ", match[1])
 				variables := convertScenarioVariablesToMap(match[1])
 				for key, value := range variables {
 					scenarioVariables[key] = value
@@ -117,22 +116,9 @@ func convertScenarioVariablesToMap(variableBlock string) map[string]string {
 	return variableMap
 }
 
-// Extracts the command text from an already parsed markdown code block.
-func extractCommandFromCodeBlock(codeBlock *ast.FencedCodeBlock, source []byte) string {
-	lines := codeBlock.Lines()
-	var command strings.Builder
-
-	for i := 0; i < lines.Len(); i++ {
-		line := lines.At(i)
-		command.WriteString(string(line.Value(source)))
-	}
-
-	return command.String()
-}
-
-// TODO: Merge this with the above function.
-func extractVariablesFromHTMLBlock(htmlBlock *ast.HTMLBlock, source []byte) string {
-	lines := htmlBlock.Lines()
+// Extract the text from a code blocks base block and return it as a string.
+func extractTextFromCodeBlock(codeBlockBase *ast.BaseBlock, source []byte) string {
+	lines := codeBlockBase.Lines()
 	var command strings.Builder
 
 	for i := 0; i < lines.Len(); i++ {

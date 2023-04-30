@@ -28,9 +28,9 @@ var executeCommand = &cobra.Command{
 			return
 		}
 
-		// Load the markdown file.
-		if utils.FileExists(markdownFile) == false {
-			fmt.Println("File does not exist.")
+		// Check if the markdown file exists.
+		if !utils.FileExists(markdownFile) {
+			fmt.Printf("Markdown file '%s' does not exist.\n", markdownFile)
 			return
 		}
 
@@ -45,7 +45,7 @@ var executeCommand = &cobra.Command{
 
 		// Check if the INI file exists & load it.
 		if !utils.FileExists(markdownINI) {
-			fmt.Println("INI file does not exist: ", markdownINI)
+			fmt.Printf("INI file '%s' does not exist, skipping...", markdownINI)
 		} else {
 			fmt.Println("INI file exists. Loading: ", markdownINI)
 			environmentVariables = parsers.ParseINIFile(markdownINI)
