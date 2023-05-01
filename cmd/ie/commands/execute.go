@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/parsers"
-	"github.com/Azure/InnovationEngine/internal/shells"
+	"github.com/Azure/InnovationEngine/internal/render"
 	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -65,18 +65,6 @@ var executeCommand = &cobra.Command{
 
 		codeBlocks := parsers.ExtractCodeBlocksFromAst(markdown, source, []string{"bash", "azurecli", "azurecli-init", "azurecli-interactive", "terraform", "terraform-interactive"})
 
-		fmt.Println(scenarioVariables)
-
-		for _, command := range codeBlocks {
-			fmt.Println("Stages to execute: ", command.Header)
-		}
-		for _, command := range codeBlocks {
-			fmt.Println(command)
-			out, error := shells.ExecuteBashCommand(command.Content, environmentVariables, true)
-			if error != nil {
-				fmt.Println(error)
-			}
-			fmt.Println(out)
-		}
+		render.ExecuteAndRenderCodeBlocks(codeBlocks, environmentVariables)
 	},
 }

@@ -61,11 +61,11 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering {
 			switch n := node.(type) {
+			// Set the last header when we encounter a heading.
 			case *ast.Heading:
-				lastHeader = string(n.Text(source))
-
+				lastHeader = string(extractTextFromCodeBlock(&n.BaseBlock, source))
+			// Extract the code block if it matches the language.
 			case *ast.FencedCodeBlock:
-
 				language := string(n.Language((source)))
 				for _, desiredLanguage := range languagesToExtract {
 					if language == desiredLanguage {
@@ -75,7 +75,6 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 							Header:   lastHeader,
 						}
 						commands = append(commands, command)
-						break
 					}
 				}
 			}
@@ -100,7 +99,6 @@ func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) map[string]st
 			blockContent := extractTextFromCodeBlock(&htmlNode.BaseBlock, source)
 			fmt.Printf("Found HTML block with the content: %s\n", blockContent)
 			match := variableCommentBlockRegex.FindStringSubmatch(blockContent)
-			fmt.Printf("Found %d matches\n", len(match))
 
 			// Extract the variables from the comment block.
 			if len(match) > 1 {
