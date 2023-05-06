@@ -19,11 +19,10 @@ type Step struct {
 
 // Scenarios are the top-level object that represents a scenario to be executed.
 type Scenario struct {
-	Name          string
-	Description   string
-	MarkdownEntry ast.Node
-	Steps         []Step
-	Environment   map[string]string
+	Name        string
+	MarkdownAst ast.Node
+	Steps       []Step
+	Environment map[string]string
 }
 
 func groupCodeBlocksIntoSteps(blocks []parsers.CodeBlock) []Step {
@@ -82,16 +81,18 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scen
 	}
 
 	codeBlocks := parsers.ExtractCodeBlocksFromAst(markdown, source, languagesToExecute)
-
 	steps := groupCodeBlocksIntoSteps(codeBlocks)
+	title, err := parsers.ExtractScenarioTitleFromAst(markdown, source)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Found scenario: %s\n", title)
 
 	return &Scenario{
-		Name:        "TODO",
+		Name:        title,
 		Environment: environmentVariables,
 		Steps:       steps,
+		MarkdownAst: markdown,
 	}, nil
-}
-
-func groupCodeBlocksByHeader(codeBlocks []parsers.CodeBlock) {
-	panic("unimplemented")
 }

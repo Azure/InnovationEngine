@@ -24,23 +24,6 @@ var markdownParser = goldmark.New(
 	),
 )
 
-type MarkdownElementType string
-
-const (
-	ElementHeading    MarkdownElementType = "heading"
-	ElementCodeBlock  MarkdownElementType = "code_block"
-	ElementList       MarkdownElementType = "list"
-	ElementBlockQuote MarkdownElementType = "block_quote"
-	ElementParagraph  MarkdownElementType = "paragraph"
-)
-
-// Represents a markdown element.
-type MarkdownElement struct {
-	Type    MarkdownElementType
-	Content string
-	Result  string
-}
-
 // Parses a markdown file into an AST representing the markdown document.
 func ParseMarkdownIntoAst(source []byte) ast.Node {
 	document := markdownParser.Parser().Parse(text.NewReader(source))
@@ -53,6 +36,30 @@ type CodeBlock struct {
 	Header   string
 }
 
+// Assumes the title of the scenario is the first h1 header in the
+// markdown file.
+func ExtractScenarioTitleFromAst(node ast.Node, source []byte) (string, error) {
+	header := ""
+	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if entering {
+			switch n := node.(type) {
+			case *ast.Heading:
+				if n.Level == 1 {
+					header = string(extractTextFromMarkdown(&n.BaseBlock, source))
+					return ast.WalkStop, nil
+				}
+			}
+		}
+		return ast.WalkContinue, nil
+	})
+
+	if header == "" {
+		return "", fmt.Errorf("no header found")
+	}
+
+	return header, nil
+}
+
 // Extracts the code blocks from a provided markdown AST that match the
 // languagesToExtract.
 func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract []string) []CodeBlock {
@@ -63,7 +70,7 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 			switch n := node.(type) {
 			// Set the last header when we encounter a heading.
 			case *ast.Heading:
-				lastHeader = string(extractTextFromCodeBlock(&n.BaseBlock, source))
+				lastHeader = string(extractTextFromMarkdown(&n.BaseBlock, source))
 			// Extract the code block if it matches the language.
 			case *ast.FencedCodeBlock:
 				language := string(n.Language((source)))
@@ -71,7 +78,7 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 					if language == desiredLanguage {
 						command := CodeBlock{
 							Language: language,
-							Content:  extractTextFromCodeBlock(&n.BaseBlock, source),
+							Content:  extractTextFromMarkdown(&n.BaseBlock, source),
 							Header:   lastHeader,
 						}
 						commands = append(commands, command)
@@ -96,7 +103,7 @@ func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) map[string]st
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering && node.Kind() == ast.KindHTMLBlock {
 			htmlNode := node.(*ast.HTMLBlock)
-			blockContent := extractTextFromCodeBlock(&htmlNode.BaseBlock, source)
+			blockContent := extractTextFromMarkdown(&htmlNode.BaseBlock, source)
 			fmt.Printf("Found HTML block with the content: %s\n", blockContent)
 			match := variableCommentBlockRegex.FindStringSubmatch(blockContent)
 
@@ -114,6 +121,8 @@ func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) map[string]st
 	return scenarioVariables
 }
 
+// Converts a string of shell variable exports into a map of key/value pairs.
+// I.E. `export FOO=bar\nexport BAZ=qux` becomes `{"FOO": "bar", "BAZ": "qux"}`
 func convertScenarioVariablesToMap(variableBlock string) map[string]string {
 	variableMap := make(map[string]string)
 
@@ -135,8 +144,8 @@ func convertScenarioVariablesToMap(variableBlock string) map[string]string {
 }
 
 // Extract the text from a code blocks base block and return it as a string.
-func extractTextFromCodeBlock(codeBlockBase *ast.BaseBlock, source []byte) string {
-	lines := codeBlockBase.Lines()
+func extractTextFromMarkdown(baseBlock *ast.BaseBlock, source []byte) string {
+	lines := baseBlock.Lines()
 	var command strings.Builder
 
 	for i := 0; i < lines.Len(); i++ {
