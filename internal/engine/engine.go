@@ -1,5 +1,7 @@
 package engine
 
+import "fmt"
+
 type EngineConfiguration struct {
 	supportedLanguages []string `yaml:"supportedLanguages"`
 }
@@ -19,6 +21,7 @@ func NewEngine() *Engine {
 }
 
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
+	fmt.Println(titleStyle.Render(scenario.Name))
 	ExecuteAndRenderSteps(scenario.Steps, scenario.Environment)
 	return nil
 }

@@ -20,6 +20,7 @@ const (
 var (
 	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF"))
 	checkStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#32CD32"))
+	titleStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Align(lipgloss.Center).Bold(true)
 )
 
 func ExecuteAndRenderSteps(steps []Step, env map[string]string) {
@@ -40,8 +41,8 @@ func ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 
 			frame := 0
 
-			// While the command is executing, render the spinner.
 		loop:
+			// While the command is executing, render the spinner.
 			for {
 				select {
 				case <-done:
