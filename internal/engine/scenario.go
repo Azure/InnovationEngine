@@ -44,6 +44,9 @@ func groupCodeBlocksIntoSteps(blocks []parsers.CodeBlock) []Step {
 	return groupedSteps
 }
 
+// Creates a scenario object from a given markdown file. languagesToExecute is
+// used to filter out code blocks that should not be parsed out of the markdown
+// file.
 func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scenario, error) {
 	if path == "" {
 		return nil, nil
