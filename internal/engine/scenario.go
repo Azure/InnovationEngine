@@ -99,3 +99,21 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scen
 		MarkdownAst: markdown,
 	}, nil
 }
+
+// Convert a scenario into a shell script
+func (s *Scenario) ToShellScript() string {
+	var script strings.Builder
+
+	for key, value := range s.Environment {
+		script.WriteString(fmt.Sprintf("export %s=\"%s\"\n", key, value))
+	}
+
+	for _, step := range s.Steps {
+		script.WriteString(fmt.Sprintf("# %s\n", step.Name))
+		for _, block := range step.CodeBlocks {
+			script.WriteString(fmt.Sprintf("%s\n", block.Content))
+		}
+	}
+
+	return script.String()
+}
