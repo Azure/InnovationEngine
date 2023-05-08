@@ -25,6 +25,6 @@ func NewEngine() *Engine {
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	fmt.Println(titleStyle.Render(scenario.Name))
 	ExecuteAndRenderSteps(scenario.Steps, scenario.Environment)
-	fmt.Printf("---Generated script---\n %s", scenario.ToShellScript())
+	fmt.Printf("---Generated script---\n%s", scenario.ToShellScript())
 	return nil
 }
