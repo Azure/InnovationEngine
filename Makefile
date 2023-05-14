@@ -25,3 +25,7 @@ run-api: build-api
 clean:
 	@echo "Cleaning up"
 	@rm -rf "$(BINARY_DIR)"
+
+build-api-container:
+	@echo "Building the Innovation Engine API container"
+	@docker build -t innovation-engine-api -f infra/api/Dockerfile .
