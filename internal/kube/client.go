@@ -9,6 +9,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// Obtains the Kubernetes clientset based on the environment
+// this function is executing in.
 func GetKubernetesClient() (*kubernetes.Clientset, error) {
 	var config *rest.Config
 	var err error
