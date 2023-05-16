@@ -4,10 +4,10 @@ metadata:
   name: innovation-engine-api-ingress
 spec:
   rules:
-    - host: innovation-engine-api.localhost
+    - host: innovation-engine.localhost
       http:
         paths:
-          - path: "/"
+          - path: "/api/ie"
             pathType: Prefix
             backend:
               service:

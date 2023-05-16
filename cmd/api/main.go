@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path"
 
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -12,13 +13,17 @@ import (
 	"github.com/Azure/InnovationEngine/internal/kube"
 )
 
+var PREFIX_BASE = "/api/ie"
+
 func main() {
 	fmt.Println("Hello, world!")
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(PREFIX_BASE, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, world!")
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"message": "Hello, world!"}`))
 	})
 
-	http.HandleFunc("/api/scenario", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(path.Join(PREFIX_BASE, "scenario"), func(w http.ResponseWriter, r *http.Request) {
 		clientset, err := kube.GetKubernetesClient()
 		w.Header().Set("Content-Type", "application/json")
 
