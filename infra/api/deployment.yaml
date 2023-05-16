@@ -15,6 +15,6 @@ spec:
       containers:
         - name: innovation-engine-api
           image: innovation-engine-api:latest
-          imagePullPolicy: Always 
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
