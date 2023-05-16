@@ -7,10 +7,10 @@ spec:
     - host: innovation-engine.localhost
       http:
         paths:
-          - path: "/api/ie"
+          - path: "/"
             pathType: Prefix
             backend:
               service:
-                name: innovation-engine-api
+                name: innovation-engine-api-service
                 port:
                   number: 80

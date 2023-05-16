@@ -12,6 +12,6 @@ COPY . .
 
 RUN make build-api
 
-EXPOSE ${PORT}
+EXPOSE 8080
 
 CMD ["./bin/api"]

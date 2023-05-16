@@ -11,24 +11,28 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/Azure/InnovationEngine/internal/kube"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 var PREFIX_BASE = "/api/ie"
 
 func main() {
 	fmt.Println("Hello, world!")
-	http.HandleFunc(PREFIX_BASE, func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, world!")
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"message": "Hello, world!"}`))
+	server := echo.New()
+
+	server.Use(middleware.Logger())
+	server.Use(middleware.Recover())
+
+	server.GET(path.Join(PREFIX_BASE, "hello"), func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"message": "Hello, world!"})
 	})
 
-	http.HandleFunc(path.Join(PREFIX_BASE, "scenario"), func(w http.ResponseWriter, r *http.Request) {
+	server.POST(PREFIX_BASE, func(c echo.Context) error {
 		clientset, err := kube.GetKubernetesClient()
-		w.Header().Set("Content-Type", "application/json")
 
 		if err != nil {
-			fmt.Fprintf(w, "Error: %s", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
 		}
 
 		job := &batchv1.Job{
@@ -56,12 +60,11 @@ func main() {
 		job, err = clientset.BatchV1().Jobs("default").Create(context.TODO(), job, metav1.CreateOptions{})
 
 		if err != nil {
-			fmt.Fprintf(w, "Error: %s", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
 		}
 
-		fmt.Println(job)
-
+		return c.JSON(http.StatusOK, map[string]string{"message": "Hello, world!", "job": job.Name})
 	})
 
-	http.ListenAndServe(":8080", nil)
+	server.Logger.Fatal(server.Start("0.0.0.0:8080"))
 }
