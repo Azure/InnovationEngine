@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"path"
 
@@ -15,20 +14,25 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-var PREFIX_BASE = "/api/ie"
+var (
+	BASE_ROUTE        = "/api"
+	HEALTH_ROUTE      = path.Join(BASE_ROUTE, "health")
+	EXECUTION_ROUTE   = path.Join(BASE_ROUTE, "execute")
+	DEPLOYMENTS_ROUTE = path.Join(BASE_ROUTE, "deployments")
+)
 
 func main() {
-	fmt.Println("Hello, world!")
 	server := echo.New()
 
+	// Setup middleware.
 	server.Use(middleware.Logger())
 	server.Use(middleware.Recover())
 
-	server.GET(path.Join(PREFIX_BASE, "hello"), func(c echo.Context) error {
+	server.GET(HEALTH_ROUTE, func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"message": "Hello, world!"})
 	})
 
-	server.POST(PREFIX_BASE, func(c echo.Context) error {
+	server.POST(EXECUTION_ROUTE, func(c echo.Context) error {
 		clientset, err := kube.GetKubernetesClient()
 
 		if err != nil {
@@ -66,5 +70,5 @@ func main() {
 		return c.JSON(http.StatusOK, map[string]string{"message": "Hello, world!", "job": job.Name})
 	})
 
-	server.Logger.Fatal(server.Start("0.0.0.0:8080"))
+	server.Logger.Fatal(server.Start(":8080"))
 }

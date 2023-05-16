@@ -73,8 +73,11 @@ k8s-delete-api:
 	@kubectl delete -f infra/api/service.yaml
 	@kubectl delete -f infra/api/ingress.yaml
 
+k8s-refresh-api: k8s-delete-api k8s-deploy-api
+	@echo "Refreshed the Innovation Engine API container in your local cluster..."
+
 k8s-delete-cluster: k8s-delete-api k8s-delete-ingress-controller
 	@echo "Deleted Kubernetes cluster for local development."
 
-k8s-refresh: k8s-delete-cluster k8s-initialize-cluster
+k8s-refresh-cluster: k8s-delete-cluster k8s-initialize-cluster
 	@echo "Refreshed Kubernetes cluster for local development."
