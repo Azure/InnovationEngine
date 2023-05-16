@@ -41,6 +41,22 @@ build-api-container:
 	@echo "Building the Innovation Engine API container"
 	@docker build -t innovation-engine-api -f infra/api/Dockerfile .
 
-deploy-api-container: build-api-container
-	@echo "Deploying the Innovation Engine API container"
-	@docker run -d -p 8080:8080 innovation-engine-api
+
+# ----------------------------- Kubernetes targets -----------------------------
+
+# Applies the ingress controller to the cluster and waits for it to be ready.
+k8s-apply-ingress-controller:
+	@echo "Deploying the ingress controller to your local cluster..."
+	@kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.7.1/deploy/static/provider/cloud/deploy.yaml
+	@kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
+
+# Deploys the API deployment, service, and ingress specifications to the 
+# cluster, allowing the API to be accessed via the ingress controller.
+k8s-apply-api: build-api-container
+	@echo "Deploying the Innovation Engine API container to your local cluster..."
+	@kubectl apply -f infra/api/deployment.yaml
+	@kubectl apply -f infra/api/service.yaml
+	@kubectl apply -f infra/api/ingress.yaml
+
+k8s-initialize-cluster: k8s-apply-ingress-controller k8s-apply-api
+	@echo "Set up Kubernetes cluster for local development."

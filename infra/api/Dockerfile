@@ -5,10 +5,13 @@ ARG PORT=8080
 
 WORKDIR /api
 
-RUN tdnf install golang make -y
+RUN tdnf update && \
+  tdnf install golang make ca-certificates -y
 
 COPY . .
 
 RUN make build-api
+
+EXPOSE ${PORT}
 
 CMD ["./bin/api"]
