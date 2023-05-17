@@ -34,16 +34,16 @@ func main() {
 		id := uuid.New().String()
 
 		// Create deployment
-		deployment := kube.GetRunnerDeployment(id)
-		_, err = kube.CreateRunnerDeployment(clientset, deployment)
+		deployment := kube.GetAgentDeployment(id)
+		_, err = kube.CreateAgentDeployment(clientset, deployment)
 
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
 		}
 
 		// Create service
-		service := kube.GetRunnerService(id)
-		_, err = kube.CreateRunnerService(clientset, service)
+		service := kube.GetAgentService(id)
+		_, err = kube.CreateAgentService(clientset, service)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
 		}
