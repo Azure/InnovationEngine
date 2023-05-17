@@ -1,10 +1,13 @@
 package kube
 
 import (
+	"context"
+
 	"github.com/Azure/InnovationEngine/internal/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 func GetRunnerDeployment(id string) *appsv1.Deployment {
@@ -46,4 +49,8 @@ func GetRunnerDeployment(id string) *appsv1.Deployment {
 			},
 		},
 	}
+}
+
+func CreateRunnerDeployment(clientset *kubernetes.Clientset, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
+	return clientset.AppsV1().Deployments("default").Create(context.TODO(), deployment, metav1.CreateOptions{})
 }

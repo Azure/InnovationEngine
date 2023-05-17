@@ -1,8 +1,11 @@
 package kube
 
 import (
+	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 func GetRunnerService(id string) *corev1.Service {
@@ -24,4 +27,8 @@ func GetRunnerService(id string) *corev1.Service {
 			},
 		},
 	}
+}
+
+func CreateRunnerService(clientset *kubernetes.Clientset, service *corev1.Service) (*corev1.Service, error) {
+	return clientset.CoreV1().Services("default").Create(context.TODO(), service, metav1.CreateOptions{})
 }
