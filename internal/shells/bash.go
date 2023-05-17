@@ -20,7 +20,7 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 
 	out, err := commandToExecute.Output()
 	if err != nil {
-		return "", fmt.Errorf("error executing bash command: %w", err)
+		return "", fmt.Errorf("command exited with '%w' and the message '%s'", err, out)
 	}
 	return string(out), nil
 }
