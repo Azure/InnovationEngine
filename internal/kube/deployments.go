@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func GetRunnerDeployment(id string) *appsv1.Deployment {
+func GetAgentDeployment(id string) *appsv1.Deployment {
 
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -51,6 +51,6 @@ func GetRunnerDeployment(id string) *appsv1.Deployment {
 	}
 }
 
-func CreateRunnerDeployment(clientset *kubernetes.Clientset, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
+func CreateAgentDeployment(clientset *kubernetes.Clientset, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
 	return clientset.AppsV1().Deployments("default").Create(context.TODO(), deployment, metav1.CreateOptions{})
 }

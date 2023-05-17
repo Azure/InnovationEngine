@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func GetRunnerService(id string) *corev1.Service {
+func GetAgentService(id string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "runner - " + id,
@@ -29,6 +29,6 @@ func GetRunnerService(id string) *corev1.Service {
 	}
 }
 
-func CreateRunnerService(clientset *kubernetes.Clientset, service *corev1.Service) (*corev1.Service, error) {
+func CreateAgentService(clientset *kubernetes.Clientset, service *corev1.Service) (*corev1.Service, error) {
 	return clientset.CoreV1().Services("default").Create(context.TODO(), service, metav1.CreateOptions{})
 }
