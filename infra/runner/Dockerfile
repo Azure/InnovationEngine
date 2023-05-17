@@ -11,4 +11,4 @@ COPY . .
 
 RUN make build-runner
 
-CMD ["./bin/api"]
+CMD ["./bin/runner"]
