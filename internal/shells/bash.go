@@ -18,9 +18,9 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 		commandToExecute.Env = append(commandToExecute.Env, fmt.Sprintf("%s=%s", k, v))
 	}
 
-	out, err := commandToExecute.Output()
+	stdOutAndErr, err := commandToExecute.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("command exited with '%w' and the message '%s'", err, out)
+		return "", fmt.Errorf("command exited with '%w' and the message '%s'", err, stdOutAndErr)
 	}
-	return string(out), nil
+	return string(stdOutAndErr), nil
 }
