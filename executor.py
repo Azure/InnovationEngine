@@ -148,7 +148,7 @@ class Executor:
             response = self.shell.run_command(command, 1200).strip()
         except ValueError as ve:
             print("Continuation prompt required for command " + command)
-            print(ex)
+            print(ve)
             response = command + " failed to run"
         except Exception as ex:
             print("command timed out")

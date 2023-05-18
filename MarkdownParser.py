@@ -80,9 +80,15 @@ class MarkdownParser:
                 command += char
                 char = self.markdownFile.read(1)
 
+        # The following if addresses bug raised in createAKSFile test script 
+        if 'EOF' in command:
+            command = self.removeSpacesBeforeEOF(command)
+            command = self.removeLeadingWhitespace(command)
+
         # Should we read a new line here?
         subtype = subtype.strip()
         command = command.strip()
+       
         return subtype, command
         
      
@@ -225,6 +231,27 @@ class MarkdownParser:
     # If want to process dashes for hidden titles etc. 
     def processDash(self, char):
         pass
+
+    def removeSpacesBeforeEOF(self, command):
+        numSpacesToRemove = 0
+        for char in reversed(command):
+            if char == '\n':
+                break
+            else:
+                numSpacesToRemove += 1
+        command = command[:-numSpacesToRemove]
+        command += 'EOF'
+
+        return command
+
+    def removeLeadingWhitespace(self, command):
+        lines = command.split("\n")
+        numberOfSpaces = len(lines[1]) - len(lines[1].lstrip())
+        output = []
+        for line in lines:
+            line = line[numberOfSpaces:] if numberOfSpaces <= len(line) else ""
+            output.append(line)
+        return "\n".join(output)
 
 class MarkdownElement:
 
