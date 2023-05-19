@@ -32,6 +32,6 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	fmt.Println(titleStyle.Render(scenario.Name))
 	ExecuteAndRenderSteps(scenario.Steps, scenario.Environment, e.Configuration.Verbose)
 	shells.ResetStoredEnvironmentVariables()
-	fmt.Printf(scriptHeader.Render("# Generated bash replicate the deployment:")+"\n%s", scriptText.Render(scenario.ToShellScript()))
+	fmt.Printf(scriptHeader.Render("# Generated bash replicate what just happened:")+"\n%s", scriptText.Render(scenario.ToShellScript()))
 	return nil
 }
