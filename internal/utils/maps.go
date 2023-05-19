@@ -1,5 +1,6 @@
 package utils
 
+// Makes a copy of a map
 func CopyMap(m map[string]string) map[string]string {
 	result := make(map[string]string)
 	for k, v := range m {
@@ -8,10 +9,12 @@ func CopyMap(m map[string]string) map[string]string {
 	return result
 }
 
+// Merge two maps together.
 func MergeMaps(a, b map[string]string) map[string]string {
+	merged := CopyMap(a)
 	for k, v := range b {
-		a[k] = v
+		merged[k] = v
 	}
 
-	return a
+	return merged
 }

@@ -44,27 +44,24 @@ func ResetStoredEnvironmentVariables() error {
 	return os.Remove(environmentStateFile)
 }
 
-func mergeMaps(a, b map[string]string) map[string]string {
-	for k, v := range b {
-		a[k] = v
-	}
-
-	return a
-}
-
 // Executes a bash command and returns the output or error.
 func ExecuteBashCommand(command string, env map[string]string, inherit_environment_variables bool) (string, error) {
-	var commandWithState = []string{
+	var commandWithStateSaved = []string{
 		command,
 		"env > /tmp/env.txt",
 	}
-	commandToExecute := exec.Command("bash", "-c", strings.Join(commandWithState, "\n"))
+	commandToExecute := exec.Command("bash", "-c", strings.Join(commandWithStateSaved, "\n"))
 
 	if inherit_environment_variables {
 		commandToExecute.Env = os.Environ()
 	}
 
-	envFromPreviousStep, err := loadEnvFile("/tmp/env.txt")
+	// Sharing environment variable state between isolated shell executions is a
+	// bit tough, but how we handle it is by storing the environment variables
+	// after a command is executed within a file and then loading that file
+	// before executing the next command. This allows us to share state between
+	// isolated command calls.
+	envFromPreviousStep, err := loadEnvFile(environmentStateFile)
 	if err == nil {
 		merged := utils.MergeMaps(env, envFromPreviousStep)
 		for k, v := range merged {
