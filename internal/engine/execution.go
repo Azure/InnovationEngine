@@ -29,12 +29,15 @@ var (
 
 // Indents a multi-line command to be nested under the first line of the
 // command.
-func indentMultiLineCommand(content string, index string) string {
+func indentMultiLineCommand(content string, indentation int) string {
 	lines := strings.Split(content, "\n")
 	for i := 1; i < len(lines); i++ {
 		if strings.HasSuffix(strings.TrimSpace(lines[i-1]), "\\") {
-			lines[i] = index + lines[i]
+			lines[i] = strings.Repeat(" ", indentation) + lines[i]
+		} else if strings.TrimSpace(lines[i]) != "" {
+			lines[i] = strings.Repeat(" ", indentation) + lines[i]
 		}
+
 	}
 	return strings.Join(lines, "\n")
 }
@@ -45,7 +48,7 @@ func ExecuteAndRenderSteps(steps []Step, env map[string]string, verbose bool) {
 		fmt.Printf("%d. %s\n", stepNumber+1, step.Name)
 		for _, block := range step.CodeBlocks {
 			// Render the codeblock.
-			indentedBlock := indentMultiLineCommand(block.Content, "    ")
+			indentedBlock := indentMultiLineCommand(block.Content, 4)
 			fmt.Print("    " + indentedBlock)
 
 			// Grab the number of lines it contains & set the cursor to the
@@ -80,7 +83,7 @@ func ExecuteAndRenderSteps(steps []Step, env map[string]string, verbose bool) {
 					fmt.Print("\033[?25h")
 					if err == nil {
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
-						fmt.Printf("\033[%dB", lines)
+						fmt.Printf("\033[%dB\n", lines)
 						if verbose {
 							fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput))
 						}
