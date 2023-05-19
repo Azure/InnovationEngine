@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
+	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -39,7 +40,7 @@ func indentMultiLineCommand(content string, index string) string {
 }
 
 // Executes the steps from a scenario and renders the output to the terminal.
-func ExecuteAndRenderSteps(steps []Step, env map[string]string) {
+func ExecuteAndRenderSteps(steps []Step, env map[string]string, verbose bool) {
 	for stepNumber, step := range steps {
 		fmt.Printf("%d. %s\n", stepNumber+1, step.Name)
 		for _, block := range step.CodeBlocks {
@@ -59,8 +60,10 @@ func ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 			// execute the command as a goroutine to allow for the spinner to be
 			// rendered while the command is executing.
 			done := make(chan error)
+			var commandOutput string
 			go func(block parsers.CodeBlock) {
-				_, err := shells.ExecuteBashCommand(block.Content, env, true)
+				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true)
+				commandOutput = output
 				done <- err
 			}(block)
 
@@ -78,6 +81,9 @@ func ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					if err == nil {
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 						fmt.Printf("\033[%dB", lines)
+						if verbose {
+							fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput))
+						}
 					} else {
 						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 						fmt.Printf("\033[%dB", lines)

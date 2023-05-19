@@ -8,6 +8,7 @@ import (
 // / Register the command with our command runner.
 func init() {
 	rootCommand.AddCommand(executeCommand)
+	rootCommand.PersistentFlags().Bool("verbose", false, "Enable verbose logging & standard output.")
 }
 
 var executeCommand = &cobra.Command{
@@ -21,7 +22,11 @@ var executeCommand = &cobra.Command{
 			return
 		}
 
-		innovationEngine := engine.NewEngine()
+		verbose, _ := cmd.Flags().GetBool("verbose")
+
+		innovationEngine := engine.NewEngine(engine.EngineConfiguration{
+			Verbose: verbose,
+		})
 		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"})
 		if err != nil {
 			panic(err)

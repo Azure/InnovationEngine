@@ -1,8 +1,11 @@
 package main
 
-import "github.com/Azure/InnovationEngine/internal/engine"
+type DeploymentStep struct {
+	Name    string `json:"name"`
+	Command string `json:"command"`
+}
 
-type ExecuteResponse struct {
-	RunnerID string        `json:"runnerID"`
-	Steps    []engine.Step `json:"steps"`
+type DeploymentResponse struct {
+	AgentWebsocketUrl string           `json:"agentWebsocketUrl"`
+	Steps             []DeploymentStep `json:"steps"`
 }
