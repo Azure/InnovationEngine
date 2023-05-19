@@ -4,6 +4,12 @@ import (
 	"fmt"
 
 	"github.com/Azure/InnovationEngine/internal/shells"
+	"github.com/charmbracelet/lipgloss"
+)
+
+var (
+	scriptHeader = lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Bold(true)
+	scriptText   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
 )
 
 type EngineConfiguration struct {
@@ -26,6 +32,6 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	fmt.Println(titleStyle.Render(scenario.Name))
 	ExecuteAndRenderSteps(scenario.Steps, scenario.Environment, e.Configuration.Verbose)
 	shells.ResetStoredEnvironmentVariables()
-	fmt.Printf("---Generated script---\n%s", scenario.ToShellScript())
+	fmt.Printf(scriptHeader.Render("# Generated bash replicate the deployment:")+"\n%s", scriptText.Render(scenario.ToShellScript()))
 	return nil
 }
