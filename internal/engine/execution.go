@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -27,6 +28,8 @@ var (
 	titleStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Align(lipgloss.Center).Bold(true)
 )
 
+var az_group_delete = regexp.MustCompile(`az group delete`)
+
 // Indents a multi-line command to be nested under the first line of the
 // command.
 func indentMultiLineCommand(content string, indentation int) string {
@@ -43,8 +46,46 @@ func indentMultiLineCommand(content string, indentation int) string {
 }
 
 // Executes the steps from a scenario and renders the output to the terminal.
-func ExecuteAndRenderSteps(steps []Step, env map[string]string, verbose bool) {
-	for stepNumber, step := range steps {
+func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
+
+	// Enable resource tracking for all of the deployments performed by the
+	// innovation engine.
+	if e.Configuration.ResourceTracking {
+		tracking_id := "6edbe7b9-4e03-4ab0-8213-230ba21aeaba"
+		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("pid-%s", tracking_id)
+		if e.Configuration.Verbose {
+			fmt.Println("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
+		}
+	}
+
+	// If a scenario has an `az group delete` command and the `--do-not-delete`
+	// flag is set, we remove it from the steps.
+
+	stepsToExecute := []Step{}
+	if e.Configuration.DoNotDelete {
+		for _, step := range steps {
+			newBlocks := []parsers.CodeBlock{}
+			for _, block := range step.CodeBlocks {
+				if az_group_delete.MatchString(block.Content) {
+					if e.Configuration.Verbose {
+						fmt.Printf("Found az group delete command within the step: %s\n", step.Name)
+					}
+				} else {
+					newBlocks = append(newBlocks, block)
+				}
+			}
+			if len(newBlocks) > 0 {
+				stepsToExecute = append(stepsToExecute, Step{
+					Name:       step.Name,
+					CodeBlocks: newBlocks,
+				})
+			}
+		}
+	} else {
+		stepsToExecute = steps
+	}
+
+	for stepNumber, step := range stepsToExecute {
 		fmt.Printf("%d. %s\n", stepNumber+1, step.Name)
 		for _, block := range step.CodeBlocks {
 			// Render the codeblock.
@@ -84,7 +125,7 @@ func ExecuteAndRenderSteps(steps []Step, env map[string]string, verbose bool) {
 					if err == nil {
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 						fmt.Printf("\033[%dB\n", lines)
-						if verbose {
+						if e.Configuration.Verbose {
 							fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput))
 						}
 					} else {

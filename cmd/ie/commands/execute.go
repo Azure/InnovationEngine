@@ -9,6 +9,8 @@ import (
 func init() {
 	rootCommand.AddCommand(executeCommand)
 	rootCommand.PersistentFlags().Bool("verbose", false, "Enable verbose logging & standard output.")
+	rootCommand.PersistentFlags().Bool("tracking", false, "Enable tracking for Azure resources created by the Azure CLI commands executed.")
+	rootCommand.PersistentFlags().Bool("do-not-delete", false, "Do not delete the Azure resources created by the Azure CLI commands executed.")
 }
 
 var executeCommand = &cobra.Command{
@@ -23,9 +25,13 @@ var executeCommand = &cobra.Command{
 		}
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
+		tracking, _ := cmd.Flags().GetBool("tracking")
+		do_not_delete, _ := cmd.Flags().GetBool("do-not-delete")
 
 		innovationEngine := engine.NewEngine(engine.EngineConfiguration{
-			Verbose: verbose,
+			Verbose:          verbose,
+			ResourceTracking: tracking,
+			DoNotDelete:      do_not_delete,
 		})
 		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"})
 		if err != nil {
