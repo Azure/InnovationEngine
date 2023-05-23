@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Azure/InnovationEngine/internal/shells"
+	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -13,7 +14,9 @@ var (
 )
 
 type EngineConfiguration struct {
-	Verbose bool
+	Verbose          bool
+	ResourceTracking bool
+	DoNotDelete      bool
 }
 
 type Engine struct {
@@ -30,7 +33,7 @@ func NewEngine(configuration EngineConfiguration) *Engine {
 // / Executes a scenario.
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	fmt.Println(titleStyle.Render(scenario.Name))
-	ExecuteAndRenderSteps(scenario.Steps, scenario.Environment, e.Configuration.Verbose)
+	e.ExecuteAndRenderSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
 	shells.ResetStoredEnvironmentVariables()
 	fmt.Printf(scriptHeader.Render("# Generated bash replicate what just happened:")+"\n%s", scriptText.Render(scenario.ToShellScript()))
 	return nil
