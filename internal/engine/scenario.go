@@ -85,7 +85,6 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scen
 
 	codeBlocks := parsers.ExtractCodeBlocksFromAst(markdown, source, languagesToExecute)
 	fmt.Println(codeBlocks)
-	os.Exit(0)
 
 	steps := groupCodeBlocksIntoSteps(codeBlocks)
 	title, err := parsers.ExtractScenarioTitleFromAst(markdown, source)
