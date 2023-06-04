@@ -3,6 +3,7 @@ package parsers
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/yuin/goldmark"
@@ -30,10 +31,17 @@ func ParseMarkdownIntoAst(source []byte) ast.Node {
 	return document
 }
 
+type ExpectedOutputBlock struct {
+	Language           string
+	Content            string
+	ExpectedSimilarity float64
+}
+
 type CodeBlock struct {
-	Language string
-	Content  string
-	Header   string
+	Language       string
+	Content        string
+	Header         string
+	ExpectedOutput ExpectedOutputBlock
 }
 
 // Assumes the title of the scenario is the first h1 header in the
@@ -60,11 +68,16 @@ func ExtractScenarioTitleFromAst(node ast.Node, source []byte) (string, error) {
 	return header, nil
 }
 
+var expectedSimilarityRegex = regexp.MustCompile(`<!--\s*expected_similarity=\s*(\d+\.?\d*)\s*-->`)
+
 // Extracts the code blocks from a provided markdown AST that match the
 // languagesToExtract.
 func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract []string) []CodeBlock {
 	var lastHeader string
 	var commands []CodeBlock
+	var nextBlockIsExpectedOutput bool
+	var lastExpectedSimilarityScore float64
+
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering {
 			switch n := node.(type) {
@@ -72,6 +85,22 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 			case *ast.Heading:
 				lastHeader = string(extractTextFromMarkdown(&n.BaseBlock, source))
 			// Extract the code block if it matches the language.
+			case *ast.HTMLBlock:
+				content := extractTextFromMarkdown(&n.BaseBlock, source)
+				match := expectedSimilarityRegex.FindStringSubmatch(content)
+
+				// TODO(vmarcella): Add better error handling for when the
+				// score isn't parsable as a float.
+				if match != nil {
+					score, err := strconv.ParseFloat(match[1], 64)
+					fmt.Println("score", score)
+					if err != nil {
+						return ast.WalkStop, err
+					}
+					lastExpectedSimilarityScore = score
+					nextBlockIsExpectedOutput = true
+				}
+
 			case *ast.FencedCodeBlock:
 				language := string(n.Language((source)))
 				for _, desiredLanguage := range languagesToExtract {
@@ -82,6 +111,18 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 							Header:   lastHeader,
 						}
 						commands = append(commands, command)
+						break
+					} else if nextBlockIsExpectedOutput {
+						if len(commands) > 0 {
+							expectedOutputBlock := ExpectedOutputBlock{
+								Language:           language,
+								Content:            extractTextFromMarkdown(&n.BaseBlock, source),
+								ExpectedSimilarity: lastExpectedSimilarityScore,
+							}
+							commands[len(commands)-1].ExpectedOutput = expectedOutputBlock
+							nextBlockIsExpectedOutput = false
+						}
+						break
 					}
 				}
 			}
