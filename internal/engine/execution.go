@@ -28,7 +28,7 @@ var (
 	titleStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Align(lipgloss.Center).Bold(true)
 )
 
-var az_group_delete = regexp.MustCompile(`az group delete`)
+var azGroupDelete = regexp.MustCompile(`az group delete`)
 
 // Indents a multi-line command to be nested under the first line of the
 // command.
@@ -66,7 +66,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 		for _, step := range steps {
 			newBlocks := []parsers.CodeBlock{}
 			for _, block := range step.CodeBlocks {
-				if az_group_delete.MatchString(block.Content) {
+				if azGroupDelete.MatchString(block.Content) {
 					if e.Configuration.Verbose {
 						fmt.Printf("Found az group delete command within the step: %s\n", step.Name)
 					}
