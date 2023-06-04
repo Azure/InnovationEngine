@@ -143,4 +143,5 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 			}
 		}
 	}
+	shells.ResetStoredEnvironmentVariables()
 }

@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 
-	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -30,11 +29,17 @@ func NewEngine(configuration EngineConfiguration) *Engine {
 	}
 }
 
-// / Executes a scenario.
+// Executes a deployment scenario.
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	fmt.Println(titleStyle.Render(scenario.Name))
 	e.ExecuteAndRenderSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
-	shells.ResetStoredEnvironmentVariables()
-	fmt.Printf(scriptHeader.Render("# Generated bash replicate what just happened:")+"\n%s", scriptText.Render(scenario.ToShellScript()))
+	fmt.Printf(scriptHeader.Render("# Generated bash to replicate what just happened:")+"\n%s", scriptText.Render(scenario.ToShellScript()))
+	return nil
+}
+
+// Validates a deployment scenario.
+func (e *Engine) TestScenario(scenario *Scenario) error {
+	fmt.Println(titleStyle.Render(scenario.Name))
+	e.TestSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
 	return nil
 }
