@@ -8,9 +8,10 @@ import (
 // / Register the command with our command runner.
 func init() {
 	rootCommand.AddCommand(executeCommand)
-	rootCommand.PersistentFlags().Bool("verbose", false, "Enable verbose logging & standard output.")
-	rootCommand.PersistentFlags().Bool("tracking", false, "Enable tracking for Azure resources created by the Azure CLI commands executed.")
-	rootCommand.PersistentFlags().Bool("do-not-delete", false, "Do not delete the Azure resources created by the Azure CLI commands executed.")
+
+	executeCommand.PersistentFlags().Bool("verbose", false, "Enable verbose logging & standard output.")
+	executeCommand.PersistentFlags().Bool("tracking", false, "Enable tracking for Azure resources created by the Azure CLI commands executed.")
+	executeCommand.PersistentFlags().Bool("do-not-delete", false, "Do not delete the Azure resources created by the Azure CLI commands executed.")
 }
 
 var executeCommand = &cobra.Command{
