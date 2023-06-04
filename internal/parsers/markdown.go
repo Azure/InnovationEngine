@@ -31,12 +31,16 @@ func ParseMarkdownIntoAst(source []byte) ast.Node {
 	return document
 }
 
+// The representation of an expected output block in a markdown file. This is
+// for scenarios that have expected output that should be validated against the
+// actual output.
 type ExpectedOutputBlock struct {
 	Language           string
 	Content            string
 	ExpectedSimilarity float64
 }
 
+// The representation of a code block in a markdown file.
 type CodeBlock struct {
 	Language       string
 	Content        string
@@ -113,6 +117,8 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 						commands = append(commands, command)
 						break
 					} else if nextBlockIsExpectedOutput {
+						// Map the expected output to the last command. If there
+						// are no commands, then we ignore the expected output.
 						if len(commands) > 0 {
 							expectedOutputBlock := ExpectedOutputBlock{
 								Language:           language,
@@ -120,7 +126,10 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 								ExpectedSimilarity: lastExpectedSimilarityScore,
 							}
 							commands[len(commands)-1].ExpectedOutput = expectedOutputBlock
+
+							// Reset the expected output state.
 							nextBlockIsExpectedOutput = false
+							lastExpectedSimilarityScore = 0
 						}
 						break
 					}
