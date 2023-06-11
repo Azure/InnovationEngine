@@ -2,6 +2,7 @@ package shells
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -44,13 +45,23 @@ func ResetStoredEnvironmentVariables() error {
 	return os.Remove(environmentStateFile)
 }
 
+type CommandOutput struct {
+	StdOut string
+	StdErr string
+}
+
 // Executes a bash command and returns the output or error.
-func ExecuteBashCommand(command string, env map[string]string, inherit_environment_variables bool) (string, error) {
+func ExecuteBashCommand(command string, env map[string]string, inherit_environment_variables bool) (CommandOutput, error) {
 	var commandWithStateSaved = []string{
 		command,
 		"env > /tmp/env.txt",
 	}
 	commandToExecute := exec.Command("bash", "-c", strings.Join(commandWithStateSaved, "\n"))
+
+	// Capture std out and std err as separate buffers.
+	var stdout, stderr bytes.Buffer
+	commandToExecute.Stdout = &stdout
+	commandToExecute.Stderr = &stderr
 
 	if inherit_environment_variables {
 		commandToExecute.Env = os.Environ()
@@ -73,10 +84,15 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 		}
 	}
 
-	stdOutAndErr, err := commandToExecute.CombinedOutput()
+	// Execute command, handle errors, and return output.
+	err = commandToExecute.Run()
+	standardOutput, standardError := stdout.String(), stderr.String()
 	if err != nil {
-		return "", fmt.Errorf("command exited with '%w' and the message '%s'", err, stdOutAndErr)
+		return CommandOutput{}, fmt.Errorf("command exited with '%w' and the message '%s'", err, standardError)
 	}
 
-	return string(stdOutAndErr), nil
+	return CommandOutput{
+		StdOut: standardOutput,
+		StdErr: standardError,
+	}, nil
 }
