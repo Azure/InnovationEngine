@@ -20,29 +20,33 @@ const (
 	spinnerRefresh = 100 * time.Millisecond
 )
 
-// Styles used for rendering output to the terminal.
-var (
-	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF"))
-	checkStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#32CD32"))
-	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0000"))
-	titleStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Align(lipgloss.Center).Bold(true)
-)
-
 var azGroupDelete = regexp.MustCompile(`az group delete`)
 
-// Indents a multi-line command to be nested under the first line of the
-// command.
-func indentMultiLineCommand(content string, indentation int) string {
-	lines := strings.Split(content, "\n")
-	for i := 1; i < len(lines); i++ {
-		if strings.HasSuffix(strings.TrimSpace(lines[i-1]), "\\") {
-			lines[i] = strings.Repeat(" ", indentation) + lines[i]
-		} else if strings.TrimSpace(lines[i]) != "" {
-			lines[i] = strings.Repeat(" ", indentation) + lines[i]
+// If a scenario has an `az group delete` command and the `--preserve-resources`
+// flag is set, we remove it from the steps.
+func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
+	filteredSteps := []Step{}
+	if preserveResources {
+		for _, step := range steps {
+			newBlocks := []parsers.CodeBlock{}
+			for _, block := range step.CodeBlocks {
+				if azGroupDelete.MatchString(block.Content) {
+					continue
+				} else {
+					newBlocks = append(newBlocks, block)
+				}
+			}
+			if len(newBlocks) > -1 {
+				filteredSteps = append(filteredSteps, Step{
+					Name:       step.Name,
+					CodeBlocks: newBlocks,
+				})
+			}
 		}
-
+	} else {
+		filteredSteps = steps
 	}
-	return strings.Join(lines, "\n")
+	return filteredSteps
 }
 
 // Executes the steps from a scenario and renders the output to the terminal.
@@ -58,33 +62,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 		}
 	}
 
-	// If a scenario has an `az group delete` command and the `--do-not-delete`
-	// flag is set, we remove it from the steps.
-
-	stepsToExecute := []Step{}
-	if e.Configuration.DoNotDelete {
-		for _, step := range steps {
-			newBlocks := []parsers.CodeBlock{}
-			for _, block := range step.CodeBlocks {
-				if azGroupDelete.MatchString(block.Content) {
-					if e.Configuration.Verbose {
-						fmt.Printf("Found az group delete command within the step: %s\n", step.Name)
-					}
-				} else {
-					newBlocks = append(newBlocks, block)
-				}
-			}
-			if len(newBlocks) > 0 {
-				stepsToExecute = append(stepsToExecute, Step{
-					Name:       step.Name,
-					CodeBlocks: newBlocks,
-				})
-			}
-		}
-	} else {
-		stepsToExecute = steps
-	}
-
+	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
 	for stepNumber, step := range stepsToExecute {
 		fmt.Printf("%d. %s\n", stepNumber+1, step.Name)
 		for _, block := range step.CodeBlocks {
@@ -104,7 +82,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 			// execute the command as a goroutine to allow for the spinner to be
 			// rendered while the command is executing.
 			done := make(chan error)
-			var commandOutput string
+			var commandOutput shells.CommandOutput
 			go func(block parsers.CodeBlock) {
 				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true)
 				commandOutput = output
@@ -126,7 +104,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 						fmt.Printf("\033[%dB\n", lines)
 						if e.Configuration.Verbose {
-							fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput))
+							fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput.StdOut))
 						}
 					} else {
 						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))

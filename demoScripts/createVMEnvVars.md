@@ -41,6 +41,7 @@ az vm create \
   --name $MY_VM_NAME \
   --image $MY_VM_IMAGE \
   --admin-username $MY_ADMIN_USERNAME \
+  --public-ip-sku Standard \
   --generate-ssh-keys
 ```
 

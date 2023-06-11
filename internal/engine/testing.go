@@ -32,7 +32,7 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 			// execute the command as a goroutine to allow for the spinner to be
 			// rendered while the command is executing.
 			done := make(chan error)
-			var commandOutput string
+			var commandOutput shells.CommandOutput
 			go func(block parsers.CodeBlock) {
 				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true)
 				commandOutput = output
@@ -52,7 +52,7 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 					fmt.Print("\033[?25h")
 					if err == nil {
 						if block.ExpectedOutput.Language == "json" {
-							actualOutput, err := utils.OrderJsonFields(commandOutput)
+							actualOutput, err := utils.OrderJsonFields(commandOutput.StdOut)
 							if err != nil {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
@@ -76,20 +76,24 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 								fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render("Expected output does not match actual output."))
 								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(expectedOutput, actualOutput))
 							}
+
+							if e.Configuration.Verbose {
+								fmt.Printf("Score %f threshold: %f\n", score, block.ExpectedOutput.ExpectedSimilarity)
+							}
 						} else {
-							score := smetrics.JaroWinkler(block.ExpectedOutput.Content, commandOutput, 0.7, 4)
+							score := smetrics.JaroWinkler(block.ExpectedOutput.Content, commandOutput.StdOut, 0.7, 4)
 							if block.ExpectedOutput.ExpectedSimilarity > score {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
 								fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render("Expected output does not match actual output."))
-								fmt.Printf("	%s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render(utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput)))
+								fmt.Printf("	%s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render(utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut)))
 							}
 						}
 
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 						fmt.Printf("\033[%dB\n", lines)
 						if e.Configuration.Verbose {
-							fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput))
+							fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput.StdOut))
 						}
 					} else {
 						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
