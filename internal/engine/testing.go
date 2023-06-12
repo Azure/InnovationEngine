@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/utils"
@@ -69,11 +70,13 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 								fmt.Printf("\033[%dB", lines)
 								fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render("Expected output does not match actual output."))
 								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(expectedOutput, actualOutput))
+								break loop
 							}
 
 							if e.Configuration.Verbose {
 								score, _ := utils.ComputeJaroWinklerScore(actualOutput, expectedOutput)
-								fmt.Printf("Score %f threshold: %f\n", score, expectedSimilarity)
+								logging.Debug("JaroWinkler score: %f Expected Similarity: %f", score, expectedSimilarity)
+								logging.Debug("Actual Output: %s", actualOutput)
 							}
 						} else {
 							score := smetrics.JaroWinkler(block.ExpectedOutput.Content, commandOutput.StdOut, 0.7, 4)

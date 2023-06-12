@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/utils"
@@ -58,6 +59,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 		tracking_id := "6edbe7b9-4e03-4ab0-8213-230ba21aeaba"
 		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("pid-%s", tracking_id)
 		if e.Configuration.Verbose {
+			logging.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 			fmt.Println("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 		}
 	}
