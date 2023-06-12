@@ -51,8 +51,12 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 					// final status.
 					fmt.Print("\033[?25h")
 					if err == nil {
+						actualOutput := commandOutput.StdOut
+						expectedOutput := block.ExpectedOutput.Content
+						expectedSimilarity := block.ExpectedOutput.ExpectedSimilarity
+
 						if block.ExpectedOutput.Language == "json" {
-							actualOutput, err := utils.OrderJsonFields(commandOutput.StdOut)
+							meetsThreshold, err := utils.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
 							if err != nil {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
@@ -60,17 +64,7 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 								break loop
 							}
 
-							expectedOutput, err := utils.OrderJsonFields(block.ExpectedOutput.Content)
-							if err != nil {
-								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-								fmt.Printf("\033[%dB", lines)
-								fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render(err.Error()))
-								break loop
-							}
-
-							score := smetrics.JaroWinkler(expectedOutput, actualOutput, 0.7, 4)
-
-							if block.ExpectedOutput.ExpectedSimilarity > score {
+							if !meetsThreshold {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
 								fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render("Expected output does not match actual output."))
@@ -78,7 +72,8 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 							}
 
 							if e.Configuration.Verbose {
-								fmt.Printf("Score %f threshold: %f\n", score, block.ExpectedOutput.ExpectedSimilarity)
+								score, _ := utils.ComputeJaroWinklerScore(actualOutput, expectedOutput)
+								fmt.Printf("Score %f threshold: %f\n", score, expectedSimilarity)
 							}
 						} else {
 							score := smetrics.JaroWinkler(block.ExpectedOutput.Content, commandOutput.StdOut, 0.7, 4)
