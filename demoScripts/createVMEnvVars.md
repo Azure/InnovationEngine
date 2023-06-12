@@ -46,7 +46,7 @@ az vm create \
 ```
 
 It takes a few minutes to create the VM and supporting resources. The following example output shows the VM create operation was successful.
-<!--expected_similarity=0.2-->
+<!--expected_similarity=0.8-->
 ```json
 {
   "fqdns": "",
