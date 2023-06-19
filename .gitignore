@@ -6,3 +6,6 @@ __pycache__
 
 # Ignore all binaries.
 bin/
+
+# Ignore ie logs
+ie.log
