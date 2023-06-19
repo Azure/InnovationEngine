@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
@@ -97,7 +98,7 @@ func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract [
 				// score isn't parsable as a float.
 				if match != nil {
 					score, err := strconv.ParseFloat(match[1], 64)
-					fmt.Println("score", score)
+					logging.GlobalLogger.Debugf("Simalrity score of %f found", score)
 					if err != nil {
 						return ast.WalkStop, err
 					}
@@ -154,7 +155,7 @@ func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) map[string]st
 		if entering && node.Kind() == ast.KindHTMLBlock {
 			htmlNode := node.(*ast.HTMLBlock)
 			blockContent := extractTextFromMarkdown(&htmlNode.BaseBlock, source)
-			fmt.Printf("Found HTML block with the content: %s\n", blockContent)
+			logging.GlobalLogger.Debugf("Found HTML block with the content: %s\n", blockContent)
 			match := variableCommentBlockRegex.FindStringSubmatch(blockContent)
 
 			// Extract the variables from the comment block.
@@ -183,7 +184,7 @@ func convertScenarioVariablesToMap(variableBlock string) map[string]string {
 			if len(parts) == 2 {
 				key := strings.TrimPrefix(parts[0], "export ")
 				value := parts[1]
-				fmt.Printf("Found variable: %s=%s\n", key, value)
+				logging.GlobalLogger.Debugf("Found variable: %s=%s\n", key, value)
 				variableMap[key] = value
 			}
 		}

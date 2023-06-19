@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/yuin/goldmark/ast"
@@ -67,13 +68,13 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scen
 
 	// Check if the INI file exists & load it.
 	if !utils.FileExists(markdownINI) {
-		fmt.Printf("INI file '%s' does not exist, skipping...", markdownINI)
+		logging.GlobalLogger.Infof("INI file '%s' does not exist, skipping...", markdownINI)
 	} else {
-		fmt.Println("INI file exists. Loading: ", markdownINI)
+		logging.GlobalLogger.Infof("INI file '%s' exists, loading...", markdownINI)
 		environmentVariables = parsers.ParseINIFile(markdownINI)
 
 		for key, value := range environmentVariables {
-			fmt.Printf("Setting %s=%s\n", key, value)
+			logging.GlobalLogger.Debugf("Setting %s=%s\n", key, value)
 		}
 	}
 
@@ -84,7 +85,7 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scen
 	}
 
 	codeBlocks := parsers.ExtractCodeBlocksFromAst(markdown, source, languagesToExecute)
-	fmt.Println(codeBlocks)
+	logging.GlobalLogger.WithField("CodeBlocks", codeBlocks).Debugf("Found %d code blocks", len(codeBlocks))
 
 	steps := groupCodeBlocksIntoSteps(codeBlocks)
 	title, err := parsers.ExtractScenarioTitleFromAst(markdown, source)
@@ -92,7 +93,7 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scen
 		return nil, err
 	}
 
-	fmt.Printf("Found scenario: %s\n", title)
+	logging.GlobalLogger.Infof("Successfully built out the scenario: %s", title)
 
 	return &Scenario{
 		Name:        title,

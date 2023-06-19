@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/Azure/InnovationEngine/internal/engine"
-	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -17,8 +16,6 @@ var testCommand = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Short: "Test document commands against it's expected outputs.",
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO(vmarcella): Initialize this via a flag.
-		logging.Init("info")
 
 		markdownFile := args[0]
 		if markdownFile == "" {

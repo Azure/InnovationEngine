@@ -1,8 +1,7 @@
 package parsers
 
 import (
-	"log"
-
+	"github.com/Azure/InnovationEngine/internal/logging"
 	"gopkg.in/ini.v1"
 )
 
@@ -13,7 +12,7 @@ func ParseINIFile(filePath string) map[string]string {
 
 	iniFile, err := ini.Load(filePath)
 	if err != nil {
-		log.Fatalf("Failed to read the INI file %s because %v", filePath, err)
+		logging.GlobalLogger.Fatalf("Failed to read the INI file %s because %v", filePath, err)
 	}
 	data := make(map[string]string)
 	for _, section := range iniFile.Sections() {

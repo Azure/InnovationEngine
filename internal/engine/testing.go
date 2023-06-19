@@ -57,26 +57,30 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 						expectedSimilarity := block.ExpectedOutput.ExpectedSimilarity
 
 						if block.ExpectedOutput.Language == "json" {
+							logging.GlobalLogger.Debugf("Comparing JSON strings:\nExpected: %s\nActual%s", expectedOutput, actualOutput)
 							meetsThreshold, err := utils.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
 							if err != nil {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
-								fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render(err.Error()))
+								fmt.Printf("  %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render(err.Error()))
 								break loop
 							}
 
 							if !meetsThreshold {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
-								fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render("Expected output does not match actual output."))
+								fmt.Printf("  %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render("Expected output does not match actual output."))
 								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(expectedOutput, actualOutput))
 								break loop
 							}
 
 							if e.Configuration.Verbose {
-								score, _ := utils.ComputeJaroWinklerScore(actualOutput, expectedOutput)
-								logging.Debug("JaroWinkler score: %f Expected Similarity: %f", score, expectedSimilarity)
-								logging.Debug("Actual Output: %s", actualOutput)
+								score, _ := utils.ComputeJsonStringSimilarity(actualOutput, expectedOutput)
+
+								actual, _ := utils.OrderJsonFields(actualOutput)
+								expected, _ := utils.OrderJsonFields(expectedOutput)
+
+								logging.GlobalLogger.WithField("actual", actual).WithField("expected", expected).Debugf("JaroWinkler score: %f Expected Similarity: %f", score, expectedSimilarity)
 							}
 						} else {
 							score := smetrics.JaroWinkler(block.ExpectedOutput.Content, commandOutput.StdOut, 0.7, 4)
@@ -84,14 +88,14 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
 								fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render("Expected output does not match actual output."))
-								fmt.Printf("	%s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render(utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut)))
+								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
 							}
 						}
 
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 						fmt.Printf("\033[%dB\n", lines)
 						if e.Configuration.Verbose {
-							fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput.StdOut))
+							fmt.Printf("  %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput.StdOut))
 						}
 					} else {
 						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))

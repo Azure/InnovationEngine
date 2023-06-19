@@ -23,7 +23,7 @@ func OrderJsonFields(jsonStr string) (string, error) {
 // Compute the Jaro-Winkler score for two JSON strings. The score is computed
 // by ordering the fields alphabetically and then comparing the strings using
 // the Jaro-Winkler algorithm.
-func ComputeJaroWinklerScore(actualJson string, expectedJson string) (float64, error) {
+func ComputeJsonStringSimilarity(actualJson string, expectedJson string) (float64, error) {
 	actualOutput, err := OrderJsonFields(actualJson)
 	if err != nil {
 		return 0, err
@@ -34,14 +34,14 @@ func ComputeJaroWinklerScore(actualJson string, expectedJson string) (float64, e
 		return 0, err
 	}
 
-	return smetrics.JaroWinkler(expectedOutput, actualOutput, 0.7, 4), nil
+	return smetrics.Jaro(actualOutput, expectedOutput), nil
 }
 
 // Compare two JSON strings by ordering the fields alphabetically and then
 // comparing the strings using the Jaro-Winkler algorithm to compute a score.
 // If the score is greater than the threshold, return true.
 func CompareJsonStrings(actualJson string, expectedJson string, threshold float64) (bool, error) {
-	score, err := ComputeJaroWinklerScore(actualJson, expectedJson)
+	score, err := ComputeJsonStringSimilarity(actualJson, expectedJson)
 	if err != nil {
 		return false, err
 	}

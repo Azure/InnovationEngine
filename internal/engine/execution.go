@@ -59,7 +59,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 		tracking_id := "6edbe7b9-4e03-4ab0-8213-230ba21aeaba"
 		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("pid-%s", tracking_id)
 		if e.Configuration.Verbose {
-			logging.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
+			logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 			fmt.Println("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 		}
 	}
