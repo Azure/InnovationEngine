@@ -26,6 +26,9 @@ type Scenario struct {
 	Environment map[string]string
 }
 
+// Groups the codeblocks into steps based on the header of the codeblock.
+// This organizes the codeblocks into steps that can be executed in a linear
+// order.
 func groupCodeBlocksIntoSteps(blocks []parsers.CodeBlock) []Step {
 	var groupedSteps []Step
 	var headerIndex = make(map[string]int)
