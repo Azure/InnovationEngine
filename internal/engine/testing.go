@@ -9,7 +9,6 @@ import (
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/utils"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/xrash/smetrics"
 )
 
@@ -62,14 +61,14 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 							if err != nil {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
-								fmt.Printf("  %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render(err.Error()))
+								fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
 								break loop
 							}
 
 							if !meetsThreshold {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
-								fmt.Printf("  %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render("Expected output does not match actual output."))
+								fmt.Printf("  %s\n", errorMessageStyle.Render("Expected output does not match actual output."))
 								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(expectedOutput, actualOutput))
 								break loop
 							}
@@ -87,7 +86,7 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 							if block.ExpectedOutput.ExpectedSimilarity > score {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								fmt.Printf("\033[%dB", lines)
-								fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render("Expected output does not match actual output."))
+								fmt.Printf("    %s\n", errorMessageStyle.Render("Expected output does not match actual output."))
 								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
 							}
 						}
@@ -95,12 +94,12 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 						fmt.Printf("\033[%dB\n", lines)
 						if e.Configuration.Verbose {
-							fmt.Printf("  %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput.StdOut))
+							fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 						}
 					} else {
 						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 						fmt.Printf("\033[%dB", lines)
-						fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render(err.Error()))
+						fmt.Printf("    %s\n", errorMessageStyle.Render(err.Error()))
 					}
 
 					break loop

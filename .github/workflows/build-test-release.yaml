@@ -1,0 +1,19 @@
+name: build-test-release
+
+on:
+  push:
+    branches:
+      - main
+      - vmarcella/port-to-go
+
+jobs:
+  build-test-release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Innovation Engine CLI.
+      run: |
+        make build-ie
+    - name: Test
+      run: |
+        make test-all

@@ -20,6 +20,12 @@ build-runner: build-ie build-api
 
 build-all: build-ie build-api build-runner
 
+# ------------------------------ Test targets ----------------------------------
+
+test-all:
+	@echo "Running all tests..."
+	@go test -v ./...
+
 # ------------------------------- Run targets ----------------------------------
 
 run-ie: build-ie

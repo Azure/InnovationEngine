@@ -10,7 +10,6 @@ import (
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/utils"
-	"github.com/charmbracelet/lipgloss"
 )
 
 const (
@@ -106,12 +105,12 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 						fmt.Printf("\033[%dB\n", lines)
 						if e.Configuration.Verbose {
-							fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Render(commandOutput.StdOut))
+							fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 						}
 					} else {
 						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 						fmt.Printf("\033[%dB", lines)
-						fmt.Printf("    %s\n", lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733")).Render(err.Error()))
+						fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
 					}
 
 					break loop
