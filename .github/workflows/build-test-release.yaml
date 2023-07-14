@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Build the Innovation Engine CLI.
+    - name: Build all targets.
       run: |
-        make build-ie
-    - name: Test
+        make build-all
+    - name: Run unit tests across all targets.
       run: |
         make test-all
