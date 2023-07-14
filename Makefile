@@ -8,15 +8,15 @@ API_BINARY := $(BINARY_DIR)/api
 
 build-ie:
 	@echo "Building the Innovation Engine CLI..."
-	@go build -o "$(IE_BINARY)" cmd/ie/ie.go
+	@CGO_ENABLED=0 go build -o "$(IE_BINARY)" cmd/ie/ie.go
 
 build-api:
 	@echo "Building the Innovation Engine API..."
-	@go build -o "$(API_BINARY)" cmd/api/main.go
+	@CGO_ENABLED=0 go build -o "$(API_BINARY)" cmd/api/main.go
 
 build-runner: build-ie build-api
 	@echo "Building the Innovation Engine Runner..."
-	@go build -o "$(BINARY_DIR)/runner" cmd/runner/main.go
+	@CGO_ENABLED=0 go build -o "$(BINARY_DIR)/runner" cmd/runner/main.go
 
 build-all: build-ie build-api build-runner
 
