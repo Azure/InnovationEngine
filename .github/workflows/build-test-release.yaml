@@ -17,3 +17,11 @@ jobs:
     - name: Run unit tests across all targets.
       run: |
         make test-all
+    - name: Release Innovation Engine
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        draft: true
+        prelease: true
+        files: ./bin
