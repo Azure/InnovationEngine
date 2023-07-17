@@ -9,6 +9,6 @@ mkdir -p ~/.local/bin
 mv ie ~/.local/bin
 
 # Export the path to IE if it's not already available
-if ![[ "$PATH" =~ "~/.local/bin" || "$PATH" =~ "$HOME/.local/bin" ]]; then
+if [[ !"$PATH" =~ "~/.local/bin" || !"$PATH" =~ "$HOME/.local/bin" ]]; then
   export PATH="$PATH:~/.local/bin"
 fi
