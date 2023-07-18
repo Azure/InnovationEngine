@@ -17,6 +17,10 @@ jobs:
     - name: Run unit tests across all targets.
       run: |
         make test-all
+    - name: Prepare scenarios to be released.
+      run: |
+        sudo apt install zip
+        zip -r scenarios.zip scenarios
     - name: Release Innovation Engine
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
@@ -26,3 +30,4 @@ jobs:
         prerelease: true
         files: |
           ./bin/ie
+          ./scenarios.zip
