@@ -24,4 +24,6 @@ jobs:
         title: "IE"
         automatic_release_tag: "latest"
         prerelease: true
-        files: ./bin/ie
+        files: |
+          ./bin/ie
+          scenarios/*
