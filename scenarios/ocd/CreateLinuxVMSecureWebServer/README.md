@@ -161,3 +161,10 @@ az network front-door show --name $CUSTOM_DOMAIN_NAME --resource-group $RESOURCE
 ## Conclusion
 
 You have completed the tutorial! View your resources on portal.azure.com 
+
+# Next Steps
+
+* [VM Documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/)
+* [Create Vm Scale Set](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/flexible-virtual-machine-scale-sets-cli)
+* [Load Balance VMs](https://learn.microsoft.com/en-us/azure/load-balancer/quickstart-load-balancer-standard-public-cli)
+* [Baclup VMs](https://learn.microsoft.com/en-us/azure/virtual-machines/backup-recovery)
