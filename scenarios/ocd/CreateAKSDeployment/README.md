@@ -349,3 +349,10 @@ Run the following command to get the HTTPS endpoint for your application:
 echo https://$FQDN
 ```
 Paste this into the browser to validate your deployment.
+
+## Next Steps
+
+* [Azure Kubernetes Service Documentation](https://learn.microsoft.com/en-us/azure/aks/)
+* [Create an Azure Container Registry](https://learn.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-acr?tabs=azure-cli)
+* [Scale your Applciation in AKS](https://learn.microsoft.com/en-us/azure/aks/tutorial-kubernetes-scale?tabs=azure-cli)
+* [Update your application in AKS](https://learn.microsoft.com/en-us/azure/aks/tutorial-kubernetes-app-update?tabs=azure-cli)
