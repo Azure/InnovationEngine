@@ -33,7 +33,7 @@ func NewEngine(configuration EngineConfiguration) *Engine {
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	fmt.Println(titleStyle.Render(scenario.Name))
 	e.ExecuteAndRenderSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
-	fmt.Printf(scriptHeader.Render("# Generated bash to replicate what just happened:")+"\n%s", scriptText.Render(scenario.ToShellScript()))
+	fmt.Printf(scriptHeader.Render("# Generated bash to replicate what just happened:")+"\n%s\n", scriptText.Render(scenario.ToShellScript()))
 	return nil
 }
 
