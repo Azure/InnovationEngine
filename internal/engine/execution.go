@@ -92,7 +92,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 			}(block)
 
 			var commandErr error
-			var frame int
+			var frame int = 0
 		loop:
 			// While the command is executing, render the spinner.
 			for {
