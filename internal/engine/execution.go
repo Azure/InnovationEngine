@@ -92,6 +92,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 			}(block)
 
 			var commandErr error
+			var frame int
 		loop:
 			// While the command is executing, render the spinner.
 			for {
@@ -109,7 +110,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					} else {
 						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 						fmt.Printf("\033[%dB", lines)
-						fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
+						fmt.Printf("  %s\n", errorMessageStyle.Render(commandErr.Error()))
 					}
 
 					break loop
