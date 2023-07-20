@@ -84,24 +84,23 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 			// rendered while the command is executing.
 			done := make(chan error)
 			var commandOutput shells.CommandOutput
-			var err error
 
 			go func(block parsers.CodeBlock) {
-				commandOutput, err = shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true)
+				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true)
+				commandOutput = output
 				done <- err
 			}(block)
 
-			frame := 0
-
+			var commandErr error
 		loop:
 			// While the command is executing, render the spinner.
 			for {
 				select {
-				case err = <-done:
+				case commandErr = <-done:
 					// Show the cursor, check the result of the command, and display the
 					// final status.
 					fmt.Print("\033[?25h")
-					if err == nil {
+					if commandErr == nil {
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 						fmt.Printf("\033[%dB\n", lines)
 						if e.Configuration.Verbose {

@@ -87,6 +87,11 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 	// Execute command, handle errors, and return output.
 	err = commandToExecute.Run()
 	standardOutput, standardError := stdout.String(), stderr.String()
+
+	fmt.Println("Standard: ", standardOutput)
+	fmt.Println("Error: ", standardError)
+	fmt.Println("Error: ", err)
+
 	if err != nil {
 		return CommandOutput{}, fmt.Errorf("command exited with '%w' and the message '%s'", err, standardError)
 	}
