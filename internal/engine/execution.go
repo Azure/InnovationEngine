@@ -84,14 +84,14 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 			// rendered while the command is executing.
 			done := make(chan error)
 			var commandOutput shells.CommandOutput
+			var err error
+
 			go func(block parsers.CodeBlock) {
-				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true)
-				commandOutput = output
+				commandOutput, err = shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true)
 				done <- err
 			}(block)
 
 			frame := 0
-			var err error
 
 		loop:
 			// While the command is executing, render the spinner.
