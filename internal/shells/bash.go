@@ -4,10 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	// "io"
 	"os"
 	"os/exec"
 	"strings"
 
+	// "github.com/creack/pty"
+
+	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/utils"
 )
 
@@ -51,17 +55,30 @@ type CommandOutput struct {
 }
 
 // Executes a bash command and returns the output or error.
-func ExecuteBashCommand(command string, env map[string]string, inherit_environment_variables bool) (CommandOutput, error) {
+func ExecuteBashCommand(command string, env map[string]string, inherit_environment_variables bool, forward_input_output bool) (CommandOutput, error) {
 	var commandWithStateSaved = []string{
 		command,
 		"env > /tmp/env.txt",
 	}
-	commandToExecute := exec.Command("bash", "-c", strings.Join(commandWithStateSaved, "\n"))
+	var commandToExecute *exec.Cmd
 
-	// Capture std out and std err as separate buffers.
+	if !forward_input_output {
+		commandToExecute = exec.Command("bash", "-c", strings.Join(commandWithStateSaved, "\n"))
+	} else {
+		commandToExecute = exec.Command("bash", "-c", command)
+	}
+
 	var stdout, stderr bytes.Buffer
-	commandToExecute.Stdout = &stdout
-	commandToExecute.Stderr = &stderr
+
+	if !forward_input_output {
+		// Capture std out and std err as separate buffers.
+		commandToExecute.Stdout = &stdout
+		commandToExecute.Stderr = &stderr
+	} else {
+		commandToExecute.Stdout = os.Stdout
+		commandToExecute.Stderr = os.Stderr
+		commandToExecute.Stdin = os.Stdin
+	}
 
 	if inherit_environment_variables {
 		commandToExecute.Env = os.Environ()
@@ -84,13 +101,15 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 		}
 	}
 
+	logging.GlobalLogger.Infof("Environment variables: %v", commandToExecute.Env)
 	// Execute command, handle errors, and return output.
-	err = commandToExecute.Run()
-	standardOutput, standardError := stdout.String(), stderr.String()
 
-	fmt.Println("Standard: ", standardOutput)
-	fmt.Println("Error: ", standardError)
-	fmt.Println("Error: ", err)
+	err = commandToExecute.Run()
+	if forward_input_output {
+		return CommandOutput{}, err
+	}
+
+	standardOutput, standardError := stdout.String(), stderr.String()
 
 	if err != nil {
 		return CommandOutput{}, fmt.Errorf("command exited with '%w' and the message '%s'", err, standardError)
