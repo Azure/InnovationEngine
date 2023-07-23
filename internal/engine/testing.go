@@ -34,7 +34,7 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 			done := make(chan error)
 			var commandOutput shells.CommandOutput
 			go func(block parsers.CodeBlock) {
-				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true)
+				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, false)
 				commandOutput = output
 				done <- err
 			}(block)
@@ -50,6 +50,12 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 					// Show the cursor, check the result of the command, and display the
 					// final status.
 					fmt.Print("\033[?25h")
+
+					// Handle the case where the command is an az cli command.
+					if checkForAzCLIError(block.Content, commandOutput) {
+						err = fmt.Errorf(commandOutput.StdErr)
+					}
+
 					if err == nil {
 						actualOutput := commandOutput.StdOut
 						expectedOutput := block.ExpectedOutput.Content
