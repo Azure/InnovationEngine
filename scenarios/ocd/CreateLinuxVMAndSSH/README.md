@@ -100,5 +100,5 @@ az role assignment create --role "Virtual Machine Administrator Login" --assigne
 You can now SSH into the VM by running the output of the following command in your ssh client of choice
 
 ```bash
-echo az ssh vm --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
+az ssh vm --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
 ```
