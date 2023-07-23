@@ -60,13 +60,7 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 		command,
 		"env > /tmp/env.txt",
 	}
-	var commandToExecute *exec.Cmd
-
-	if !forward_input_output {
-		commandToExecute = exec.Command("bash", "-c", strings.Join(commandWithStateSaved, "\n"))
-	} else {
-		commandToExecute = exec.Command("bash", "-c", command)
-	}
+	commandToExecute := exec.Command("bash", "-c", strings.Join(commandWithStateSaved, "\n"))
 
 	var stdoutBuffer, stderrBuffer bytes.Buffer
 
