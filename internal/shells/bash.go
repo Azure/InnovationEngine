@@ -68,16 +68,16 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 		commandToExecute = exec.Command("bash", "-c", command)
 	}
 
-	var stdout, stderr bytes.Buffer
+	var stdoutBuffer, stderrBuffer bytes.Buffer
 
-	if !forward_input_output {
-		// Capture std out and std err as separate buffers.
-		commandToExecute.Stdout = &stdout
-		commandToExecute.Stderr = &stderr
-	} else {
+	if forward_input_output {
 		commandToExecute.Stdout = os.Stdout
 		commandToExecute.Stderr = os.Stderr
 		commandToExecute.Stdin = os.Stdin
+	} else {
+		// Capture std out and std err as separate buffers.
+		commandToExecute.Stdout = &stdoutBuffer
+		commandToExecute.Stderr = &stderrBuffer
 	}
 
 	if inherit_environment_variables {
@@ -101,7 +101,7 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 		}
 	}
 
-	logging.GlobalLogger.Infof("Environment variables: %v", commandToExecute.Env)
+	logging.GlobalLogger.Tracef("Environment variables: %v", commandToExecute.Env)
 	// Execute command, handle errors, and return output.
 
 	err = commandToExecute.Run()
@@ -109,7 +109,7 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 		return CommandOutput{}, err
 	}
 
-	standardOutput, standardError := stdout.String(), stderr.String()
+	standardOutput, standardError := stdoutBuffer.String(), stderrBuffer.String()
 
 	if err != nil {
 		return CommandOutput{}, fmt.Errorf("command exited with '%w' and the message '%s'", err, standardError)
