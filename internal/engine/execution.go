@@ -21,7 +21,7 @@ const (
 
 var azGroupDelete = regexp.MustCompile(`az group delete`)
 var azCommand = regexp.MustCompile(`az\s+([a-z]+)\s+([a-z]+)`)
-var sshCommand = regexp.MustCompile(`ssh\s+([a-z]+)`)
+var sshCommand = regexp.MustCompile(`(^|\s)\bssh\b\s`)
 
 // If a scenario has an `az group delete` command and the `--do-not-delete`
 // flag is set, we remove it from the steps.
