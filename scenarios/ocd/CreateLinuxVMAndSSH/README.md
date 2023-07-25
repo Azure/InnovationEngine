@@ -73,5 +73,5 @@ export IP_ADDRESS=$(az vm show --show-details --resource-group $MY_RESOURCE_GROU
 You can now SSH into the VM by running the output of the following command in your ssh client of choice
 
 ```bash
-ssh $MY_USERNAME@$IP_ADDRESS
+ssh -o StrictHostKeyChecking=no $MY_USERNAME@$IP_ADDRESS
 ```
