@@ -22,10 +22,12 @@ const (
 	spinnerRefresh = 100 * time.Millisecond
 )
 
-var azGroupDelete = regexp.MustCompile(`az group delete`)
-var azCommand = regexp.MustCompile(`az\s+([a-z]+)\s+([a-z]+)`)
-var sshCommand = regexp.MustCompile(`(^|\s)\bssh\b\s`)
-var azResourceURI = regexp.MustCompile(`\"id\": \"(/subscriptions/[^\"]+)\"`)
+var (
+	azGroupDelete = regexp.MustCompile(`az group delete`)
+	azCommand     = regexp.MustCompile(`az\s+([a-z]+)\s+([a-z]+)`)
+	sshCommand    = regexp.MustCompile(`(^|\s)\bssh\b\s`)
+	azResourceURI = regexp.MustCompile(`\"id\": \"(/subscriptions/[^\"]+)\"`)
+)
 
 // If a scenario has an `az group delete` command and the `--do-not-delete`
 // flag is set, we remove it from the steps.
