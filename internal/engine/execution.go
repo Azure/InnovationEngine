@@ -90,18 +90,18 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 
 			// If the command is an SSH command, we need to forward the input and
 			// output
-			forward_input_output := false
+			interactiveCommand := false
 			if sshCommand.MatchString(block.Content) {
-				forward_input_output = true
+				interactiveCommand = true
 			}
 
-			logging.GlobalLogger.WithField("forward_intput_output", forward_input_output).Info("Executing command: " + block.Content)
+			logging.GlobalLogger.WithField("forward_intput_output", interactiveCommand).Info("Executing command: " + block.Content)
 
 			var commandErr error
 			var frame int = 0
 
 			// If forwarding input/output, don't render the spinner.
-			if !forward_input_output {
+			if !interactiveCommand {
 				// Grab the number of lines it contains & set the cursor to the
 				// beginning of the block.
 				lines := strings.Count(block.Content, "\n")
@@ -112,7 +112,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				fmt.Print("\033[?25l")
 
 				go func(block parsers.CodeBlock) {
-					output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, forward_input_output)
+					output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
 					commandOutput = output
 					done <- err
 				}(block)
@@ -151,7 +151,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				}
 			} else {
 				func(block parsers.CodeBlock) {
-					shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, forward_input_output)
+					shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
 				}(block)
 			}
 		}
