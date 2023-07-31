@@ -1,6 +1,9 @@
 package commands
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/Azure/InnovationEngine/internal/engine"
 	"github.com/spf13/cobra"
 )
@@ -26,24 +29,27 @@ var executeCommand = &cobra.Command{
 		markdownFile := args[0]
 		if markdownFile == "" {
 			cmd.Help()
-			return
+			os.Exit(1)
 		}
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		doNotDelete, _ := cmd.Flags().GetBool("do-not-delete")
 		subscription, _ := cmd.Flags().GetString("subscription")
 		correlationId, _ := cmd.Flags().GetString("correlation-id")
+		environment, _ := cmd.Flags().GetString("environment")
 
 		innovationEngine := engine.NewEngine(engine.EngineConfiguration{
 			Verbose:       verbose,
 			DoNotDelete:   doNotDelete,
 			Subscription:  subscription,
 			CorrelationId: correlationId,
+			Environment:   environment,
 		})
 
 		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"})
 		if err != nil {
-			panic(err)
+			fmt.Printf("Error creating scenario: %s", err)
+			os.Exit(1)
 		}
 
 		innovationEngine.ExecuteScenario(scenario)

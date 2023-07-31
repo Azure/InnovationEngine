@@ -1,12 +1,15 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/Azure/InnovationEngine/internal/logging"
+	"github.com/Azure/InnovationEngine/internal/ocd"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/utils"
@@ -22,6 +25,7 @@ const (
 var azGroupDelete = regexp.MustCompile(`az group delete`)
 var azCommand = regexp.MustCompile(`az\s+([a-z]+)\s+([a-z]+)`)
 var sshCommand = regexp.MustCompile(`(^|\s)\bssh\b\s`)
+var azResourceURI = regexp.MustCompile(`\"id\": \"(/subscriptions/[^\"]+)\"`)
 
 // If a scenario has an `az group delete` command and the `--do-not-delete`
 // flag is set, we remove it from the steps.
@@ -75,9 +79,21 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 		logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 	}
 
+	var ocdStatus = ocd.OneClickDeploymentStatus{}
+
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
+
+	if e.Configuration.Environment == EnvironmentsOCD {
+		for stepNumber, step := range stepsToExecute {
+			ocdStatus.Steps = append(ocdStatus.Steps, fmt.Sprintf("%d. %s", stepNumber+1, step.Name))
+		}
+		ocdStatus.Status = "Executing"
+	}
+
 	for stepNumber, step := range stepsToExecute {
 		fmt.Printf("%d. %s\n", stepNumber+1, step.Name)
+		ocdStatus.CurrentStep = stepNumber + 1
+
 		for _, block := range step.CodeBlocks {
 			// Render the codeblock.
 			indentedBlock := indentMultiLineCommand(block.Content, 4)
@@ -95,7 +111,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				interactiveCommand = true
 			}
 
-			logging.GlobalLogger.WithField("forward_intput_output", interactiveCommand).Info("Executing command: " + block.Content)
+			logging.GlobalLogger.WithField("isInteractive", interactiveCommand).Infof("Executing command: %s", block.Content)
 
 			var commandErr error
 			var frame int = 0
@@ -136,10 +152,34 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 							if e.Configuration.Verbose {
 								fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 							}
+
+							if e.Configuration.Environment == EnvironmentsOCD {
+								if azCommand.MatchString(block.Content) {
+									matches := azResourceURI.FindStringSubmatch(commandOutput.StdOut)
+									if len(matches) > 1 {
+										logging.GlobalLogger.Infof("Found resource URI: %s", matches[1])
+										ocdStatus.ResourceURIs = append(ocdStatus.ResourceURIs, matches[1])
+									} else {
+										logging.GlobalLogger.Warnf("Could not find resource URI in the output for the command: %s", block.Content)
+									}
+								}
+								ocdStatusJSON, _ := json.Marshal(ocdStatus)
+								fmt.Println(string(ocdStatusJSON))
+							}
+
 						} else {
 							fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 							fmt.Printf("\033[%dB", lines)
 							fmt.Printf("  %s\n", errorMessageStyle.Render(commandErr.Error()))
+
+							if e.Configuration.Environment == EnvironmentsOCD {
+								ocdStatus.Status = "Failed"
+								ocdStatus.Error = commandErr.Error()
+								ocdStatusJSON, _ := json.Marshal(ocdStatus)
+								fmt.Println(string(ocdStatusJSON))
+							}
+
+							os.Exit(1)
 						}
 
 						break loop
@@ -150,11 +190,41 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					}
 				}
 			} else {
-				func(block parsers.CodeBlock) {
-					shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
-				}(block)
+				lines := strings.Count(block.Content, "\n")
+				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
+
+				if checkForAzCLIError(block.Content, output) {
+					err = fmt.Errorf(output.StdErr)
+				}
+
+				if err == nil {
+					fmt.Print("\033[?25h")
+					fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
+
+					fmt.Printf("\033[%dB\n", lines)
+					if e.Configuration.Verbose {
+						fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
+					}
+				} else {
+					fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
+					fmt.Printf("\033[%dB", lines)
+					fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
+
+					if e.Configuration.Environment == EnvironmentsOCD {
+						ocdStatus.Status = "Failed"
+						ocdStatus.Error = err.Error()
+						fmt.Println(ocdStatus)
+					}
+
+					os.Exit(1)
+				}
 			}
 		}
 	}
+
+	if e.Configuration.Environment == EnvironmentsOCD {
+		ocdStatus.Status = "Succeeded"
+	}
+
 	shells.ResetStoredEnvironmentVariables()
 }
