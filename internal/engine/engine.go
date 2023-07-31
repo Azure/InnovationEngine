@@ -14,11 +14,22 @@ var (
 	scriptText   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
 )
 
+const (
+	EnvironmentsLocal = "local"
+	EnvironmentsCI    = "ci"
+	EnvironmentsOCD   = "ocd"
+)
+
+func IsValidEnvironment(environment string) bool {
+	return environment == EnvironmentsLocal || environment == EnvironmentsCI || environment == EnvironmentsOCD
+}
+
 type EngineConfiguration struct {
 	Verbose       bool
 	DoNotDelete   bool
 	CorrelationId string
 	Subscription  string
+	Environment   string
 }
 
 type Engine struct {
@@ -34,7 +45,6 @@ func NewEngine(configuration EngineConfiguration) *Engine {
 
 // Executes a deployment scenario.
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
-
 	if e.Configuration.Subscription != "" {
 		command := fmt.Sprintf("az account set --subscription %s", e.Configuration.Subscription)
 		_, err := shells.ExecuteBashCommand(command, map[string]string{}, true, false)

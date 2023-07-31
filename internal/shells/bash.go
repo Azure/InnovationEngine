@@ -46,8 +46,9 @@ func ResetStoredEnvironmentVariables() error {
 }
 
 type CommandOutput struct {
-	StdOut string
-	StdErr string
+	StdOut     string
+	StdErr     string
+	StatusCode int
 }
 
 // Executes a bash command and returns the output or error.

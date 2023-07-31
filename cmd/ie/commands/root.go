@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Azure/InnovationEngine/internal/engine"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
@@ -16,15 +17,29 @@ var rootCommand = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		logLevel, err := cmd.Flags().GetString("log-level")
 		if err != nil {
-			panic(err)
+			fmt.Printf("Error getting log level: %s", err)
+			os.Exit(1)
 		}
 		logging.Init(logging.LevelFromString(logLevel))
+
+		// Check environment
+		environment, err := cmd.Flags().GetString("environment")
+		if err != nil {
+			fmt.Printf("Error getting environment: %s", err)
+			os.Exit(1)
+		}
+
+		if !engine.IsValidEnvironment(environment) {
+			fmt.Printf("Invalid environment: %s", environment)
+			os.Exit(1)
+		}
 	},
 }
 
 // Entrypoint into the Innovation Engine CLI.
 func ExecuteCLI() {
 	rootCommand.PersistentFlags().String("log-level", string(logging.Debug), "Configure the log level")
+	rootCommand.PersistentFlags().String("environment", engine.EnvironmentsLocal, "The environment that the CLI is running in. (local, ci, ocd)")
 
 	if err := rootCommand.Execute(); err != nil {
 		fmt.Println(err)
