@@ -30,15 +30,15 @@ var executeCommand = &cobra.Command{
 		}
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
-		do_not_delete, _ := cmd.Flags().GetBool("do-not-delete")
+		doNotDelete, _ := cmd.Flags().GetBool("do-not-delete")
 		subscription, _ := cmd.Flags().GetString("subscription")
-		correlation_id, _ := cmd.Flags().GetString("correlation-id")
+		correlationId, _ := cmd.Flags().GetString("correlation-id")
 
 		innovationEngine := engine.NewEngine(engine.EngineConfiguration{
 			Verbose:       verbose,
-			DoNotDelete:   do_not_delete,
+			DoNotDelete:   doNotDelete,
 			Subscription:  subscription,
-			CorrelationId: correlation_id,
+			CorrelationId: correlationId,
 		})
 
 		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"})
