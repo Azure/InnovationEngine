@@ -9,9 +9,13 @@ import (
 func init() {
 	rootCommand.AddCommand(executeCommand)
 
+	// Bool flags
 	executeCommand.PersistentFlags().Bool("verbose", false, "Enable verbose logging & standard output.")
-	executeCommand.PersistentFlags().Bool("tracking", false, "Enable tracking for Azure resources created by the Azure CLI commands executed.")
 	executeCommand.PersistentFlags().Bool("do-not-delete", false, "Do not delete the Azure resources created by the Azure CLI commands executed.")
+
+	// String flags
+	executeCommand.PersistentFlags().String("correlation-id", "", "Adds a correlation ID to the user agent used by a scenarios azure-cli commands.")
+	executeCommand.PersistentFlags().String("subscription", "", "Sets the subscription ID used by a scenarios azure-cli commands. Will rely on the default subscription if not set.")
 }
 
 var executeCommand = &cobra.Command{
@@ -26,14 +30,17 @@ var executeCommand = &cobra.Command{
 		}
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
-		tracking, _ := cmd.Flags().GetBool("tracking")
 		do_not_delete, _ := cmd.Flags().GetBool("do-not-delete")
+		subscription, _ := cmd.Flags().GetString("subscription")
+		correlation_id, _ := cmd.Flags().GetString("correlation-id")
 
 		innovationEngine := engine.NewEngine(engine.EngineConfiguration{
-			Verbose:          verbose,
-			ResourceTracking: tracking,
-			DoNotDelete:      do_not_delete,
+			Verbose:       verbose,
+			DoNotDelete:   do_not_delete,
+			Subscription:  subscription,
+			CorrelationId: correlation_id,
 		})
+
 		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"})
 		if err != nil {
 			panic(err)
