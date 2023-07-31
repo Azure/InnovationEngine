@@ -67,14 +67,13 @@ func checkForAzCLIError(command string, output shells.CommandOutput) bool {
 // Executes the steps from a scenario and renders the output to the terminal.
 func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 
-	// Enable resource tracking for all of the deployments performed by the
-	// innovation engine.
-	if e.Configuration.ResourceTracking {
-		tracking_id := "6edbe7b9-4e03-4ab0-8213-230ba21aeaba"
-		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("pid-%s", tracking_id)
+	// If the correlation ID is set, we need to set the AZURE_HTTP_USER_AGENT
+	// environment variable so that the Azure CLI will send the correlation ID
+	// with Azure Resource Manager requests.
+	if e.Configuration.CorrelationId != "" {
+		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("innovation-engine-%s", e.Configuration.CorrelationId)
 		if e.Configuration.Verbose {
 			logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
-			fmt.Println("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 		}
 	}
 

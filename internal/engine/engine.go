@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 
+	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -13,9 +14,10 @@ var (
 )
 
 type EngineConfiguration struct {
-	Verbose          bool
-	ResourceTracking bool
-	DoNotDelete      bool
+	Verbose       bool
+	DoNotDelete   bool
+	CorrelationId string
+	Subscription  string
 }
 
 type Engine struct {
@@ -31,6 +33,15 @@ func NewEngine(configuration EngineConfiguration) *Engine {
 
 // Executes a deployment scenario.
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
+
+	if e.Configuration.Subscription != "" {
+		command := fmt.Sprintf("az account set --subscription %s", e.Configuration.Subscription)
+		_, err := shells.ExecuteBashCommand(command, map[string]string{}, true, false)
+		if err != nil {
+			return err
+		}
+	}
+
 	fmt.Println(titleStyle.Render(scenario.Name))
 	e.ExecuteAndRenderSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
 	fmt.Printf(scriptHeader.Render("# Generated bash to replicate what just happened:")+"\n%s\n", scriptText.Render(scenario.ToShellScript()))
