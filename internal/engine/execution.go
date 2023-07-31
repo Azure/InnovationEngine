@@ -72,9 +72,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 	// with Azure Resource Manager requests.
 	if e.Configuration.CorrelationId != "" {
 		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("innovation-engine-%s", e.Configuration.CorrelationId)
-		if e.Configuration.Verbose {
-			logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
-		}
+		logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 	}
 
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
