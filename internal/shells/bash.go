@@ -4,14 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	// "io"
 	"os"
 	"os/exec"
 	"strings"
 
-	// "github.com/creack/pty"
-
-	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/utils"
 )
 
@@ -94,9 +90,6 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 			commandToExecute.Env = append(commandToExecute.Env, fmt.Sprintf("%s=%s", k, v))
 		}
 	}
-
-	logging.GlobalLogger.Tracef("Environment variables: %v", commandToExecute.Env)
-	// Execute command, handle errors, and return output.
 
 	err = commandToExecute.Run()
 	if forward_input_output {

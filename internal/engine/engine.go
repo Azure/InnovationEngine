@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 
+	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/charmbracelet/lipgloss"
@@ -38,8 +39,10 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 		command := fmt.Sprintf("az account set --subscription %s", e.Configuration.Subscription)
 		_, err := shells.ExecuteBashCommand(command, map[string]string{}, true, false)
 		if err != nil {
+			logging.GlobalLogger.Error("Failed to set subscription", err)
 			return err
 		}
+		logging.GlobalLogger.Infof("Set subscription to %s", e.Configuration.Subscription)
 	}
 
 	fmt.Println(titleStyle.Render(scenario.Name))
@@ -50,6 +53,16 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 
 // Validates a deployment scenario.
 func (e *Engine) TestScenario(scenario *Scenario) error {
+	if e.Configuration.Subscription != "" {
+		command := fmt.Sprintf("az account set --subscription %s", e.Configuration.Subscription)
+		_, err := shells.ExecuteBashCommand(command, map[string]string{}, true, false)
+		if err != nil {
+			logging.GlobalLogger.Error("Failed to set subscription", err)
+			return err
+		}
+		logging.GlobalLogger.Infof("Set subscription to %s", e.Configuration.Subscription)
+	}
+
 	fmt.Println(titleStyle.Render(scenario.Name))
 	e.TestSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
 	return nil
