@@ -24,7 +24,7 @@ var rootCommand = &cobra.Command{
 
 // Entrypoint into the Innovation Engine CLI.
 func ExecuteCLI() {
-	rootCommand.PersistentFlags().String("log-level", string(logging.Error), "Configure the log level")
+	rootCommand.PersistentFlags().String("log-level", string(logging.Debug), "Configure the log level")
 
 	if err := rootCommand.Execute(); err != nil {
 		fmt.Println(err)
