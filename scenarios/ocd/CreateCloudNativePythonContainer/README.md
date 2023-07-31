@@ -134,3 +134,10 @@ az group delete --name $MY_RESOURCE_GROUP_NAME
 ## Notes
 
 - The sample in section 1 is originally from <https://github.com/tonybaloney/ants-azure-demos>, which is also referenced in step 1 of the video walkthrough. The updated sample is at: <https://github.com/asw101/python-fastapi-pypy>.
+
+## Next Steps
+
+* [Azure Container Apps Documentation](https://learn.microsoft.com/en-us/azure/container-apps/)
+* [Scaling an Azure Container App](https://learn.microsoft.com/en-us/azure/container-apps/scale-app?pivots=azure-cli)
+* [Manage Secrets in Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/manage-secrets?tabs=azure-cli)
+* [Health Probes in Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/health-probes?tabs=arm-cli)
