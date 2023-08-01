@@ -22,10 +22,15 @@ const (
 )
 
 var (
-	azGroupDelete = regexp.MustCompile(`az group delete`)
+	sshCommand = regexp.MustCompile(`(^|\s)\bssh\b\s`)
+
+	// Az cli command regex
 	azCommand     = regexp.MustCompile(`az\s+([a-z]+)\s+([a-z]+)`)
-	sshCommand    = regexp.MustCompile(`(^|\s)\bssh\b\s`)
-	azResourceURI = regexp.MustCompile(`\"id\": \"(/subscriptions/[^\"]+)\"`)
+	azGroupDelete = regexp.MustCompile(`az group delete`)
+
+	// ARM response regex
+	azResourceURI       = regexp.MustCompile(`\"id\": \"(/subscriptions/[^\"]+)\"`)
+	azResourceGroupName = regexp.MustCompile(`resourceGroups/([^\"]+)`)
 )
 
 // If a scenario has an `az group delete` command and the `--do-not-delete`
@@ -83,6 +88,30 @@ func reportOCDStatus(status ocd.OneClickDeploymentStatus, environment string) {
 	}
 }
 
+func findResourceGroupName(commandOutput string) string {
+	matches := azResourceGroupName.FindStringSubmatch(commandOutput)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
+}
+
+// Find all the deployed resources in a resource group.
+func findAllDeployedResourceURIs(resourceGroup string) []string {
+	output, err := shells.ExecuteBashCommand("az resource list -g"+resourceGroup, map[string]string{}, true, false)
+
+	if err != nil {
+		logging.GlobalLogger.Error("Failed to list deployments", err)
+	}
+
+	matches := azResourceURI.FindAllStringSubmatch(output.StdOut, -1)
+	results := []string{}
+	for _, match := range matches {
+		results = append(results, match[1])
+	}
+	return results
+}
+
 // Executes the steps from a scenario and renders the output to the terminal.
 func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 
@@ -94,15 +123,16 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 		logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 	}
 
+	var resourceGroupName string
 	var ocdStatus = ocd.NewOneClickDeploymentStatus()
 
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
 
-	if e.Configuration.Environment == EnvironmentsOCD {
-		for stepNumber, step := range stepsToExecute {
-			ocdStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name))
-		}
+	for stepNumber, step := range stepsToExecute {
+		ocdStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name))
 	}
+
+	reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
 	for stepNumber, step := range stepsToExecute {
 		fmt.Printf("%d. %s\n", stepNumber+1, step.Name)
@@ -167,6 +197,16 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 								fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 							}
 
+							// Extract the resource group name from the command output if
+							// it's not already set.
+							if resourceGroupName == "" && azCommand.MatchString(block.Content) {
+								tmpResourceGroup := findResourceGroupName(commandOutput.StdOut)
+								if tmpResourceGroup != "" {
+									logging.GlobalLogger.WithField("resourceGroup", tmpResourceGroup).Info("Found resource group")
+									resourceGroupName = tmpResourceGroup
+								}
+							}
+
 							reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
 						} else {
@@ -218,9 +258,20 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 		}
 	}
 
-	if e.Configuration.Environment == EnvironmentsOCD {
-		ocdStatus.Status = "Succeeded"
+	ocdStatus.Status = "Succeeded"
+
+	if resourceGroupName != "" {
+		resourceURIs := findAllDeployedResourceURIs(resourceGroupName)
+
+		if len(resourceURIs) > 0 {
+			logging.GlobalLogger.WithField("resourceURIs", resourceURIs).Info("Found deployed resources.")
+			ocdStatus.ResourceURIs = resourceURIs
+		}
+	} else {
+		logging.GlobalLogger.Warn("No resource group name found. Unable to find deployed resources.")
 	}
+
+	reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
 	shells.ResetStoredEnvironmentVariables()
 }
