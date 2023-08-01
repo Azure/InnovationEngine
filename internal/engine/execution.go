@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -70,6 +69,20 @@ func checkForAzCLIError(command string, output shells.CommandOutput) bool {
 	return false
 }
 
+// Print out the one click deployment status if in the correct environment.
+func reportOCDStatus(status ocd.OneClickDeploymentStatus, environment string) {
+	if environment == EnvironmentsOCD {
+		statusJson, err := status.AsJsonString()
+		if err != nil {
+			logging.GlobalLogger.Error("Failed to marshal status", err)
+		} else {
+			// We add these strings to the output so that the portal can find and parse
+			// the JSON status.
+			fmt.Printf("ie_us%sie_ue\n", statusJson)
+		}
+	}
+}
+
 // Executes the steps from a scenario and renders the output to the terminal.
 func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 
@@ -81,15 +94,14 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 		logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 	}
 
-	var ocdStatus = ocd.OneClickDeploymentStatus{}
+	var ocdStatus = ocd.NewOneClickDeploymentStatus()
 
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
 
 	if e.Configuration.Environment == EnvironmentsOCD {
 		for stepNumber, step := range stepsToExecute {
-			ocdStatus.Steps = append(ocdStatus.Steps, fmt.Sprintf("%d. %s", stepNumber+1, step.Name))
+			ocdStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name))
 		}
-		ocdStatus.Status = "Executing"
 	}
 
 	for stepNumber, step := range stepsToExecute {
@@ -155,31 +167,15 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 								fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 							}
 
-							if e.Configuration.Environment == EnvironmentsOCD {
-								if azCommand.MatchString(block.Content) {
-									matches := azResourceURI.FindStringSubmatch(commandOutput.StdOut)
-									if len(matches) > 1 {
-										logging.GlobalLogger.Infof("Found resource URI: %s", matches[1])
-										ocdStatus.ResourceURIs = append(ocdStatus.ResourceURIs, matches[1])
-									} else {
-										logging.GlobalLogger.Warnf("Could not find resource URI in the output for the command: %s", block.Content)
-									}
-								}
-								ocdStatusJSON, _ := json.Marshal(ocdStatus)
-								fmt.Println("ie_us" + string(ocdStatusJSON) + "ie_ue")
-							}
+							reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
 						} else {
 							fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 							fmt.Printf("\033[%dB", lines)
 							fmt.Printf("  %s\n", errorMessageStyle.Render(commandErr.Error()))
 
-							if e.Configuration.Environment == EnvironmentsOCD {
-								ocdStatus.Status = "Failed"
-								ocdStatus.Error = commandErr.Error()
-								ocdStatusJSON, _ := json.Marshal(ocdStatus)
-								fmt.Println("ie_us" + string(ocdStatusJSON) + "ie_ue")
-							}
+							ocdStatus.SetError(commandErr)
+							reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
 							os.Exit(1)
 						}
@@ -208,23 +204,14 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 						fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 					}
 
-					if e.Configuration.Environment == EnvironmentsOCD {
-						ocdStatusJSON, _ := json.Marshal(ocdStatus)
-						fmt.Println("ie_us" + string(ocdStatusJSON) + "ie_ue")
-					}
+					reportOCDStatus(ocdStatus, e.Configuration.Environment)
 				} else {
 					fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 					fmt.Printf("\033[%dB", lines)
 					fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
 
-					if e.Configuration.Environment == EnvironmentsOCD {
-						ocdStatus.Status = "Failed"
-						ocdStatus.Error = err.Error()
-						ocdStatusJSON, _ := json.Marshal(ocdStatus)
-
-						fmt.Println("ie_us" + string(ocdStatusJSON) + "ie_ue")
-					}
-
+					ocdStatus.SetError(err)
+					reportOCDStatus(ocdStatus, e.Configuration.Environment)
 					os.Exit(1)
 				}
 			}
