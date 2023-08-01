@@ -166,7 +166,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 									}
 								}
 								ocdStatusJSON, _ := json.Marshal(ocdStatus)
-								fmt.Println(string(ocdStatusJSON))
+								fmt.Println("ie_us" + string(ocdStatusJSON) + "ie_ue")
 							}
 
 						} else {
@@ -178,7 +178,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 								ocdStatus.Status = "Failed"
 								ocdStatus.Error = commandErr.Error()
 								ocdStatusJSON, _ := json.Marshal(ocdStatus)
-								fmt.Println(string(ocdStatusJSON))
+								fmt.Println("ie_us" + string(ocdStatusJSON) + "ie_ue")
 							}
 
 							os.Exit(1)
@@ -207,6 +207,11 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					if e.Configuration.Verbose {
 						fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 					}
+
+					if e.Configuration.Environment == EnvironmentsOCD {
+						ocdStatusJSON, _ := json.Marshal(ocdStatus)
+						fmt.Println("ie_us" + string(ocdStatusJSON) + "ie_ue")
+					}
 				} else {
 					fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 					fmt.Printf("\033[%dB", lines)
@@ -215,7 +220,9 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					if e.Configuration.Environment == EnvironmentsOCD {
 						ocdStatus.Status = "Failed"
 						ocdStatus.Error = err.Error()
-						fmt.Println(ocdStatus)
+						ocdStatusJSON, _ := json.Marshal(ocdStatus)
+
+						fmt.Println("ie_us" + string(ocdStatusJSON) + "ie_ue")
 					}
 
 					os.Exit(1)
