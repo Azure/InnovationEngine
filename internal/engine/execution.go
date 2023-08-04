@@ -28,7 +28,7 @@ var (
 	azCommand     = regexp.MustCompile(`az\s+([a-z]+)\s+([a-z]+)`)
 	azGroupDelete = regexp.MustCompile(`az group delete`)
 
-	// ARM response regex
+	// ARM regex
 	azResourceURI       = regexp.MustCompile(`\"id\": \"(/subscriptions/[^\"]+)\"`)
 	azResourceGroupName = regexp.MustCompile(`resourceGroups/([^\"]+)`)
 )

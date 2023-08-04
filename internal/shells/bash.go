@@ -55,8 +55,11 @@ type CommandOutput struct {
 func ExecuteBashCommand(command string, env map[string]string, inherit_environment_variables bool, forward_input_output bool) (CommandOutput, error) {
 	var commandWithStateSaved = []string{
 		command,
+		"IE_LAST_COMMAND_EXIT_CODE=\"$?\"",
 		"env > /tmp/env.txt",
+		"exit $IE_LAST_COMMAND_EXIT_CODE",
 	}
+
 	commandToExecute := exec.Command("bash", "-c", strings.Join(commandWithStateSaved, "\n"))
 
 	var stdoutBuffer, stderrBuffer bytes.Buffer
