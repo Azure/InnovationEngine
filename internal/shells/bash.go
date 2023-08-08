@@ -46,13 +46,12 @@ func ResetStoredEnvironmentVariables() error {
 }
 
 type CommandOutput struct {
-	StdOut     string
-	StdErr     string
-	StatusCode int
+	StdOut string
+	StdErr string
 }
 
 // Executes a bash command and returns the output or error.
-func ExecuteBashCommand(command string, env map[string]string, inherit_environment_variables bool, forward_input_output bool) (CommandOutput, error) {
+func ExecuteBashCommand(command string, env map[string]string, inheritEnvironment bool, forwardInputOutput bool) (CommandOutput, error) {
 	var commandWithStateSaved = []string{
 		command,
 		"IE_LAST_COMMAND_EXIT_CODE=\"$?\"",
@@ -64,7 +63,7 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 
 	var stdoutBuffer, stderrBuffer bytes.Buffer
 
-	if forward_input_output {
+	if forwardInputOutput {
 		commandToExecute.Stdout = os.Stdout
 		commandToExecute.Stderr = os.Stderr
 		commandToExecute.Stdin = os.Stdin
@@ -74,7 +73,7 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 		commandToExecute.Stderr = &stderrBuffer
 	}
 
-	if inherit_environment_variables {
+	if inheritEnvironment {
 		commandToExecute.Env = os.Environ()
 	}
 
@@ -96,7 +95,7 @@ func ExecuteBashCommand(command string, env map[string]string, inherit_environme
 	}
 
 	err = commandToExecute.Run()
-	if forward_input_output {
+	if forwardInputOutput {
 		return CommandOutput{}, err
 	}
 
