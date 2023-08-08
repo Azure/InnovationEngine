@@ -51,11 +51,6 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 					// final status.
 					fmt.Print("\033[?25h")
 
-					// Handle the case where the command is an az cli command.
-					if checkForAzCLIError(block.Content, commandOutput) {
-						err = fmt.Errorf(commandOutput.StdErr)
-					}
-
 					if err == nil {
 						actualOutput := commandOutput.StdOut
 						expectedOutput := block.ExpectedOutput.Content

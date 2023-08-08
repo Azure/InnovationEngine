@@ -60,20 +60,6 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 	return filteredSteps
 }
 
-// Check for errors from the Azure CLI. The Azure CLI doesn't return a non-zero
-// exit code when an error occurs, so we have to check the output for errors.
-func checkForAzCLIError(command string, output shells.CommandOutput) bool {
-	if !azCommand.MatchString(command) {
-		return false
-	}
-
-	if output.StdOut == "" && output.StdErr != "" {
-		return true
-	}
-
-	return false
-}
-
 // Print out the one click deployment status if in the correct environment.
 func reportOCDStatus(status ocd.OneClickDeploymentStatus, environment string) {
 	if environment == EnvironmentsOCD {
@@ -185,10 +171,6 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 						// final status.
 						fmt.Print("\033[?25h")
 
-						if checkForAzCLIError(block.Content, commandOutput) {
-							commandErr = fmt.Errorf(commandOutput.StdErr)
-						}
-
 						if commandErr == nil {
 							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 
@@ -231,17 +213,13 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				lines := strings.Count(block.Content, "\n")
 				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
 
-				if checkForAzCLIError(block.Content, output) {
-					err = fmt.Errorf(output.StdErr)
-				}
-
 				if err == nil {
 					fmt.Print("\033[?25h")
 					fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 
 					fmt.Printf("\033[%dB\n", lines)
 					if e.Configuration.Verbose {
-						fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
+						fmt.Printf("  %s\n", verboseStyle.Render(output.StdOut))
 					}
 
 					reportOCDStatus(ocdStatus, e.Configuration.Environment)
