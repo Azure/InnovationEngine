@@ -18,6 +18,14 @@ var (
 	ocdStatusUpdateStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000"))
 )
 
+const (
+	setCursor = "\033[?25h"
+)
+
+func moveCursorPositionDown(lines int) string {
+	return "\033[" + string(lines) + "B\n"
+}
+
 // Indents a multi-line command to be nested under the first line of the
 // command.
 func indentMultiLineCommand(content string, indentation int) string {
