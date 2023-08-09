@@ -121,7 +121,8 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 	reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
 	for stepNumber, step := range stepsToExecute {
-		fmt.Printf("%d. %s\n", stepNumber+1, step.Name)
+		stepTitle := fmt.Sprintf("%d. %s\n", stepNumber+1, step.Name)
+		fmt.Println(stepTitleStyle.Render(stepTitle))
 		ocdStatus.CurrentStep = stepNumber + 1
 
 		for _, block := range step.CodeBlocks {
