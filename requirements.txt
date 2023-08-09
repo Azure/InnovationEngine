@@ -1,5 +1,0 @@
-colorama==0.4.3
-pexpect==4.8.0
-envsubst==0.1.5
-fuzzywuzzy==0.18.0
-levenshtein==0.20.5
