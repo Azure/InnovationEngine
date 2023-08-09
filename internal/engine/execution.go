@@ -177,7 +177,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 						if commandErr == nil {
 							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 
-							fmt.Printf(moveCursorPositionDown(lines))
+							moveCursorPositionDown(lines)
 							if e.Configuration.Verbose {
 								fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 							}
@@ -196,7 +196,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 
 						} else {
 							fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-							fmt.Printf(moveCursorPositionDown(lines))
+							moveCursorPositionDown(lines)
 							fmt.Printf("  %s\n", errorMessageStyle.Render(commandErr.Error()))
 
 							ocdStatus.SetError(commandErr)
@@ -220,7 +220,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					fmt.Print("\033[?25h")
 					fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 
-					fmt.Printf(moveCursorPositionDown(lines))
+					moveCursorPositionDown(lines)
 					if e.Configuration.Verbose {
 						fmt.Printf("  %s\n", verboseStyle.Render(output.StdOut))
 					}
@@ -228,7 +228,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					reportOCDStatus(ocdStatus, e.Configuration.Environment)
 				} else {
 					fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-					fmt.Printf(moveCursorPositionDown(lines))
+					moveCursorPositionDown(lines)
 					fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
 
 					ocdStatus.SetError(err)

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -22,8 +23,8 @@ const (
 	setCursor = "\033[?25h"
 )
 
-func moveCursorPositionDown(lines int) string {
-	return "\033[" + string(lines) + "B\n"
+func moveCursorPositionDown(lines int) {
+	fmt.Printf("\033[" + string(lines) + "B\n")
 }
 
 // Indents a multi-line command to be nested under the first line of the
