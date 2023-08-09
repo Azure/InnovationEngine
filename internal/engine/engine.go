@@ -55,7 +55,7 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 		logging.GlobalLogger.Infof("Set subscription to %s", e.Configuration.Subscription)
 	}
 
-	fmt.Println(titleStyle.Render(scenario.Name))
+	fmt.Println(scenarioTitleStyle.Render(scenario.Name))
 	e.ExecuteAndRenderSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
 	fmt.Printf(scriptHeader.Render("# Generated bash to replicate what just happened:")+"\n%s\n", scriptText.Render(scenario.ToShellScript()))
 	return nil
@@ -73,7 +73,7 @@ func (e *Engine) TestScenario(scenario *Scenario) error {
 		logging.GlobalLogger.Infof("Set subscription to %s", e.Configuration.Subscription)
 	}
 
-	fmt.Println(titleStyle.Render(scenario.Name))
+	fmt.Println(scenarioTitleStyle.Render(scenario.Name))
 	e.TestSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
 	return nil
 }
