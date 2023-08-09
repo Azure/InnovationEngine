@@ -69,11 +69,13 @@ func reportOCDStatus(status ocd.OneClickDeploymentStatus, environment string) {
 		} else {
 			// We add these strings to the output so that the portal can find and parse
 			// the JSON status.
-			fmt.Printf("ie_us%sie_ue\n", statusJson)
+			ocdStatus := fmt.Sprintf("ie_us%sie_ue\n", statusJson)
+			fmt.Println(ocdStatusUpdateStyle.Render(ocdStatus))
 		}
 	}
 }
 
+// Find the resource group name from the output of an az command.
 func findResourceGroupName(commandOutput string) string {
 	matches := azResourceGroupName.FindStringSubmatch(commandOutput)
 	if len(matches) > 1 {
