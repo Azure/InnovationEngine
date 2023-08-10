@@ -19,12 +19,23 @@ var (
 	ocdStatusUpdateStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000"))
 )
 
-const (
-	setCursor = "\033[?25h"
-)
+// Hides the cursor from the CLI using ANSI escape codes.
+func hideCursor() {
+	fmt.Print("\033[?25l")
+}
 
+// Displays the cursor in the CLI using ANSI escape codes.
+func showCursor() {
+	fmt.Print("\033[?25h")
+}
+
+func moveCursorPositionUp(lines int) {
+	fmt.Printf("\033[%dA", lines)
+}
+
+// Moves the cursor down a specified number of lines.
 func moveCursorPositionDown(lines int) {
-	fmt.Printf("\033[" + string(lines) + "B\n")
+	fmt.Printf("\033[%dB\n", lines)
 }
 
 // Indents a multi-line command to be nested under the first line of the

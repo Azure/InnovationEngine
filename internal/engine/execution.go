@@ -154,11 +154,11 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				// Grab the number of lines it contains & set the cursor to the
 				// beginning of the block.
 				lines := strings.Count(block.Content, "\n")
-				fmt.Printf("\033[%dA", lines)
+				moveCursorPositionUp(lines)
 
 				// Render the spinner and hide the cursor.
 				fmt.Print(spinnerStyle.Render("  "+string(spinnerFrames[0])) + " ")
-				fmt.Print("\033[?25l")
+				hideCursor()
 
 				go func(block parsers.CodeBlock) {
 					output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
@@ -172,7 +172,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					case commandErr = <-done:
 						// Show the cursor, check the result of the command, and display the
 						// final status.
-						fmt.Print("\033[?25h")
+						showCursor()
 
 						if commandErr == nil {
 							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
@@ -192,9 +192,12 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 								}
 							}
 
-							reportOCDStatus(ocdStatus, e.Configuration.Environment)
+							if stepNumber != len(stepsToExecute)-1 {
+								reportOCDStatus(ocdStatus, e.Configuration.Environment)
+							}
 
 						} else {
+							showCursor()
 							fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 							moveCursorPositionDown(lines)
 							fmt.Printf("  %s\n", errorMessageStyle.Render(commandErr.Error()))
@@ -217,16 +220,18 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
 
 				if err == nil {
-					fmt.Print("\033[?25h")
+					showCursor()
 					fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
-
 					moveCursorPositionDown(lines)
+
 					if e.Configuration.Verbose {
 						fmt.Printf("  %s\n", verboseStyle.Render(output.StdOut))
 					}
-
-					reportOCDStatus(ocdStatus, e.Configuration.Environment)
+					if stepNumber != len(stepsToExecute)-1 {
+						reportOCDStatus(ocdStatus, e.Configuration.Environment)
+					}
 				} else {
+					showCursor()
 					fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 					moveCursorPositionDown(lines)
 					fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
