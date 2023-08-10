@@ -29,6 +29,7 @@ func showCursor() {
 	fmt.Print("\033[?25h")
 }
 
+// Moves the cursor up a specified number of lines.
 func moveCursorPositionUp(lines int) {
 	fmt.Printf("\033[%dA", lines)
 }
