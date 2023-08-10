@@ -247,6 +247,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				// If we're on the last step and the command is an SSH command, we need
 				// to report the status before executing the command.
 				if stepNumber == len(stepsToExecute)-1 && sshCommand.MatchString(block.Content) {
+					ocdStatus.Status = "Succeeded"
 					attachResourceURIsToOCDStatus(&ocdStatus, resourceGroupName, e.Configuration.Environment)
 					reportOCDStatus(ocdStatus, e.Configuration.Environment)
 				}
