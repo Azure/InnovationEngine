@@ -62,16 +62,40 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 
 // Print out the one click deployment status if in the correct environment.
 func reportOCDStatus(status ocd.OneClickDeploymentStatus, environment string) {
-	if environment == EnvironmentsOCD {
-		statusJson, err := status.AsJsonString()
-		if err != nil {
-			logging.GlobalLogger.Error("Failed to marshal status", err)
-		} else {
-			// We add these strings to the output so that the portal can find and parse
-			// the JSON status.
-			ocdStatus := fmt.Sprintf("ie_us%sie_ue\n", statusJson)
-			fmt.Println(ocdStatusUpdateStyle.Render(ocdStatus))
-		}
+	if environment != EnvironmentsOCD {
+		return
+	}
+
+	statusJson, err := status.AsJsonString()
+	if err != nil {
+		logging.GlobalLogger.Error("Failed to marshal status", err)
+	} else {
+		// We add these strings to the output so that the portal can find and parse
+		// the JSON status.
+		ocdStatus := fmt.Sprintf("ie_us%sie_ue\n", statusJson)
+		fmt.Println(ocdStatusUpdateStyle.Render(ocdStatus))
+	}
+}
+
+func attachResourceURIsToOCDStatus(status *ocd.OneClickDeploymentStatus, resourceGroupName string, environment string) {
+
+	if environment != EnvironmentsOCD {
+		logging.GlobalLogger.Info("Not fetching resource URIs because we're not in the OCD environment.")
+		return
+	}
+
+	if resourceGroupName == "" {
+		logging.GlobalLogger.Warn("No resource group name found.")
+		return
+	}
+
+	resourceURIs := findAllDeployedResourceURIs(resourceGroupName)
+
+	if len(resourceURIs) > 0 {
+		logging.GlobalLogger.WithField("resourceURIs", resourceURIs).Info("Found deployed resources.")
+		status.ResourceURIs = resourceURIs
+	} else {
+		logging.GlobalLogger.Warn("No deployed resources found.")
 	}
 }
 
@@ -217,6 +241,14 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				}
 			} else {
 				lines := strings.Count(block.Content, "\n")
+
+				// If we're on the last step and the command is an SSH command, we need
+				// to report the status before executing the command.
+				if stepNumber == len(stepsToExecute)-1 && sshCommand.MatchString(block.Content) {
+					attachResourceURIsToOCDStatus(&ocdStatus, resourceGroupName, e.Configuration.Environment)
+					reportOCDStatus(ocdStatus, e.Configuration.Environment)
+				}
+
 				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
 
 				if err == nil {
@@ -245,18 +277,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 	}
 
 	ocdStatus.Status = "Succeeded"
-
-	if resourceGroupName != "" {
-		resourceURIs := findAllDeployedResourceURIs(resourceGroupName)
-
-		if len(resourceURIs) > 0 {
-			logging.GlobalLogger.WithField("resourceURIs", resourceURIs).Info("Found deployed resources.")
-			ocdStatus.ResourceURIs = resourceURIs
-		}
-	} else {
-		logging.GlobalLogger.Warn("No resource group name found. Unable to find deployed resources.")
-	}
-
+	attachResourceURIsToOCDStatus(&ocdStatus, resourceGroupName, e.Configuration.Environment)
 	reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
 	shells.ResetStoredEnvironmentVariables()
