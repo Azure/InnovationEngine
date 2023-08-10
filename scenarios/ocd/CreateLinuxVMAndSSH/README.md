@@ -5,9 +5,10 @@
 The First step in this tutorial is to define environment variables 
 
 ```bash
-export MY_RESOURCE_GROUP_NAME=myResourceGroup
+export UNIQUE_POSTFIX="$(($RANDOM % 100 + 1))"
+export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
 export MY_LOCATION=EastUS
-export MY_VM_NAME=myVM
+export MY_VM_NAME="myVM$UNIQUE_POSTFIX"
 export MY_USERNAME=azureuser
 export MY_VM_IMAGE=UbuntuLTS
 ```
