@@ -77,6 +77,8 @@ func reportOCDStatus(status ocd.OneClickDeploymentStatus, environment string) {
 	}
 }
 
+// Attach deployed resource URIs to the one click deployment status if we're in
+// the correct environment & we have a resource group name.
 func attachResourceURIsToOCDStatus(status *ocd.OneClickDeploymentStatus, resourceGroupName string, environment string) {
 
 	if environment != EnvironmentsOCD {
