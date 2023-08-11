@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/shells"
@@ -25,11 +26,12 @@ func IsValidEnvironment(environment string) bool {
 }
 
 type EngineConfiguration struct {
-	Verbose       bool
-	DoNotDelete   bool
-	CorrelationId string
-	Subscription  string
-	Environment   string
+	Verbose          bool
+	DoNotDelete      bool
+	CorrelationId    string
+	Subscription     string
+	Environment      string
+	WorkingDirectory string
 }
 
 type Engine struct {
@@ -55,9 +57,36 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 		logging.GlobalLogger.Infof("Set subscription to %s", e.Configuration.Subscription)
 	}
 
+	// Store the current directory so we can restore it later
+	currentDirectory, err := os.Getwd()
+	if err != nil {
+		logging.GlobalLogger.Error("Failed to get current directory", err)
+		return err
+	}
+
+	// Change working directory if specified
+	if e.Configuration.WorkingDirectory != "" {
+		err = os.Chdir(e.Configuration.WorkingDirectory)
+		if err != nil {
+			logging.GlobalLogger.Error("Failed to change working directory", err)
+			return err
+		}
+
+		logging.GlobalLogger.Infof("Changed working directory to %s", e.Configuration.WorkingDirectory)
+	}
+
+	// Execute the steps
 	fmt.Println(scenarioTitleStyle.Render(scenario.Name))
 	e.ExecuteAndRenderSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
 	fmt.Printf(scriptHeader.Render("# Generated bash to replicate what just happened:")+"\n%s\n", scriptText.Render(scenario.ToShellScript()))
+
+	// Restore original directory
+	err = os.Chdir(currentDirectory)
+	if err != nil {
+		logging.GlobalLogger.Error("Failed to restore the original working directory", err)
+		return err
+	}
+
 	return nil
 }
 
