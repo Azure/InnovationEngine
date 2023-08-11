@@ -19,6 +19,7 @@ func init() {
 	// String flags
 	executeCommand.PersistentFlags().String("correlation-id", "", "Adds a correlation ID to the user agent used by a scenarios azure-cli commands.")
 	executeCommand.PersistentFlags().String("subscription", "", "Sets the subscription ID used by a scenarios azure-cli commands. Will rely on the default subscription if not set.")
+	executeCommand.PersistentFlags().String("working-directory", ".", "Sets the working directory for innovation engine to operate out of. Restores the current working directory when finished.")
 }
 
 var executeCommand = &cobra.Command{
@@ -37,21 +38,29 @@ var executeCommand = &cobra.Command{
 		subscription, _ := cmd.Flags().GetString("subscription")
 		correlationId, _ := cmd.Flags().GetString("correlation-id")
 		environment, _ := cmd.Flags().GetString("environment")
+		workingDirectory, _ := cmd.Flags().GetString("working-directory")
 
 		innovationEngine := engine.NewEngine(engine.EngineConfiguration{
-			Verbose:       verbose,
-			DoNotDelete:   doNotDelete,
-			Subscription:  subscription,
-			CorrelationId: correlationId,
-			Environment:   environment,
+			Verbose:          verbose,
+			DoNotDelete:      doNotDelete,
+			Subscription:     subscription,
+			CorrelationId:    correlationId,
+			Environment:      environment,
+			WorkingDirectory: workingDirectory,
 		})
 
+		// Parse the markdown file and create a scenario
 		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"})
 		if err != nil {
 			fmt.Printf("Error creating scenario: %s", err)
 			os.Exit(1)
 		}
 
-		innovationEngine.ExecuteScenario(scenario)
+		// Execute the scenario
+		err = innovationEngine.ExecuteScenario(scenario)
+		if err != nil {
+			fmt.Printf("Error executing scenario: %s", err)
+			os.Exit(1)
+		}
 	},
 }
