@@ -1,62 +1,29 @@
 # Quickstart: Deploy a Scalable & Secure Azure Kubernetes Service cluster using the Azure CLI
-Welcome to this tutorial where we will take you step by step in creating an Azure Kubernetes Web Application with a custom domain that is secured via https. This tutorial assumes you are logged into Azure CLI already and have selected a subscription to use with the CLI. It also assumes that you have Helm installed (Instructions can be found here https://helm.sh/docs/intro/install/). If you have not done this already. Press b and hit ctl c to exit the program.
+Welcome to this tutorial where we will take you step by step in creating an Azure Kubernetes Web Application that is secured via https. This tutorial assumes you are logged into Azure CLI already and have selected a subscription to use with the CLI. It also assumes that you have Helm installed (Instructions can be found here https://helm.sh/docs/intro/install/).
 
-To Login to Az CLI and select a subscription 
-'az login' followed by 'az account list --output table' and 'az account set --subscription "name of subscription to use"'
+## Define Environment Variables
 
-To Install Az CLI
-If you need to install Azure CLI run the following command - curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-
-Assuming the pre requisites are met press enter to proceed
-
-## Define Command Line Variables 
-Most of these variables should be set to a smart default. However, if you want to change them
-press b and run the command export VARIABLE_NAME="new variable value"
+The First step in this tutorial is to define environment variables 
 
 ```bash
-echo $RESOURCE_GROUP_NAME
-echo $RESOURCE_LOCATION
-echo $AKS_CLUSTER_NAME
-echo $PUBLIC_IP_NAME
-echo $VNET_NAME
-echo $SUBNET_NAME
-echo $APPLICATION_GATEWAY_NAME
+export UNIQUE_POSTFIX="$(($RANDOM % 1000 + 1))"
+export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
+export MY_LOCATION=eastus
+export MY_AKS_CLUSTER_NAME="myAKSCluster$UNIQUE_POSTFIX"
+export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
+export MY_DNS_LABEL="myAKSCluster$UNIQUE_POSTFIX"
 ```
 
-For the following variables, unless you manually added them in the env.json, you will be asked to provide an input
+# Create a resource group
 
-The custom domain must be unique and fit the pattern: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$
-For example mycooldomain - this domain is already taken btw :) 
-
-Note - Do not add any capitalization or .com
-```bash
-if [[ ! $CUSTOM_DOMAIN_NAME =~ ^[a-z][a-z0-9-]{1,61}[a-z0-9] ]]; then echo "Invalid Domain, re enter your domain by pressing b and running 'export CUSTOM_DOMAIN_NAME="customdomainname"' then press r to re-run the previous command and validate the custom domain"; else echo "Custom Domain Set!"; fi; 
-```
-
-For the email address any enter a valid email. I.e sarajane@gmail.com
-```bash
-echo $SSL_EMAIL_ADDRESS
-```
-
-## Create A Resource Group
-An Azure resource group is a logical group in which Azure resources are deployed and managed. When you create a resource group, you are prompted to specify a location. This location is:
-  - The storage location of your resource group metadata.
-  - Where your resources will run in Azure if you don't specify another region during resource creation.
-
-Validate Resource Group does not already exist. If it does, select a new resource group name by running the following:
+A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $MY_LOCATION parameters.
 
 ```bash
-if [ "$(az group exists --name $RESOURCE_GROUP_NAME)" = 'true' ]; then export RAND=$RANDOM; export RESOURCE_GROUP_NAME="$RESOURCE_GROUP_NAME$RAND"; echo "Your new Resource Group Name is $RESOURCE_GROUP_NAME"; fi
-```
-
-Create a resource group using the az group create command:
-```bash
-az group create --name $RESOURCE_GROUP_NAME --location $RESOURCE_LOCATION
+az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
 ```
 Results:
 
-```expected_similarity=0.5
+```expected_similarity=0.3
 {
   "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/resourceGroups/testResourceGroup24763",
   "location": "eastus",
@@ -83,7 +50,7 @@ Create an AKS cluster using the az aks create command with the --enable-addons m
 
 This will take a few minutes
 ```bash
-az aks create --resource-group $RESOURCE_GROUP_NAME --name $AKS_CLUSTER_NAME --node-count 1 --enable-addons monitoring --generate-ssh-keys
+az aks create --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AKS_CLUSTER_NAME --node-count 1 --enable-addons monitoring --generate-ssh-keys
 ```
 
 ## Connect to the cluster
@@ -112,6 +79,20 @@ az aks get-credentials --resource-group $RESOURCE_GROUP_NAME --name $AKS_CLUSTER
 kubectl get nodes
 ```
 
+## Install NGINX Ingress Controller
+
+```bash
+export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --sku Standard --allocation-method static --query publicIp.ipAddress -o tsv)
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"=$MY_DNS_LABEL \
+  --set controller.service.loadBalancerIP=$MY_STATIC_IP \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz
+```
+
 ## Deploy the Application 
 A Kubernetes manifest file defines a cluster's desired state, such as which container images to run.
 
@@ -125,30 +106,18 @@ Two Kubernetes Services are also created:
 - An internal service for the Redis instance.
 - An external service to access the Azure Vote application from the internet.
 
+Finally, an Ingress resource is created to route traffic to the Azure Vote application.
+
 A test voting app YML file is already prepared. To deploy this app run the following command 
 ```bash
 kubectl apply -f azure-vote-start.yml
 ```
 
 ## Test The Application
-When the application runs, a Kubernetes service exposes the application front end to the internet. This process can take a few minutes to complete.
 
-Check progress using the kubectl get service command.
-
+Validate that the application is running by either visiting the public ip or the application url. The application url can be found by running the following command:
 ```bash
-kubectl get service
-```
-
-Store the public IP Address as an environment variable for later use.
->[!Note]
-> This commmand loops for 2 minutes and queries the output of kubectl get service for the IP Address. Sometimes it can take a few seconds to propogate correctly 
-```bash
-runtime="2 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do export IP_ADDRESS=$(kubectl get service azure-vote-front --output jsonpath='{.status.loadBalancer.ingress[0].ip}'); if ! [ -z $IP_ADDRESS ]; then break; else sleep 10; fi; done
-```
-
-Validate IP Address by running the following:
-```bash
-echo $IP_ADDRESS
+echo "http://${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
 ```
 
 # Add Application Gateway Ingress Controller
