@@ -48,6 +48,8 @@ az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
 
 Results:
 
+<!--expected_similarity=0.5-->
+
 ```json
 {
   "id": "/subscriptions/ab9d8365-2f65-47a4-8df4-7e40db70c8d2/resourceGroups/$MY_RESOURCE_GROUP_NAME",
@@ -71,6 +73,8 @@ az storage account create --name $MY_STORAGE_ACCOUNT_NAME --resource-group $MY_R
 ```
 
 Results:
+
+<!--expected_similarity=0.5-->
 
 ```json
 {
@@ -181,6 +185,8 @@ az storage container create --name images --account-name $MY_STORAGE_ACCOUNT_NAM
 
 Results:
 
+<!--expected_similarity=0.5-->
+
 ```json
 {
   "created": true
@@ -218,6 +224,8 @@ az postgres flexible-server create \
 ```
 
 Results:
+
+<!--expected_similarity=0.5-->
 
 ```json
 {
@@ -259,6 +267,8 @@ az cognitiveservices account create \
 ```
 
 Results:
+
+<!--expected_similarity=0.5-->
 
 ```json
 {
@@ -436,6 +446,8 @@ az containerapp show --name $MY_CONTAINER_APP_NAME --resource-group $MY_RESOURCE
 
 Results:
 
+<!--expected_similarity=0.5-->
+
 ```json
 {
   "id": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/providers/Microsoft.App/containerapps/cntestcontainerapp17",
@@ -562,6 +574,8 @@ az postgres flexible-server firewall-rule create \
 ```
 
 Results:
+
+<!--expected_similarity=0.5-->
 
 ```json
 {
