@@ -7,16 +7,6 @@ In this guide, we'll be walking through deploying the necessary resources for a 
 - **Azure Computer Vision** to analyze the images for cats or dogs
 - **Azure Container App** to deploy our code
 
-## Clone the sample repository
-
-First, we're going to clone this repository onto our local machines. This will provide the starter code required to provide the functionality for the simple application outlined above. We can clone with a simple git command.
-
-```bash
-git clone https://github.com/Azure/computer-vision-nextjs-webapp.git
-```
-
-Once cloned, navigate to the root of the repo in your terminal. To preserve saved environment variables, it's important that this terminal window stays open for the duration of the deployment.
-
 ## Define Environment Variables
 
 The first step in this tutorial is to define environment variables. Replace the values with your own.
@@ -33,6 +23,16 @@ export MY_COMPUTER_VISION_NAME=mycomputervisionname
 export MY_CONTAINER_APP_NAME=mycontainerapp
 export MY_CONTAINER_APP_ENV_NAME=mycontainerappenv
 ```
+
+## Clone the sample repository
+
+First, we're going to clone this repository onto our local machines. This will provide the starter code required to provide the functionality for the simple application outlined above. We can clone with a simple git command.
+
+```bash
+git clone https://github.com/Azure/computer-vision-nextjs-webapp.git
+```
+
+Once cloned, navigate to the root of the repo in your terminal. To preserve saved environment variables, it's important that this terminal window stays open for the duration of the deployment.
 
 ## Login to Azure using the CLI
 
