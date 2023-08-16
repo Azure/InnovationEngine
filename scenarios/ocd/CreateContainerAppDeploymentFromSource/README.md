@@ -11,16 +11,8 @@ In this guide, we'll be walking through deploying the necessary resources for a 
 
 First, we're going to clone this repository onto our local machines. This will provide the starter code required to provide the functionality for the simple application outlined above. We can clone with a simple git command.
 
-**With HTTPS**
-
 ```bash
 git clone https://github.com/Azure/computer-vision-nextjs-webapp.git
-```
-
-**With SSH**
-
-```bash
-git clone git@github.com:Azure/computer-vision-nextjs-webapp.git
 ```
 
 Once cloned, navigate to the root of the repo in your terminal. To preserve saved environment variables, it's important that this terminal window stays open for the duration of the deployment.
