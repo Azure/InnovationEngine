@@ -29,7 +29,7 @@ Once cloned, navigate to the root of the repo in your terminal. To preserve save
 
 The first step in this tutorial is to define environment variables. Replace the values with your own.
 
-```bash
+```plaintext
 export MY_RESOURCE_GROUP_NAME=myresourcegroup
 export MY_LOCATION=westus
 export MY_STORAGE_ACCOUNT_NAME=mystorageaccount
