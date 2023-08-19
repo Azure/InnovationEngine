@@ -51,7 +51,6 @@ az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "id": "/subscriptions/ab9d8365-2f65-47a4-8df4-7e40db70c8d2/resourceGroups/$MY_RESOURCE_GROUP_NAME",
@@ -77,7 +76,6 @@ az storage account create --name $MY_STORAGE_ACCOUNT_NAME --resource-group $MY_R
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "accessTier": "Hot",
@@ -188,7 +186,6 @@ az storage container create --name images --account-name $MY_STORAGE_ACCOUNT_NAM
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "created": true
@@ -228,7 +225,6 @@ az postgres flexible-server create \
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "connectionString": "postgresql://$MY_DATABASE_USERNAME:$MY_DATABASE_PASSWORD@$MY_DATABASE_NAME.postgres.database.azure.com/flexibleserverdb?sslmode=require",
@@ -271,7 +267,6 @@ az cognitiveservices account create \
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "etag": "\"090ac83c-0000-0700-0000-64d4fcd80000\"",
@@ -449,7 +444,6 @@ az containerapp show --name $MY_CONTAINER_APP_NAME --resource-group $MY_RESOURCE
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "id": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/providers/Microsoft.App/containerapps/cntestcontainerapp17",
@@ -578,7 +572,6 @@ az postgres flexible-server firewall-rule create \
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "endIpAddress": "20.237.221.47",
