@@ -7,21 +7,23 @@ In this guide, we'll be walking through deploying the necessary resources for a 
 - **Azure Computer Vision** to analyze the images for cats or dogs
 - **Azure Container App** to deploy our code
 
+Note: If you've never created a Computer Vision resource before, you will not be able to create one using the Azure CLI. You must create your first Computer Vision resource from the Azure portal to review and acknowledge the Responsible AI terms and conditions. You can do so here: [Create a Computer Vision Resource](https://portal.azure.com/#create/Microsoft.CognitiveServicesComputerVision). After that, you can create subsequent resources using any deployment tool (SDK, CLI, or ARM template, etc) under the same Azure subscription.
+
 ## Define Environment Variables
 
-The first step in this tutorial is to define environment variables. Replace the values with your own.
+The first step in this tutorial is to define environment variables. **Replace the values on the right with your own unique values.** These values will be used throughout the tutorial to create resources and configure the application. Use lowercase and no special characters for the storage account name.
 
 ```plaintext
-export MY_RESOURCE_GROUP_NAME=myresourcegroup
+export MY_RESOURCE_GROUP_NAME=<your resource group name>
 export MY_LOCATION=westus
-export MY_STORAGE_ACCOUNT_NAME=mystorageaccount
-export $MY_DATABASE_SERVER_NAME=mydatabaseserver
-export $MY_DATABASE_NAME=mydatabase
-export MY_DATABASE_USERNAME=mydatabaseusername
-export MY_DATABASE_PASSWORD=mydatabasepassword
-export MY_COMPUTER_VISION_NAME=mycomputervisionname
-export MY_CONTAINER_APP_NAME=mycontainerapp
-export MY_CONTAINER_APP_ENV_NAME=mycontainerappenv
+export MY_STORAGE_ACCOUNT_NAME=<your storage account name>
+export MY_DATABASE_SERVER_NAME=<your database server name>
+export MY_DATABASE_NAME=<your database name>
+export MY_DATABASE_USERNAME=<your database username>
+export MY_DATABASE_PASSWORD=<your database password>
+export MY_COMPUTER_VISION_NAME=<your computer vision resource name>
+export MY_CONTAINER_APP_NAME=<your container app name>
+export MY_CONTAINER_APP_ENV_NAME=<your container app environment name>
 ```
 
 ## Clone the sample repository
