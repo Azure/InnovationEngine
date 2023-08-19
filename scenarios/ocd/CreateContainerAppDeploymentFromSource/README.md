@@ -34,7 +34,13 @@ First, we're going to clone this repository onto our local machines. This will p
 git clone https://github.com/Azure/computer-vision-nextjs-webapp.git
 ```
 
-Once cloned, navigate to the root of the repo in your terminal. To preserve saved environment variables, it's important that this terminal window stays open for the duration of the deployment.
+Once cloned, navigate to the root of the repo in your terminal. 
+
+```bash
+cd computer-vision-nextjs-webapp
+```
+
+To preserve saved environment variables, it's important that this terminal window stays open for the duration of the deployment.
 
 ## Login to Azure using the CLI
 
@@ -443,7 +449,7 @@ az containerapp up \
     AZURE_STORAGE_ACCOUNT_KEY=$STORAGE_ACCOUNT_KEY
 ```
 
-We can verify that the command was successfull by using:
+We can verify that the command was successful by using:
 
 ```bash
 az containerapp show --name $MY_CONTAINER_APP_NAME --resource-group $MY_RESOURCE_GROUP_NAME
