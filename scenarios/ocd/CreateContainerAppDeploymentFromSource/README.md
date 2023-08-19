@@ -413,7 +413,13 @@ export COMPUTER_VISION_KEY=$(az cognitiveservices account keys list --name $MY_C
 
 ## Deploy the code into a Container App
 
-Now that we've got our storage, database, and Computer Vision resources all set up, we are ready to deploy the application code. To do this, we're going to use Azure Container Apps to host a containerized build of our Next.js app. The `Dockerfile` is already created at the root of the repository, so all we need to do is run a single command to deploy the code. This command will create an Azure Container Registry resource to host our Docker image, an Azure Container App resource which runs the image, and an Azure Container App Environment resource for our image. Let's break down what we're passing into the command.
+Now that we've got our storage, database, and Computer Vision resources all set up, we are ready to deploy the application code. To do this, we're going to use Azure Container Apps to host a containerized build of our Next.js app. The `Dockerfile` is already created at the root of the repository, so all we need to do is run a single command to deploy the code. Before running this command, we first need to install the containerapp extension for the Azure CLI.
+
+```bash
+az extension add --upgrade -n containerapp
+```
+
+This command will create an Azure Container Registry resource to host our Docker image, an Azure Container App resource which runs the image, and an Azure Container App Environment resource for our image. Let's break down what we're passing into the command.
 
 - The basics: resource name, resource group, and the region
 - The name of the Azure Container App Environment resource to use or create
@@ -427,6 +433,8 @@ az containerapp up \
   --environment $MY_CONTAINER_APP_ENV_NAME \
   --context-path . \
   --source . \
+  --target-port 3000 \
+  --ingress external \
   --env-vars \
     AZURE_DATABASE_URL=$DATABASE_URL \
     AZURE_COMPUTER_VISION_KEY=$COMPUTER_VISION_KEY \
@@ -612,7 +620,11 @@ az storage cors add \
   --account-key $STORAGE_ACCOUNT_KEY
 ```
 
-That's it! Feel free to access the newly deployed web app in your browser using the $CONTAINER_APP_URL environment variable.
+That's it! Feel free to access the newly deployed web app in your browser printing the CONTAINER_APP_URL environment variable we added earlier.
+
+```bash
+echo $CONTAINER_APP_URL
+```
 
 ## Next Steps
 
