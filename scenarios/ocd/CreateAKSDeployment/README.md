@@ -6,12 +6,16 @@ Welcome to this tutorial where we will take you step by step in creating an Azur
 The First step in this tutorial is to define environment variables 
 
 ```bash
-export UNIQUE_POSTFIX="$(($RANDOM % 1000 + 1))"
+export UNIQUE_POSTFIX="$(($RANDOM % 254 + 1))"
 export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
 export MY_LOCATION="eastus"
 export MY_AKS_CLUSTER_NAME="myAKSCluster$UNIQUE_POSTFIX"
 export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
 export MY_DNS_LABEL="myAKSCluster$UNIQUE_POSTFIX"
+export MY_VNET_NAME="myVNet$UNIQUE_POSTFIX"
+export MY_VNET_PREFIX="10.$UNIQUE_POSTFIX.0.0/16"
+export MY_SN_NAME="mySN$UNIQUE_POSTFIX"
+export MY_SN_PREFIX="10.$UNIQUE_POSTFIX.0.0/22"
 ```
 
 # Create a resource group
@@ -25,7 +29,7 @@ Results:
 
 ```expected_similarity=0.3
 {
-  "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/resourceGroups/testResourceGroup24763",
+  "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/resourceGroups/myResourceGroup210",
   "location": "eastus",
   "managedBy": null,
   "name": "testResourceGroup",
@@ -34,6 +38,57 @@ Results:
   },
   "tags": null,
   "type": "Microsoft.Resources/resourceGroups"
+}
+```
+
+## Create a virtual network and subnet
+
+A virtual network is the fundamental building block for private networks in Azure. Azure Virtual Network enables Azure resources like VMs to securely communicate with each other and the internet.
+
+```bash
+az network vnet create \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --location $MY_LOCATION \
+    --name $MY_VNET_NAME \
+    --address-prefix $MY_VNET_PREFIX \
+    --subnet-name $MY_SN_NAME \
+    --subnet-prefixes $MY_SN_PREFIX
+```
+Results:
+
+```expected_similarity=0.3
+{
+  "newVNet": {
+    "addressSpace": {
+      "addressPrefixes": [
+        "10.210.0.0/16"
+      ]
+    },
+    "enableDdosProtection": false,
+    "etag": "W/\"1e065114-2ae3-4dee-91eb-c69667e60afb\"",
+    "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210",
+    "location": "eastus",
+    "name": "myVNet210",
+    "provisioningState": "Succeeded",
+    "resourceGroup": "myResourceGroup210",
+    "resourceGuid": "3e54a2e8-32fa-4157-b817-f4e4507dbac9",
+    "subnets": [
+      {
+        "addressPrefix": "10.210.0.0/22",
+        "delegations": [],
+        "etag": "W/\"1e065114-2ae3-4dee-91eb-c69667e60afb\"",
+        "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210/subnets/mySN210",
+        "name": "mySN210",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled",
+        "provisioningState": "Succeeded",
+        "resourceGroup": "myResourceGroup210",
+        "type": "Microsoft.Network/virtualNetworks/subnets"
+      }
+    ],
+    "type": "Microsoft.Network/virtualNetworks",
+    "virtualNetworkPeerings": []
+  }
 }
 ```
 
@@ -46,11 +101,28 @@ az provider register --namespace Microsoft.OperationalInsights
 ```
 
 ## Create AKS Cluster 
-Create an AKS cluster using the az aks create command with the --enable-addons monitoring parameter to enable Container insights. The following example creates a cluster named myAKSCluster with one node:
+Create an AKS cluster using the az aks create command with the --enable-addons monitoring parameter to enable Container insights. The following example creates an autoscaling, availability zone enabled cluster named myAKSCluster:
 
 This will take a few minutes
 ```bash
-az aks create --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AKS_CLUSTER_NAME --node-count 1 --enable-addons monitoring --generate-ssh-keys
+export MY_SN_ID=$(az network vnet subnet list --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name $MY_VNET_NAME --query "[0].id" --output tsv)
+
+az aks create \
+  --resource-group $MY_RESOURCE_GROUP_NAME \
+  --name $MY_AKS_CLUSTER_NAME \
+  --auto-upgrade-channel stable \
+  --enable-cluster-autoscaler \
+  --enable-addons monitoring \
+  --location $MY_LOCATION \
+  --node-count 1 \
+  --min-count 1 \
+  --max-count 3 \
+  --network-plugin azure \
+  --network-policy azure \
+  --vnet-subnet-id $MY_SN_ID \
+  --no-ssh-key \
+  --node-vm-size Standard_DS2_v2 \
+  --zones 1 2 3
 ```
 
 ## Connect to the cluster
