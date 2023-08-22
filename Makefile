@@ -1,4 +1,4 @@
-.PHONY: build-ie build-api build-all run-ie run-api clean
+.PHONY: build-ie build-api build-all run-ie run-api clean test-all
 
 BINARY_DIR := bin
 IE_BINARY := $(BINARY_DIR)/ie
@@ -24,6 +24,7 @@ build-all: build-ie build-api build-runner
 
 test-all:
 	@echo "Running all tests..."
+	@go clean -testcache
 	@go test -v ./...
 
 # ------------------------------- Run targets ----------------------------------
