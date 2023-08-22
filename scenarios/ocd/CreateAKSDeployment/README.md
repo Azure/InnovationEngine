@@ -8,7 +8,7 @@ The First step in this tutorial is to define environment variables
 ```bash
 export UNIQUE_POSTFIX="$(($RANDOM % 1000 + 1))"
 export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
-export MY_LOCATION=eastus
+export MY_LOCATION="eastus"
 export MY_AKS_CLUSTER_NAME="myAKSCluster$UNIQUE_POSTFIX"
 export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
 export MY_DNS_LABEL="myAKSCluster$UNIQUE_POSTFIX"
