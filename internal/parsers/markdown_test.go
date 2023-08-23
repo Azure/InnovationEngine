@@ -5,34 +5,50 @@ import (
 	"testing"
 )
 
-func TestParsingMarkdownTitle(t *testing.T) {
-	// Handle when title is present
-	markdown := []byte(`# Hello World`)
-	document := ParseMarkdownIntoAst(markdown)
-	title, err := ExtractScenarioTitleFromAst(document, markdown)
+func TestParsingScenarioTitles(t *testing.T) {
 
-	if err != nil {
-		t.Errorf("Error parsing title: %s", err)
-	}
+	t.Run("scenario with valid title", func(t *testing.T) {
+		markdown := []byte(`# Hello World`)
+		document := ParseMarkdownIntoAst(markdown)
+		title, err := ExtractScenarioTitleFromAst(document, markdown)
 
-	if title != "Hello World" {
-		t.Errorf("Title is wrong: %s", title)
-	}
+		if err != nil {
+			t.Errorf("Error parsing title: %s", err)
+		}
 
-	// Handle when title is not present
-	markdown = []byte(``)
+		if title != "Hello World" {
+			t.Errorf("Title is wrong: %s", title)
+		}
+	})
 
-	document = ParseMarkdownIntoAst(markdown)
-	title, err = ExtractScenarioTitleFromAst(document, markdown)
+	t.Run("scenario with multiple titles", func(t *testing.T) {
+		markdown := []byte("# Hello World \n # Hello again")
+		document := ParseMarkdownIntoAst(markdown)
+		title, err := ExtractScenarioTitleFromAst(document, markdown)
 
-	if err == nil {
-		t.Errorf("Error should have been thrown")
-	}
+		if err != nil {
+			t.Errorf("Error parsing title: %s", err)
+		}
 
-	if title != "" {
-		t.Errorf("Title should be empty")
-	}
+		if title != "Hello World" {
+			t.Errorf("Title is wrong: %s", title)
+		}
+	})
 
+	t.Run("scenario without a title", func(t *testing.T) {
+		markdown := []byte(``)
+
+		document := ParseMarkdownIntoAst(markdown)
+		title, err := ExtractScenarioTitleFromAst(document, markdown)
+
+		if err == nil {
+			t.Errorf("Error should have been thrown")
+		}
+
+		if title != "" {
+			t.Errorf("Title should be empty")
+		}
+	})
 }
 
 func TestParsingMarkdownCodeBlocks(t *testing.T) {
