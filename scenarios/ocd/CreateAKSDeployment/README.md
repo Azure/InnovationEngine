@@ -189,7 +189,7 @@ kubectl apply -f azure-vote-start.yml
 
 Validate that the application is running by either visiting the public ip or the application url. The application url can be found by running the following command:
 ```bash
-echo "http://${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
+curl "http://${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
 ```
 
 # Add Application Gateway Ingress Controller
