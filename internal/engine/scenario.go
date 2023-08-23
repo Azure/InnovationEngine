@@ -74,7 +74,11 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scen
 		logging.GlobalLogger.Infof("INI file '%s' does not exist, skipping...", markdownINI)
 	} else {
 		logging.GlobalLogger.Infof("INI file '%s' exists, loading...", markdownINI)
-		environmentVariables = parsers.ParseINIFile(markdownINI)
+		environmentVariables, err = parsers.ParseINIFile(markdownINI)
+
+		if err != nil {
+			return nil, err
+		}
 
 		for key, value := range environmentVariables {
 			logging.GlobalLogger.Debugf("Setting %s=%s\n", key, value)
