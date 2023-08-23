@@ -194,7 +194,7 @@ curl "http://$FQDN"
 ```
 
 # Add HTTPS termination to custom domain 
-At this point in the tutorial you have an AKS web app with Application Gateway as the Ingress controller and a custom domain you can use to access your application. The next step is to add an SSL certificate to the domain so that users can reach your application securely via https.  
+At this point in the tutorial you have an AKS web app with NGINX as the Ingress controller and a custom domain you can use to access your application. The next step is to add an SSL certificate to the domain so that users can reach your application securely via https.  
 
 ## Set Up Cert Manager
 In order to add HTTPS we are going to use Cert Manager. Cert Manager is an open source tool used to obtain and manage SSL certificate for Kubernetes deployments. Cert Manager will obtain certificates from a variety of Issuers, both popular public Issuers as well as private Issuers, and ensure the certificates are valid and up-to-date, and will attempt to renew certificates at a configured time before expiry.
@@ -246,9 +246,9 @@ envsubst < cluster-issuer-prod.yml | kubectl apply -f -
 
 5. Upate Voting App Application to use Cert-Manager to obtain an SSL Certificate. 
 
-    The full YAML file can be found in `azure-vote-agic-ssl-yml`
+    The full YAML file can be found in `azure-vote-nginx-ssl-yml`
 ```bash
-envsubst < azure-vote-agic-ssl.yml | kubectl apply -f -
+envsubst < azure-vote-nginx-ssl.yml | kubectl apply -f -
 ```
 ## Validate application is working
 
