@@ -5,9 +5,8 @@ import (
 	"testing"
 )
 
-func TestParsingScenarioTitles(t *testing.T) {
-
-	t.Run("scenario with valid title", func(t *testing.T) {
+func TestParsingMarkdownHeaders(t *testing.T) {
+	t.Run("Markdown with a valid title", func(t *testing.T) {
 		markdown := []byte(`# Hello World`)
 		document := ParseMarkdownIntoAst(markdown)
 		title, err := ExtractScenarioTitleFromAst(document, markdown)
@@ -21,7 +20,7 @@ func TestParsingScenarioTitles(t *testing.T) {
 		}
 	})
 
-	t.Run("scenario with multiple titles", func(t *testing.T) {
+	t.Run("Markdown with multiple titles", func(t *testing.T) {
 		markdown := []byte("# Hello World \n # Hello again")
 		document := ParseMarkdownIntoAst(markdown)
 		title, err := ExtractScenarioTitleFromAst(document, markdown)
@@ -35,7 +34,7 @@ func TestParsingScenarioTitles(t *testing.T) {
 		}
 	})
 
-	t.Run("scenario without a title", func(t *testing.T) {
+	t.Run("Markdown without a title", func(t *testing.T) {
 		markdown := []byte(``)
 
 		document := ParseMarkdownIntoAst(markdown)
