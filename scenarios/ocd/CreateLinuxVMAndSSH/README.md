@@ -27,7 +27,9 @@ az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
 
 Results:
 
-```expected_similarity=0.3
+<!-- expected_similarity=0.3 -->
+```json   
+{
   "id": "/subscriptions/325e7c34-99fb-4190-aa87-1df746c67705/resourceGroups/myResourceGroup",
   "location": "eastus",
   "managedBy": null,
@@ -37,6 +39,7 @@ Results:
   },
   "tags": null,
   "type": "Microsoft.Resources/resourceGroups"
+}
 ```
 
 ## Create the Virtual Machine
@@ -51,7 +54,9 @@ az vm create --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_VM_NAME --image
 
 Results:
 
-```expected_similarity=0.3
+<!-- expected_similarity=0.3 -->
+```json
+{
   "fqdns": "",
   "id": "/subscriptions/325e7c34-99fb-4190-aa87-1df746c67705/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM",
   "location": "eastus",
@@ -61,6 +66,7 @@ Results:
   "publicIpAddress": "52.147.208.85",
   "resourceGroup": "myResourceGroup",
   "zones": ""
+}
 ```
 
 # Store IP Address of VM in order to SSH
