@@ -16,6 +16,7 @@ export MY_VNET_NAME="myVNet$UNIQUE_POSTFIX"
 export MY_VNET_PREFIX="10.$UNIQUE_POSTFIX.0.0/16"
 export MY_SN_NAME="mySN$UNIQUE_POSTFIX"
 export MY_SN_PREFIX="10.$UNIQUE_POSTFIX.0.0/22"
+export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
 ```
 
 # Create a resource group
@@ -189,7 +190,7 @@ kubectl apply -f azure-vote-start.yml
 
 Validate that the application is running by either visiting the public ip or the application url. The application url can be found by running the following command:
 ```bash
-curl "http://${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
+curl "http://$FQDN"
 ```
 
 # Add Application Gateway Ingress Controller
@@ -351,9 +352,9 @@ helm install cert-manager jetstack/cert-manager --namespace cert-manager --versi
 
     ClusterIssuers are Kubernetes resources that represent certificate authorities (CAs) that are able to generate signed certificates by honoring certificate signing requests. All cert-manager certificates require a referenced issuer that is in a ready condition to attempt to honor the request.
 
-    The issuer we are using can be found in the `cluster-issuer-prod.yaml file`
+    The issuer we are using can be found in the `cluster-issuer-prod.yml file`
 ```bash
-envsubst < cluster-issuer-prod.yaml | kubectl apply -f -
+envsubst < cluster-issuer-prod.yml | kubectl apply -f -
 ```
 
 5. Upate Voting App Application to use Cert-Manager to obtain an SSL Certificate. 
@@ -387,7 +388,7 @@ Run the following command to get the HTTPS endpoint for your application:
 >[!Note]
 > It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via https 
 ```bash
-echo https://$FQDN
+curl https://$FQDN
 ```
 Paste this into the browser to validate your deployment.
 
