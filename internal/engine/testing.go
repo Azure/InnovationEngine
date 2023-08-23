@@ -9,7 +9,6 @@ import (
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/utils"
-	"github.com/xrash/smetrics"
 )
 
 func (e *Engine) TestSteps(steps []Step, env map[string]string) {
@@ -55,41 +54,16 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 						actualOutput := commandOutput.StdOut
 						expectedOutput := block.ExpectedOutput.Content
 						expectedSimilarity := block.ExpectedOutput.ExpectedSimilarity
+						expectedOutputLanguage := block.ExpectedOutput.Language
 
-						if block.ExpectedOutput.Language == "json" {
-							logging.GlobalLogger.Debugf("Comparing JSON strings:\nExpected: %s\nActual%s", expectedOutput, actualOutput)
-							meetsThreshold, err := utils.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
-							if err != nil {
-								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-								fmt.Printf("\033[%dB", lines)
-								fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
-								break loop
-							}
+						err := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedOutputLanguage)
 
-							if !meetsThreshold {
-								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-								fmt.Printf("\033[%dB", lines)
-								fmt.Printf("  %s\n", errorMessageStyle.Render("Expected output does not match actual output."))
-								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(expectedOutput, actualOutput))
-								break loop
-							}
+						if err != nil {
+							logging.GlobalLogger.Errorf("Error comparing command outputs: %s", err.Error())
+							fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
+							moveCursorPositionDown(lines)
+							fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
 
-							if e.Configuration.Verbose {
-								score, _ := utils.ComputeJsonStringSimilarity(actualOutput, expectedOutput)
-
-								actual, _ := utils.OrderJsonFields(actualOutput)
-								expected, _ := utils.OrderJsonFields(expectedOutput)
-
-								logging.GlobalLogger.WithField("actual", actual).WithField("expected", expected).Debugf("JaroWinkler score: %f Expected Similarity: %f", score, expectedSimilarity)
-							}
-						} else {
-							score := smetrics.JaroWinkler(block.ExpectedOutput.Content, commandOutput.StdOut, 0.7, 4)
-							if block.ExpectedOutput.ExpectedSimilarity > score {
-								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-								fmt.Printf("\033[%dB", lines)
-								fmt.Printf("    %s\n", errorMessageStyle.Render("Expected output does not match actual output."))
-								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
-							}
 						}
 
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))

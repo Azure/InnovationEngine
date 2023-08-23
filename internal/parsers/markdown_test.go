@@ -51,20 +51,24 @@ func TestParsingMarkdownHeaders(t *testing.T) {
 }
 
 func TestParsingMarkdownCodeBlocks(t *testing.T) {
-	markdown := []byte(fmt.Sprintf("# Hello World\n ```bash\n%s\n```", "echo Hello"))
 
-	document := ParseMarkdownIntoAst(markdown)
-	codeBlocks := ExtractCodeBlocksFromAst(document, markdown, []string{"bash"})
+	t.Run("Markdown with a valid bash code block", func(t *testing.T) {
+		markdown := []byte(fmt.Sprintf("# Hello World\n ```bash\n%s\n```", "echo Hello"))
 
-	if len(codeBlocks) != 1 {
-		t.Errorf("Code block count is wrong: %d", len(codeBlocks))
-	}
+		document := ParseMarkdownIntoAst(markdown)
+		codeBlocks := ExtractCodeBlocksFromAst(document, markdown, []string{"bash"})
 
-	if codeBlocks[0].Language != "bash" {
-		t.Errorf("Code block language is wrong: %s", codeBlocks[0].Language)
-	}
+		if len(codeBlocks) != 1 {
+			t.Errorf("Code block count is wrong: %d", len(codeBlocks))
+		}
 
-	if codeBlocks[0].Content != "echo Hello\n" {
-		t.Errorf("Code block code is wrong. Expected: %s, Got %s", "echo Hello\\n", codeBlocks[0].Content)
-	}
+		if codeBlocks[0].Language != "bash" {
+			t.Errorf("Code block language is wrong: %s", codeBlocks[0].Language)
+		}
+
+		if codeBlocks[0].Content != "echo Hello\n" {
+			t.Errorf("Code block code is wrong. Expected: %s, Got %s", "echo Hello\\n", codeBlocks[0].Content)
+		}
+	})
+
 }

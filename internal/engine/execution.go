@@ -201,9 +201,25 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 						showCursor()
 
 						if commandErr == nil {
+
+							actualOutput := commandOutput.StdOut
+							expectedOutput := block.ExpectedOutput.Content
+							expectedSimilarity := block.ExpectedOutput.ExpectedSimilarity
+							expectedOutputLanguage := block.ExpectedOutput.Language
+
+							err := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedOutputLanguage)
+
+							if err != nil {
+								logging.GlobalLogger.Errorf("Error comparing command outputs: %s", err.Error())
+								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
+								moveCursorPositionDown(lines)
+								fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
+								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
+								break loop
+							}
+
 							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 
-							moveCursorPositionDown(lines)
 							if e.Configuration.Verbose {
 								fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 							}

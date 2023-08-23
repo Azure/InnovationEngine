@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Azure/InnovationEngine/internal/logging"
+	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/xrash/smetrics"
 )
 
 // Styles used for rendering output to the terminal.
@@ -52,4 +55,35 @@ func indentMultiLineCommand(content string, indentation int) string {
 
 	}
 	return strings.Join(lines, "\n")
+}
+
+// Compares the actual output of a command to the expected output of a command.
+func compareCommandOutputs(actualOutput string, expectedOutput string, expectedSimilarity float64, expectedOutputLanguage string) error {
+	if expectedOutputLanguage == "json" {
+		logging.GlobalLogger.Debugf("Comparing JSON strings:\nExpected: %s\nActual%s", expectedOutput, actualOutput)
+		meetsThreshold, err := utils.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
+
+		if err != nil {
+			return err
+		}
+
+		if !meetsThreshold {
+			return fmt.Errorf(errorMessageStyle.Render("Expected output does not match actual output."))
+		}
+
+		score, _ := utils.ComputeJsonStringSimilarity(actualOutput, expectedOutput)
+
+		actual, _ := utils.OrderJsonFields(actualOutput)
+		expected, _ := utils.OrderJsonFields(expectedOutput)
+
+		logging.GlobalLogger.WithField("actual", actual).WithField("expected", expected).Debugf("Jaro score: %f Expected Similarity: %f", score, expectedSimilarity)
+	} else {
+		score := smetrics.JaroWinkler(expectedOutput, actualOutput, 0.7, 4)
+
+		if expectedSimilarity > score {
+			return fmt.Errorf(errorMessageStyle.Render("Expected output does not match actual output."))
+		}
+	}
+
+	return nil
 }
