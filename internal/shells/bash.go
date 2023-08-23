@@ -33,7 +33,7 @@ func loadEnvFile(path string) (map[string]string, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, "=") {
-			parts := strings.Split(line, "=")
+			parts := strings.SplitN(line, "=", 2) // Split at the first "=" only
 			env[parts[0]] = parts[1]
 		}
 	}
