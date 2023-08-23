@@ -193,118 +193,6 @@ Validate that the application is running by either visiting the public ip or the
 curl "http://$FQDN"
 ```
 
-# Add Application Gateway Ingress Controller
-The Application Gateway Ingress Controller (AGIC) is a Kubernetes application, which makes it possible for Azure Kubernetes Service (AKS) customers to leverage Azure's native Application Gateway L7 load-balancer to expose cloud software to the Internet. AGIC monitors the Kubernetes cluster it is hosted on and continuously updates an Application Gateway, so that selected services are exposed to the Internet
-
-AGIC helps eliminate the need to have another load balancer/public IP in front of the AKS cluster and avoids multiple hops in your datapath before requests reach the AKS cluster. Application Gateway talks to pods using their private IP directly and does not require NodePort or KubeProxy services. This also brings better performance to your deployments.
-
-## Deploy a new Application Gateway 
-1. Create a Public IP for Application Gateway by running the following:
-```bash
-az network public-ip create --name $PUBLIC_IP_NAME --resource-group $RESOURCE_GROUP_NAME --allocation-method Static --sku Standard
-```
-
-2. Create a Virtual Network(Vnet) for Application Gateway by running the following:
-```bash
-az network vnet create --name $VNET_NAME --resource-group $RESOURCE_GROUP_NAME --address-prefix 11.0.0.0/8 --subnet-name $SUBNET_NAME --subnet-prefix 11.1.0.0/16 
-```
-
-3. Create Application Gateway by running the following:
-
-> [!NOTE] 
-> This will take around 5 minutes 
-```bash
-az network application-gateway create --name $APPLICATION_GATEWAY_NAME --location $RESOURCE_LOCATION --resource-group $RESOURCE_GROUP_NAME --sku Standard_v2 --public-ip-address $PUBLIC_IP_NAME --vnet-name $VNET_NAME --subnet $SUBNET_NAME --priority 100
-```
-
-## Enable the AGIC add-on in existing AKS cluster 
-
-1. Store Application Gateway ID by running the following:
-```bash
-APPLICATION_GATEWAY_ID=$(az network application-gateway show --name $APPLICATION_GATEWAY_NAME --resource-group $RESOURCE_GROUP_NAME --output tsv --query "id") 
-```
-
-2. Enable Application Gateway Ingress Addon by running the following:
-
-> [!NOTE]
-> This will take a few minutes
-```bash
-az aks enable-addons --name $AKS_CLUSTER_NAME --resource-group $RESOURCE_GROUP_NAME --addon ingress-appgw --appgw-id $APPLICATION_GATEWAY_ID
-```
-
-3. Store the node resource as an environment variable group by running the following:
-```bash
-NODE_RESOURCE_GROUP=$(az aks show --name myAKSCluster --resource-group $RESOURCE_GROUP_NAME --output tsv --query "nodeResourceGroup")
-```
-4. Store the Vnet name as an environment variable by running the following:
-```bash
-AKS_VNET_NAME=$(az network vnet list --resource-group $NODE_RESOURCE_GROUP --output tsv --query "[0].name")
-```
-
-5. Store the Vnet ID as an environment variable by running the following:
-```bash
-AKS_VNET_ID=$(az network vnet show --name $AKS_VNET_NAME --resource-group $NODE_RESOURCE_GROUP --output tsv --query "id")
-```
-## Peer the two virtual networks together 
-Since we deployed the AKS cluster in its own virtual network and the Application Gateway in another virtual network, you'll need to peer the two virtual networks together in order for traffic to flow from the Application Gateway to the pods in the cluster. Peering the two virtual networks requires running the Azure CLI command two separate times, to ensure that the connection is bi-directional. The first command will create a peering connection from the Application Gateway virtual network to the AKS virtual network; the second command will create a peering connection in the other direction.
-
-1. Create the peering from Application Gateway to AKS by runnig the following:
-```bash
-az network vnet peering create --name $APPGW_TO_AKS_PEERING_NAME --resource-group $RESOURCE_GROUP_NAME --vnet-name $VNET_NAME --remote-vnet $AKS_VNET_ID --allow-vnet-access 
-```
-
-2. Store Id of Application Gateway Vnet As enviornment variable by running the following:
-```bash
-APPLICATION_GATEWAY_VNET_ID=$(az network vnet show --name $VNET_NAME --resource-group $RESOURCE_GROUP_NAME --output tsv --query "id")
-```
-3. Create Vnet Peering from AKS to Application Gateway
-```bash
-az network vnet peering create --name $AKS_TO_APPGW_PEERING_NAME --resource-group $NODE_RESOURCE_GROUP --vnet-name $AKS_VNET_NAME --remote-vnet $APPLICATION_GATEWAY_VNET_ID --allow-vnet-access
-```
-4. Store New IP address as environment variable by running the following command:
-```bash
-runtime="2 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do export IP_ADDRESS=$(az network public-ip show --resource-group $RESOURCE_GROUP_NAME --name $PUBLIC_IP_NAME --query ipAddress --output tsv); if ! [ -z $IP_ADDRESS ]; then break; else sleep 10; fi; done
-```
-
-## Apply updated application YAML complete with AGIC
-In order to use the Application Gateway Ingress Controller we deployed we need to re-deploy an update Voting App YML file. The following command will update the application:
-
-The full updated YML file can be viewed at `azure-vote-agic-yml`
-```bash
-kubectl apply -f azure-vote-agic.yml
-```
-
-## Check that the application is reachable
-Now that the Application Gateway is set up to serve traffic to the AKS cluster, let's verify that your application is reachable. 
-
-Check that the sample application you created is up and running by either visiting the IP address of the Application Gateway that get from running the following command or check with curl. It may take Application Gateway a minute to get the update, so if the Application Gateway is still in an "Updating" state on Portal, then let it finish before trying to reach the IP address. Run the following to check the status:
-```bash
-kubectl get ingress
-```
-
-## Add custom subdomain to AGIC
-Now Application Gateway Ingress has been added to the application gateway the next step is to add a custom domain. This will allow the endpoint to be reached by a human readable URL as well as allow for SSL Termination at the endpoint.
-
-1. Store Unique ID of the Public IP Address as an environment variable by running the following:
-```bash
-export PUBLIC_IP_ID=$(az network public-ip list --query "[?ipAddress!=null]|[?contains(ipAddress, '$IP_ADDRESS')].[id]" --output tsv)
-```
-
-2. Update public IP to respond to custom domain requests by running the following:
-```bash
-az network public-ip update --ids $PUBLIC_IP_ID --dns-name $CUSTOM_DOMAIN_NAME
-```
-
-3. Validate the resource is reachable via the custom domain.
-```bash
-az network public-ip show --ids $PUBLIC_IP_ID --query "[dnsSettings.fqdn]" --output tsv
-```
-
-4. Store the custom domain as en enviornment variable. This will be used later when setting up https termination.
-```bash
-export FQDN=$(az network public-ip show --ids $PUBLIC_IP_ID --query "[dnsSettings.fqdn]" --output tsv)
-```
-
 # Add HTTPS termination to custom domain 
 At this point in the tutorial you have an AKS web app with Application Gateway as the Ingress controller and a custom domain you can use to access your application. The next step is to add an SSL certificate to the domain so that users can reach your application securely via https.  
 
@@ -320,7 +208,6 @@ kubectl create namespace cert-manager
 ```bash
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.0/cert-manager.crds.yaml
 ```
-
 
 3. Add the certmanager.k8s.io/disable-validation: "true" label to the cert-manager namespace by running the following. This will allow the system resources that cert-manager requires to bootstrap TLS to be created in its own namespace.
 ```bash
