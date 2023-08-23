@@ -142,7 +142,7 @@ if ! [ -x "$(command -v kubectl)" ]; then az aks install-cli; fi
 > This will overwrite any existing credentials with the same entry
 
 ```bash
-az aks get-credentials --resource-group $RESOURCE_GROUP_NAME --name $AKS_CLUSTER_NAME --overwrite-existing
+az aks get-credentials --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AKS_CLUSTER_NAME --overwrite-existing
 ```
 
 3. Verify the connection to your cluster using the kubectl get command. This command returns a list of the cluster nodes.
