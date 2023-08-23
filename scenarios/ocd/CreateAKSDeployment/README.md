@@ -11,7 +11,7 @@ export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
 export MY_LOCATION="eastus"
 export MY_AKS_CLUSTER_NAME="myAKSCluster$UNIQUE_POSTFIX"
 export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
-export MY_DNS_LABEL="myAKSCluster$UNIQUE_POSTFIX"
+export MY_DNS_LABEL="mydnslabel$UNIQUE_POSTFIX"
 export MY_VNET_NAME="myVNet$UNIQUE_POSTFIX"
 export MY_VNET_PREFIX="10.$UNIQUE_POSTFIX.0.0/16"
 export MY_SN_NAME="mySN$UNIQUE_POSTFIX"
@@ -154,7 +154,7 @@ kubectl get nodes
 ## Install NGINX Ingress Controller
 
 ```bash
-export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --sku Standard --allocation-method static --query publicIp.ipAddress -o tsv)
+export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${MY_LOCATION} --location  ${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
