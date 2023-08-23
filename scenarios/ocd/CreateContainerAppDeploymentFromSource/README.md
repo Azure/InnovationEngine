@@ -13,17 +13,18 @@ Note: If you've never created a Computer Vision resource before, you will not be
 
 The first step in this tutorial is to define environment variables. **Replace the values on the right with your own unique values.** These values will be used throughout the tutorial to create resources and configure the application. Use lowercase and no special characters for the storage account name.
 
-```plaintext
-export MY_RESOURCE_GROUP_NAME=<your resource group name>
+```bash
+export SUFFIX=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | fold -w 8 | head -n 1)
+export MY_RESOURCE_GROUP_NAME=rg$SUFFIX
 export MY_LOCATION=westus
-export MY_STORAGE_ACCOUNT_NAME=<your storage account name>
-export MY_DATABASE_SERVER_NAME=<your database server name>
-export MY_DATABASE_NAME=<your database name>
-export MY_DATABASE_USERNAME=<your database username>
-export MY_DATABASE_PASSWORD=<your database password>
-export MY_COMPUTER_VISION_NAME=<your computer vision resource name>
-export MY_CONTAINER_APP_NAME=<your container app name>
-export MY_CONTAINER_APP_ENV_NAME=<your container app environment name>
+export MY_STORAGE_ACCOUNT_NAME=storage$SUFFIX
+export MY_DATABASE_SERVER_NAME=dbserver$SUFFIX
+export MY_DATABASE_NAME=db$SUFFIX
+export MY_DATABASE_USERNAME=dbuser$SUFFIX
+export MY_DATABASE_PASSWORD=dbpass$SUFFIX
+export MY_COMPUTER_VISION_NAME=computervision$SUFFIX
+export MY_CONTAINER_APP_NAME=containerapp$SUFFIX
+export MY_CONTAINER_APP_ENV_NAME=containerappenv$SUFFIX
 ```
 
 ## Clone the sample repository
@@ -460,12 +461,12 @@ Results:
 <!--expected_similarity=0.5-->
 ```json
 {
-  "id": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/providers/Microsoft.App/containerapps/cntestcontainerapp17",
+  "id": "/subscriptions/fake3265-2f64-47a4-8df4-7e41ab70c8dh/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.App/containerapps/$MY_CONTAINER_APP_NAME",
   "identity": {
     "type": "None"
   },
   "location": "West US",
-  "name": "cntestcontainerapp17",
+  "name": "$MY_CONTAINER_APP_NAME",
   "properties": {
     "configuration": {
       "activeRevisionsMode": "Single",
@@ -477,7 +478,7 @@ Results:
         "customDomains": null,
         "exposedPort": 0,
         "external": true,
-        "fqdn": "cntestcontainerapp17.kindocean-a506af76.westus.azurecontainerapps.io",
+        "fqdn": "$MY_CONTAINER_APP_NAME.kindocean-a506af76.$MY_LOCATION.azurecontainerapps.io",
         "ipSecurityRestrictions": null,
         "stickySessions": null,
         "targetPort": 3000,
@@ -495,12 +496,12 @@ Results:
       "service": null
     },
     "customDomainVerificationId": "06C64CD176439F8B6CCBBE1B531758828A5CACEABFB30B4DC9750641532924F6",
-    "environmentId": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/providers/Microsoft.App/managedEnvironments/cndbcomputervisionenv11",
-    "eventStreamEndpoint": "https://westus.azurecontainerapps.dev/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/containerApps/cntestcontainerapp17/eventstream",
-    "latestReadyRevisionName": "cntestcontainerapp17--jl6fh75",
-    "latestRevisionFqdn": "cntestcontainerapp17--jl6fh75.kindocean-a506af76.westus.azurecontainerapps.io",
-    "latestRevisionName": "cntestcontainerapp17--jl6fh75",
-    "managedEnvironmentId": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/providers/Microsoft.App/managedEnvironments/cndbcomputervisionenv11",
+    "environmentId": "/subscriptions/fake3265-2f64-47a4-8df4-7e41ab70c8dh/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.App/managedEnvironments/$MY_CONTAINER_APP_ENV_NAME",
+    "eventStreamEndpoint": "https://$MY_LOCATION.azurecontainerapps.dev/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/$MY_RESOURCE_GROUP_NAME/containerApps/$MY_CONTAINER_APP_NAME/eventstream",
+    "latestReadyRevisionName": "$MY_CONTAINER_APP_NAME--jl6fh75",
+    "latestRevisionFqdn": "$MY_CONTAINER_APP_NAME--jl6fh75.kindocean-a506af76.$MY_LOCATION.azurecontainerapps.io",
+    "latestRevisionName": "$MY_CONTAINER_APP_NAME--jl6fh75",
+    "managedEnvironmentId": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.App/managedEnvironments/$MY_CONTAINER_APP_ENV_NAME",
     "outboundIpAddresses": ["20.237.221.47"],
     "provisioningState": "Succeeded",
     "runningStatus": "Running",
@@ -510,27 +511,27 @@ Results:
           "env": [
             {
               "name": "AZURE_DATABASE_URL",
-              "value": "postgres://cndbadmin11:cndbscret11@cntestdb11.postgres.database.azure.com/flexibleserverdb"
+              "value": "$DATABASE_URL"
             },
             {
               "name": "AZURE_COMPUTER_VISION_KEY",
-              "value": "949ad147794046baa8fc22af832c954f"
+              "value": "$COMPUTER_VISION_KEY"
             },
             {
               "name": "AZURE_COMPUTER_VISION_ENDPOINT",
-              "value": "https://westus.api.cognitive.microsoft.com/"
+              "value": "$COMPUTER_VISION_ENDPOINT"
             },
             {
               "name": "AZURE_STORAGE_ACCOUNT_NAME",
-              "value": "cnteststorage14"
+              "value": "$MY_STORAGE_ACCOUNT_NAME"
             },
             {
               "name": "AZURE_STORAGE_ACCOUNT_KEY",
-              "value": "+b/zI8I35ZCrRgPHYsNSc2A1QiLId3aZyAoUlQboDmfVC22wPQUvus2qxqdnLcjq2+SJ7t1DxCLX+AStkCmi3Q=="
+              "value": "$STORAGE_ACCOUNT_KEY"
             }
           ],
           "image": "ralphr123/cn-app",
-          "name": "cntestcontainerapp17",
+          "name": "$MY_CONTAINER_APP_NAME",
           "resources": {
             "cpu": 0.5,
             "ephemeralStorage": "2Gi",
@@ -551,13 +552,13 @@ Results:
     },
     "workloadProfileName": null
   },
-  "resourceGroup": "cn-test3",
+  "resourceGroup": "$MY_RESOURCE_GROUP_NAME",
   "systemData": {
     "createdAt": "2023-08-10T21:50:07.2125698",
-    "createdBy": "ralph.rouhana@gmail.com",
+    "createdBy": "username@domain.com",
     "createdByType": "User",
     "lastModifiedAt": "2023-08-10T21:50:07.2125698",
-    "lastModifiedBy": "ralph.rouhana@gmail.com",
+    "lastModifiedBy": "username@domain.com",
     "lastModifiedByType": "User"
   },
   "type": "Microsoft.App/containerApps"
