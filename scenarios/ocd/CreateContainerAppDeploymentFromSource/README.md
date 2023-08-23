@@ -7,21 +7,24 @@ In this guide, we'll be walking through deploying the necessary resources for a 
 - **Azure Computer Vision** to analyze the images for cats or dogs
 - **Azure Container App** to deploy our code
 
+Note: If you've never created a Computer Vision resource before, you will not be able to create one using the Azure CLI. You must create your first Computer Vision resource from the Azure portal to review and acknowledge the Responsible AI terms and conditions. You can do so here: [Create a Computer Vision Resource](https://portal.azure.com/#create/Microsoft.CognitiveServicesComputerVision). After that, you can create subsequent resources using any deployment tool (SDK, CLI, or ARM template, etc) under the same Azure subscription.
+
 ## Define Environment Variables
 
-The first step in this tutorial is to define environment variables. Replace the values with your own.
+The first step in this tutorial is to define environment variables. **Replace the values on the right with your own unique values.** These values will be used throughout the tutorial to create resources and configure the application. Use lowercase and no special characters for the storage account name.
 
-```plaintext
-export MY_RESOURCE_GROUP_NAME=myresourcegroup
+```bash
+export SUFFIX=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | fold -w 8 | head -n 1)
+export MY_RESOURCE_GROUP_NAME=rg$SUFFIX
 export MY_LOCATION=westus
-export MY_STORAGE_ACCOUNT_NAME=mystorageaccount
-export $MY_DATABASE_SERVER_NAME=mydatabaseserver
-export $MY_DATABASE_NAME=mydatabase
-export MY_DATABASE_USERNAME=mydatabaseusername
-export MY_DATABASE_PASSWORD=mydatabasepassword
-export MY_COMPUTER_VISION_NAME=mycomputervisionname
-export MY_CONTAINER_APP_NAME=mycontainerapp
-export MY_CONTAINER_APP_ENV_NAME=mycontainerappenv
+export MY_STORAGE_ACCOUNT_NAME=storage$SUFFIX
+export MY_DATABASE_SERVER_NAME=dbserver$SUFFIX
+export MY_DATABASE_NAME=db$SUFFIX
+export MY_DATABASE_USERNAME=dbuser$SUFFIX
+export MY_DATABASE_PASSWORD=dbpass$SUFFIX
+export MY_COMPUTER_VISION_NAME=computervision$SUFFIX
+export MY_CONTAINER_APP_NAME=containerapp$SUFFIX
+export MY_CONTAINER_APP_ENV_NAME=containerappenv$SUFFIX
 ```
 
 ## Clone the sample repository
@@ -32,7 +35,7 @@ First, we're going to clone this repository onto our local machines. This will p
 git clone https://github.com/Azure/computer-vision-nextjs-webapp.git
 ```
 
-Once cloned, navigate to the root of the repo in your terminal. To preserve saved environment variables, it's important that this terminal window stays open for the duration of the deployment.
+To preserve saved environment variables, it's important that this terminal window stays open for the duration of the deployment.
 
 ## Login to Azure using the CLI
 
@@ -49,7 +52,6 @@ az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "id": "/subscriptions/ab9d8365-2f65-47a4-8df4-7e40db70c8d2/resourceGroups/$MY_RESOURCE_GROUP_NAME",
@@ -75,7 +77,6 @@ az storage account create --name $MY_STORAGE_ACCOUNT_NAME --resource-group $MY_R
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "accessTier": "Hot",
@@ -186,7 +187,6 @@ az storage container create --name images --account-name $MY_STORAGE_ACCOUNT_NAM
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "created": true
@@ -226,7 +226,6 @@ az postgres flexible-server create \
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "connectionString": "postgresql://$MY_DATABASE_USERNAME:$MY_DATABASE_PASSWORD@$MY_DATABASE_NAME.postgres.database.azure.com/flexibleserverdb?sslmode=require",
@@ -269,7 +268,6 @@ az cognitiveservices account create \
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "etag": "\"090ac83c-0000-0700-0000-64d4fcd80000\"",
@@ -416,7 +414,13 @@ export COMPUTER_VISION_KEY=$(az cognitiveservices account keys list --name $MY_C
 
 ## Deploy the code into a Container App
 
-Now that we've got our storage, database, and Computer Vision resources all set up, we are ready to deploy the application code. To do this, we're going to use Azure Container Apps to host a containerized build of our Next.js app. The `Dockerfile` is already created at the root of the repository, so all we need to do is run a single command to deploy the code. This command will create an Azure Container Registry resource to host our Docker image, an Azure Container App resource which runs the image, and an Azure Container App Environment resource for our image. Let's break down what we're passing into the command.
+Now that we've got our storage, database, and Computer Vision resources all set up, we are ready to deploy the application code. To do this, we're going to use Azure Container Apps to host a containerized build of our Next.js app. The `Dockerfile` is already created at the root of the repository, so all we need to do is run a single command to deploy the code. Before running this command, we first need to install the containerapp extension for the Azure CLI.
+
+```bash
+az extension add --upgrade -n containerapp
+```
+
+This command will create an Azure Container Registry resource to host our Docker image, an Azure Container App resource which runs the image, and an Azure Container App Environment resource for our image. Let's break down what we're passing into the command.
 
 - The basics: resource name, resource group, and the region
 - The name of the Azure Container App Environment resource to use or create
@@ -428,8 +432,10 @@ az containerapp up \
   --resource-group $MY_RESOURCE_GROUP_NAME \
   --location $MY_LOCATION \
   --environment $MY_CONTAINER_APP_ENV_NAME \
-  --context-path . \
-  --source . \
+  --context-path computer-vision-nextjs-webapp \
+  --source computer-vision-nextjs-webapp \
+  --target-port 3000 \
+  --ingress external \
   --env-vars \
     AZURE_DATABASE_URL=$DATABASE_URL \
     AZURE_COMPUTER_VISION_KEY=$COMPUTER_VISION_KEY \
@@ -438,7 +444,7 @@ az containerapp up \
     AZURE_STORAGE_ACCOUNT_KEY=$STORAGE_ACCOUNT_KEY
 ```
 
-We can verify that the command was successfull by using:
+We can verify that the command was successful by using:
 
 ```bash
 az containerapp show --name $MY_CONTAINER_APP_NAME --resource-group $MY_RESOURCE_GROUP_NAME
@@ -447,15 +453,14 @@ az containerapp show --name $MY_CONTAINER_APP_NAME --resource-group $MY_RESOURCE
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
-  "id": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/providers/Microsoft.App/containerapps/cntestcontainerapp17",
+  "id": "/subscriptions/fake3265-2f64-47a4-8df4-7e41ab70c8dh/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.App/containerapps/$MY_CONTAINER_APP_NAME",
   "identity": {
     "type": "None"
   },
   "location": "West US",
-  "name": "cntestcontainerapp17",
+  "name": "$MY_CONTAINER_APP_NAME",
   "properties": {
     "configuration": {
       "activeRevisionsMode": "Single",
@@ -467,7 +472,7 @@ Results:
         "customDomains": null,
         "exposedPort": 0,
         "external": true,
-        "fqdn": "cntestcontainerapp17.kindocean-a506af76.westus.azurecontainerapps.io",
+        "fqdn": "$MY_CONTAINER_APP_NAME.kindocean-a506af76.$MY_LOCATION.azurecontainerapps.io",
         "ipSecurityRestrictions": null,
         "stickySessions": null,
         "targetPort": 3000,
@@ -485,12 +490,12 @@ Results:
       "service": null
     },
     "customDomainVerificationId": "06C64CD176439F8B6CCBBE1B531758828A5CACEABFB30B4DC9750641532924F6",
-    "environmentId": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/providers/Microsoft.App/managedEnvironments/cndbcomputervisionenv11",
-    "eventStreamEndpoint": "https://westus.azurecontainerapps.dev/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/containerApps/cntestcontainerapp17/eventstream",
-    "latestReadyRevisionName": "cntestcontainerapp17--jl6fh75",
-    "latestRevisionFqdn": "cntestcontainerapp17--jl6fh75.kindocean-a506af76.westus.azurecontainerapps.io",
-    "latestRevisionName": "cntestcontainerapp17--jl6fh75",
-    "managedEnvironmentId": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/cn-test3/providers/Microsoft.App/managedEnvironments/cndbcomputervisionenv11",
+    "environmentId": "/subscriptions/fake3265-2f64-47a4-8df4-7e41ab70c8dh/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.App/managedEnvironments/$MY_CONTAINER_APP_ENV_NAME",
+    "eventStreamEndpoint": "https://$MY_LOCATION.azurecontainerapps.dev/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/$MY_RESOURCE_GROUP_NAME/containerApps/$MY_CONTAINER_APP_NAME/eventstream",
+    "latestReadyRevisionName": "$MY_CONTAINER_APP_NAME--jl6fh75",
+    "latestRevisionFqdn": "$MY_CONTAINER_APP_NAME--jl6fh75.kindocean-a506af76.$MY_LOCATION.azurecontainerapps.io",
+    "latestRevisionName": "$MY_CONTAINER_APP_NAME--jl6fh75",
+    "managedEnvironmentId": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.App/managedEnvironments/$MY_CONTAINER_APP_ENV_NAME",
     "outboundIpAddresses": ["20.237.221.47"],
     "provisioningState": "Succeeded",
     "runningStatus": "Running",
@@ -500,27 +505,27 @@ Results:
           "env": [
             {
               "name": "AZURE_DATABASE_URL",
-              "value": "postgres://cndbadmin11:cndbscret11@cntestdb11.postgres.database.azure.com/flexibleserverdb"
+              "value": "$DATABASE_URL"
             },
             {
               "name": "AZURE_COMPUTER_VISION_KEY",
-              "value": "949ad147794046baa8fc22af832c954f"
+              "value": "$COMPUTER_VISION_KEY"
             },
             {
               "name": "AZURE_COMPUTER_VISION_ENDPOINT",
-              "value": "https://westus.api.cognitive.microsoft.com/"
+              "value": "$COMPUTER_VISION_ENDPOINT"
             },
             {
               "name": "AZURE_STORAGE_ACCOUNT_NAME",
-              "value": "cnteststorage14"
+              "value": "$MY_STORAGE_ACCOUNT_NAME"
             },
             {
               "name": "AZURE_STORAGE_ACCOUNT_KEY",
-              "value": "+b/zI8I35ZCrRgPHYsNSc2A1QiLId3aZyAoUlQboDmfVC22wPQUvus2qxqdnLcjq2+SJ7t1DxCLX+AStkCmi3Q=="
+              "value": "$STORAGE_ACCOUNT_KEY"
             }
           ],
           "image": "ralphr123/cn-app",
-          "name": "cntestcontainerapp17",
+          "name": "$MY_CONTAINER_APP_NAME",
           "resources": {
             "cpu": 0.5,
             "ephemeralStorage": "2Gi",
@@ -541,13 +546,13 @@ Results:
     },
     "workloadProfileName": null
   },
-  "resourceGroup": "cn-test3",
+  "resourceGroup": "$MY_RESOURCE_GROUP_NAME",
   "systemData": {
     "createdAt": "2023-08-10T21:50:07.2125698",
-    "createdBy": "ralph.rouhana@gmail.com",
+    "createdBy": "username@domain.com",
     "createdByType": "User",
     "lastModifiedAt": "2023-08-10T21:50:07.2125698",
-    "lastModifiedBy": "ralph.rouhana@gmail.com",
+    "lastModifiedBy": "username@domain.com",
     "lastModifiedByType": "User"
   },
   "type": "Microsoft.App/containerApps"
@@ -576,7 +581,6 @@ az postgres flexible-server firewall-rule create \
 Results:
 
 <!--expected_similarity=0.5-->
-
 ```json
 {
   "endIpAddress": "20.237.221.47",
@@ -617,7 +621,11 @@ az storage cors add \
   --account-key $STORAGE_ACCOUNT_KEY
 ```
 
-That's it! Feel free to access the newly deployed web app in your browser using the $CONTAINER_APP_URL environment variable.
+That's it! Feel free to access the newly deployed web app in your browser printing the CONTAINER_APP_URL environment variable we added earlier.
+
+```bash
+echo $CONTAINER_APP_URL
+```
 
 ## Next Steps
 
