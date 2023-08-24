@@ -6,16 +6,17 @@ Welcome to this tutorial where we will take you step by step in creating an Azur
 The First step in this tutorial is to define environment variables 
 
 ```bash
-export UNIQUE_POSTFIX="$(($RANDOM % 254 + 1))"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
+export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
+export RANDOM_ID="$(openssl rand -hex 3)"
+export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
 export MY_LOCATION="eastus"
-export MY_AKS_CLUSTER_NAME="myAKSCluster$UNIQUE_POSTFIX"
-export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
-export MY_DNS_LABEL="mydnslabel$UNIQUE_POSTFIX"
-export MY_VNET_NAME="myVNet$UNIQUE_POSTFIX"
-export MY_VNET_PREFIX="10.$UNIQUE_POSTFIX.0.0/16"
-export MY_SN_NAME="mySN$UNIQUE_POSTFIX"
-export MY_SN_PREFIX="10.$UNIQUE_POSTFIX.0.0/22"
+export MY_AKS_CLUSTER_NAME="myAKSCluster$RANDOM_ID"
+export MY_PUBLIC_IP_NAME="myPublicIP$RANDOM_ID"
+export MY_DNS_LABEL="mydnslabel$RANDOM_ID"
+export MY_VNET_NAME="myVNet$RANDOM_ID"
+export MY_VNET_PREFIX="10.$NETWORK_PREFIX.0.0/16"
+export MY_SN_NAME="mySN$RANDOM_ID"
+export MY_SN_PREFIX="10.$NETWORK_PREFIX.0.0/22"
 export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
 ```
 
@@ -189,6 +190,9 @@ kubectl apply -f azure-vote-start.yml
 ## Test The Application
 
 Validate that the application is running by either visiting the public ip or the application url. The application url can be found by running the following command:
+
+>[!Note] 
+>It often takes 2-3 minutes for the PODs to be created and the site to be reachable via http
 ```bash
 curl "http://$FQDN"
 ```
