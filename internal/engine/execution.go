@@ -219,6 +219,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 							}
 
 							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
+							moveCursorPositionDown(lines)
 
 							if e.Configuration.Verbose {
 								fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
