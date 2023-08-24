@@ -6,8 +6,6 @@ Welcome to this tutorial where we will create a VM. This tutorial assumes you ar
 
 If you need to install Azure CLI run the following command - curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-testing the changes - by bc
-
 Assuming the pre requisites are met press space bar to proceed
 
 ## Create a resource Group
