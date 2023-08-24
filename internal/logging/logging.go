@@ -66,7 +66,7 @@ func Init(level Level) {
 		DisableQuote:  true,
 	})
 
-	GlobalLogger.SetReportCaller(true)
+	GlobalLogger.SetReportCaller(false)
 	GlobalLogger.SetLevel(level.Integer())
 
 	file, err := os.OpenFile("ie.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -75,6 +75,6 @@ func Init(level Level) {
 		GlobalLogger.SetOutput(file)
 	} else {
 		GlobalLogger.SetOutput(os.Stdout)
-		GlobalLogger.Info("Failed to log to file, using default stderr")
+		GlobalLogger.Warn("Failed to log to file, using default stderr")
 	}
 }

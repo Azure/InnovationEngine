@@ -296,6 +296,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 		}
 	}
 
+	// Report the final status of the deployment (Only applies to one click deployments).
 	ocdStatus.Status = "Succeeded"
 	attachResourceURIsToOCDStatus(&ocdStatus, resourceGroupName, e.Configuration.Environment)
 	reportOCDStatus(ocdStatus, e.Configuration.Environment)
