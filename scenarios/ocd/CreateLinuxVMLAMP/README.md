@@ -1,26 +1,27 @@
 # Variable declaration
 
 ```bash
-export UNIQUE_POSTFIX="$(($RANDOM % 254 + 1))"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
+export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
+export RANDOM_ID="$(openssl rand -hex 3)"
+export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
 export MY_LOCATION="eastus"
-export MY_VM_NAME="myVMName$UNIQUE_POSTFIX"
+export MY_VM_NAME="myVMName$RANDOM_ID"
 export MY_VM_USERNAME="azureadmin"
 export MY_VM_SIZE='Standard_DS2_v2'
 export MY_VM_IMAGE='Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest'
-export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
-export MY_DNS_LABEL="mydnslabel$UNIQUE_POSTFIX"
-export MY_NSG_NAME="myNSGName$UNIQUE_POSTFIX"
-export MY_NSG_SSH_RULE="Allow-Access$UNIQUE_POSTFIX"
-export MY_VM_NIC_NAME="myVMNicName$UNIQUE_POSTFIX"
-export MY_VNET_NAME="myVNet$UNIQUE_POSTFIX"
-export MY_VNET_PREFIX="10.$UNIQUE_POSTFIX.0.0/22"
-export MY_SN_NAME="mySN$UNIQUE_POSTFIX"
-export MY_SN_PREFIX="10.$UNIQUE_POSTFIX.0.0/24"
-export MY_MYSQL_DB_NAME="myDB$UNIQUE_POSTFIX"
-export MY_MYSQL_ADMIN_USERNAME="dbadmin$UNIQUE_POSTFIX"
-export MY_MYSQL_ADMIN_PW="etregdgdfggg$UNIQUE_POSTFIX"
-export MY_MYSQL_SN_NAME="myMySQLSN$UNIQUE_POSTFIX"
+export MY_PUBLIC_IP_NAME="myPublicIP$RANDOM_ID"
+export MY_DNS_LABEL="mydnslabel$RANDOM_ID"
+export MY_NSG_NAME="myNSGName$RANDOM_ID"
+export MY_NSG_SSH_RULE="Allow-Access$RANDOM_ID"
+export MY_VM_NIC_NAME="myVMNicName$RANDOM_ID"
+export MY_VNET_NAME="myVNet$RANDOM_ID"
+export MY_VNET_PREFIX="10.$NETWORK_PREFIX.0.0/22"
+export MY_SN_NAME="mySN$RANDOM_ID"
+export MY_SN_PREFIX="10.$NETWORK_PREFIX.0.0/24"
+export MY_MYSQL_DB_NAME="mydb$RANDOM_ID"
+export MY_MYSQL_ADMIN_USERNAME="dbadmin$RANDOM_ID"
+export MY_MYSQL_ADMIN_PW="etregdgdfggg$RANDOM_ID"
+export MY_MYSQL_SN_NAME="myMySQLSN$RANDOM_ID"
 export MY_WP_ADMIN_PW="$(openssl rand -base64 32)"
 export MY_WP_ADMIN_USER="wpcliadmin"
 export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
@@ -395,13 +396,13 @@ write_files:
             index index.php;
 
             location / {
-                try_files $uri $uri/ /index.php?$args;
+                try_files \$uri \$uri/ /index.php?\$args;
             }
             location ~ \.php$ {
                 include fastcgi_params;
                 fastcgi_intercept_errors on;
                 fastcgi_pass php;
-                fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_param  SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
             }
             location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
                     expires max;
@@ -427,10 +428,14 @@ write_files:
 
 runcmd:
   - sed -i "s/;cgi.fix_pathinfo.*/cgi.fix_pathinfo = 1/" /etc/php/8.1/fpm/php.ini
+  - sed -i 's/^max_execution_time \= .*/max_execution_time \= 300/g' /etc/php/8.1/fpm/php.ini
+  - sed -i 's/^upload_max_filesize \= .*/upload_max_filesize \= 64M/g' /etc/php/8.1/fpm/php.ini
+  - sed -i 's/^post_max_size \= .*/post_max_size \= 64M/g' /etc/php/8.1/fpm/php.ini
   - systemctl restart php8.1-fpm
   - systemctl restart nginx
-  - certbot run -n --nginx --agree-tos -d $FQDN -m bla@bla.com --redirect
+  - certbot --nginx certonly --non-interactive --agree-tos -d $FQDN -m dummy@dummy.com --redirect
   - ln -s /etc/nginx/sites-available/$FQDN.conf /etc/nginx/sites-enabled/
+  - rm /etc/nginx/sites-enabled/default
   - systemctl restart nginx
   - curl --url https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar --output /tmp/wp-cli.phar
   - mv /tmp/wp-cli.phar /usr/local/bin/wp
@@ -439,10 +444,12 @@ runcmd:
   - mkdir -m 0755 -p /var/www/$FQDN
   - chown -R azureadmin:www-data /var/www/$FQDN
   - sudo -u azureadmin -i -- wp core download --path=/var/www/$FQDN
-  - sudo -u azureadmin -i -- wp core config --dbhost=mydb56.mysql.database.azure.com --dbname=wp001 --dbuser=$MY_MYSQL_ADMIN_USERNAME --dbpass=$MY_MYSQL_ADMIN_PW --path=/var/www/$FQDN
-  - sudo -u azureadmin -i -- wp db create --path=/var/www/$FQDN
+  - sudo -u azureadmin -i -- wp config create --dbhost=$MY_MYSQL_DB_NAME.mysql.database.azure.com --dbname=wp001 --dbuser=$MY_MYSQL_ADMIN_USERNAME --dbpass=$MY_MYSQL_ADMIN_PW --path=/var/www/$FQDN
   - sudo -u azureadmin -i -- wp core install --url=$FQDN --title="Azure hosted blog" --admin_user=$MY_WP_ADMIN_USER --admin_password=$MY_WP_ADMIN_PW --admin_email=example@example.org --path=/var/www/$FQDN 
   - sudo -u azureadmin -i -- wp plugin update --all --path=/var/www/$FQDN
+  - chmod 600 /var/www/$FQDN/wp-config.php
+  - mkdir -p -m 0775 /var/www/$FQDN/wp-content/uploads
+  - chgrp www-data /var/www/$FQDN/wp-content/uploads
 EOF
 ```
 
@@ -476,6 +483,10 @@ Results:
 # Create Azure MySQL Flexible Server
 
 ```bash
+echo "Your MySQL user $MY_MYSQL_ADMIN_USERNAME password is: $MY_WP_ADMIN_PW" 
+```
+
+```bash
 az mysql flexible-server create \
     --admin-password $MY_MYSQL_ADMIN_PW \
     --admin-user $MY_MYSQL_ADMIN_USERNAME \
@@ -484,6 +495,7 @@ az mysql flexible-server create \
     --iops 500 \
     --location $MY_LOCATION \
     --name $MY_MYSQL_DB_NAME \
+    --database-name wp001 \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --sku-name Standard_B2s \
     --storage-auto-grow Disabled \
@@ -513,6 +525,36 @@ Results:
 }
 ```
 
+## Disable Azure MySQL Flexible Server SSL connection for Wordpress
+```bash
+az mysql flexible-server parameter set \
+    -g $MY_RESOURCE_GROUP_NAME \
+    -s $MY_MYSQL_DB_NAME \
+    -n require_secure_transport -v "OFF" -o JSON
+```
+
+Results:
+```expected_similarity=0.3
+{
+  "allowedValues": "ON,OFF",
+  "currentValue": "OFF",
+  "dataType": "Enumeration",
+  "defaultValue": "ON",
+  "description": "Whether client connections to the server are required to use some form of secure transport. When this variable is enabled, the server permits only TCP/IP connections that use SSL, or connections that use a socket file (on Unix) or shared memory (on Windows). ",9cc74d5e-1162-4b90-8696-65f3d6a3f7d0 -ApiId 00000003-0000-0000-c000-000000000000 -PermissionId 5f8c59db-677d-491f-a6b8-5f174b11ec1d
+  "documentationLink": "https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_require_secure_transport",
+  "id": "/subscriptions/7f9b0964-9093-4e26-b299-451fea2d435d/resourceGroups/myResourceGroup0e0a96/providers/Microsoft.DBforMySQL/flexibleServers/mydb0e0a96/configurations/require_secure_transport",
+  "isConfigPendingRestart": "False",
+  "isDynamicConfig": "True",
+  "isReadOnly": "False",
+  "name": "require_secure_transport",
+  "resourceGroup": "myResourceGroup0e0a96",
+  "source": "user-override",
+  "systemData": null,
+  "type": "Microsoft.DBforMySQL/flexibleServers/configurations",
+  "value": "OFF"
+}
+```
+
 # Create VM
 
 ```bash
@@ -533,22 +575,3 @@ az vm create \
     --nics $MY_VM_NIC_NAME \
     --custom-data cloud-init.txt 
 ```
-
-
-
-## Then, replace the examples below with the info for your WordPress database:
-wp core config create --dbhost=host.db --dbname=prefix_db --dbuser=username --dbpass=password
-
-wp db create
-## Change permissions for wp-config.php
-chmod 600 wp-config.php
-
-## Configure wp-config.php
-wp core install --url=yourwebsite.com --title="Your Blog Title" --admin_name=wordpress_admin --admin_password=4Long&Strong1 --admin_email=you@example.com
-wp plugin update --all
-
-## Enable file uploads
-cd wp-content
-mkdir uploads
-chgrp web uploads/
-chmod 775 uploads/
