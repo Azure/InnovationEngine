@@ -6,12 +6,18 @@ Welcome to this tutorial where we will take you step by step in creating an Azur
 The First step in this tutorial is to define environment variables 
 
 ```bash
-export UNIQUE_POSTFIX="$(($RANDOM % 1000 + 1))"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
-export MY_LOCATION=eastus
-export MY_AKS_CLUSTER_NAME="myAKSCluster$UNIQUE_POSTFIX"
-export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
-export MY_DNS_LABEL="myAKSCluster$UNIQUE_POSTFIX"
+export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
+export RANDOM_ID="$(openssl rand -hex 3)"
+export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
+export MY_LOCATION="eastus"
+export MY_AKS_CLUSTER_NAME="myAKSCluster$RANDOM_ID"
+export MY_PUBLIC_IP_NAME="myPublicIP$RANDOM_ID"
+export MY_DNS_LABEL="mydnslabel$RANDOM_ID"
+export MY_VNET_NAME="myVNet$RANDOM_ID"
+export MY_VNET_PREFIX="10.$NETWORK_PREFIX.0.0/16"
+export MY_SN_NAME="mySN$RANDOM_ID"
+export MY_SN_PREFIX="10.$NETWORK_PREFIX.0.0/22"
+export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
 ```
 
 # Create a resource group
@@ -23,9 +29,10 @@ az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
 ```
 Results:
 
-```expected_similarity=0.3
+<!-- expected_similarity=0.3 -->
+```JSON
 {
-  "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/resourceGroups/testResourceGroup24763",
+  "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/resourceGroups/myResourceGroup210",
   "location": "eastus",
   "managedBy": null,
   "name": "testResourceGroup",
@@ -34,6 +41,58 @@ Results:
   },
   "tags": null,
   "type": "Microsoft.Resources/resourceGroups"
+}
+```
+
+## Create a virtual network and subnet
+
+A virtual network is the fundamental building block for private networks in Azure. Azure Virtual Network enables Azure resources like VMs to securely communicate with each other and the internet.
+
+```bash
+az network vnet create \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --location $MY_LOCATION \
+    --name $MY_VNET_NAME \
+    --address-prefix $MY_VNET_PREFIX \
+    --subnet-name $MY_SN_NAME \
+    --subnet-prefixes $MY_SN_PREFIX
+```
+Results:
+
+<!-- expected_similarity=0.3 -->
+```JSON
+{
+  "newVNet": {
+    "addressSpace": {
+      "addressPrefixes": [
+        "10.210.0.0/16"
+      ]
+    },
+    "enableDdosProtection": false,
+    "etag": "W/\"1e065114-2ae3-4dee-91eb-c69667e60afb\"",
+    "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210",
+    "location": "eastus",
+    "name": "myVNet210",
+    "provisioningState": "Succeeded",
+    "resourceGroup": "myResourceGroup210",
+    "resourceGuid": "3e54a2e8-32fa-4157-b817-f4e4507dbac9",
+    "subnets": [
+      {
+        "addressPrefix": "10.210.0.0/22",
+        "delegations": [],
+        "etag": "W/\"1e065114-2ae3-4dee-91eb-c69667e60afb\"",
+        "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210/subnets/mySN210",
+        "name": "mySN210",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled",
+        "provisioningState": "Succeeded",
+        "resourceGroup": "myResourceGroup210",
+        "type": "Microsoft.Network/virtualNetworks/subnets"
+      }
+    ],
+    "type": "Microsoft.Network/virtualNetworks",
+    "virtualNetworkPeerings": []
+  }
 }
 ```
 
@@ -46,11 +105,28 @@ az provider register --namespace Microsoft.OperationalInsights
 ```
 
 ## Create AKS Cluster 
-Create an AKS cluster using the az aks create command with the --enable-addons monitoring parameter to enable Container insights. The following example creates a cluster named myAKSCluster with one node:
+Create an AKS cluster using the az aks create command with the --enable-addons monitoring parameter to enable Container insights. The following example creates an autoscaling, availability zone enabled cluster named myAKSCluster:
 
 This will take a few minutes
 ```bash
-az aks create --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AKS_CLUSTER_NAME --node-count 1 --enable-addons monitoring --generate-ssh-keys
+export MY_SN_ID=$(az network vnet subnet list --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name $MY_VNET_NAME --query "[0].id" --output tsv)
+
+az aks create \
+  --resource-group $MY_RESOURCE_GROUP_NAME \
+  --name $MY_AKS_CLUSTER_NAME \
+  --auto-upgrade-channel stable \
+  --enable-cluster-autoscaler \
+  --enable-addons monitoring \
+  --location $MY_LOCATION \
+  --node-count 1 \
+  --min-count 1 \
+  --max-count 3 \
+  --network-plugin azure \
+  --network-policy azure \
+  --vnet-subnet-id $MY_SN_ID \
+  --no-ssh-key \
+  --node-vm-size Standard_DS2_v2 \
+  --zones 1 2 3
 ```
 
 ## Connect to the cluster
@@ -70,7 +146,7 @@ if ! [ -x "$(command -v kubectl)" ]; then az aks install-cli; fi
 > This will overwrite any existing credentials with the same entry
 
 ```bash
-az aks get-credentials --resource-group $RESOURCE_GROUP_NAME --name $AKS_CLUSTER_NAME --overwrite-existing
+az aks get-credentials --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AKS_CLUSTER_NAME --overwrite-existing
 ```
 
 3. Verify the connection to your cluster using the kubectl get command. This command returns a list of the cluster nodes.
@@ -82,7 +158,8 @@ kubectl get nodes
 ## Install NGINX Ingress Controller
 
 ```bash
-export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --sku Standard --allocation-method static --query publicIp.ipAddress -o tsv)
+export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${MY_LOCATION} --location ${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
+
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
@@ -116,124 +193,51 @@ kubectl apply -f azure-vote-start.yml
 ## Test The Application
 
 Validate that the application is running by either visiting the public ip or the application url. The application url can be found by running the following command:
+
+>[!Note] 
+>It often takes 2-3 minutes for the PODs to be created and the site to be reachable via http
 ```bash
-echo "http://${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
+runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get pods -l app=azure-vote-front -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'); echo $STATUS; if [ "$STATUS" = 'True' ]; then break; else sleep 10; fi; done
+
+curl "http://$FQDN"
 ```
+Results:
 
-# Add Application Gateway Ingress Controller
-The Application Gateway Ingress Controller (AGIC) is a Kubernetes application, which makes it possible for Azure Kubernetes Service (AKS) customers to leverage Azure's native Application Gateway L7 load-balancer to expose cloud software to the Internet. AGIC monitors the Kubernetes cluster it is hosted on and continuously updates an Application Gateway, so that selected services are exposed to the Internet
+<!-- expected_similarity=0.3 -->
+```HTML
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="stylesheet" type="text/css" href="/static/default.css">
+    <title>Azure Voting App</title>
 
-AGIC helps eliminate the need to have another load balancer/public IP in front of the AKS cluster and avoids multiple hops in your datapath before requests reach the AKS cluster. Application Gateway talks to pods using their private IP directly and does not require NodePort or KubeProxy services. This also brings better performance to your deployments.
+    <script language="JavaScript">
+        function send(form){
+        }
+    </script>
 
-## Deploy a new Application Gateway 
-1. Create a Public IP for Application Gateway by running the following:
-```bash
-az network public-ip create --name $PUBLIC_IP_NAME --resource-group $RESOURCE_GROUP_NAME --allocation-method Static --sku Standard
-```
-
-2. Create a Virtual Network(Vnet) for Application Gateway by running the following:
-```bash
-az network vnet create --name $VNET_NAME --resource-group $RESOURCE_GROUP_NAME --address-prefix 11.0.0.0/8 --subnet-name $SUBNET_NAME --subnet-prefix 11.1.0.0/16 
-```
-
-3. Create Application Gateway by running the following:
-
-> [!NOTE] 
-> This will take around 5 minutes 
-```bash
-az network application-gateway create --name $APPLICATION_GATEWAY_NAME --location $RESOURCE_LOCATION --resource-group $RESOURCE_GROUP_NAME --sku Standard_v2 --public-ip-address $PUBLIC_IP_NAME --vnet-name $VNET_NAME --subnet $SUBNET_NAME --priority 100
-```
-
-## Enable the AGIC add-on in existing AKS cluster 
-
-1. Store Application Gateway ID by running the following:
-```bash
-APPLICATION_GATEWAY_ID=$(az network application-gateway show --name $APPLICATION_GATEWAY_NAME --resource-group $RESOURCE_GROUP_NAME --output tsv --query "id") 
-```
-
-2. Enable Application Gateway Ingress Addon by running the following:
-
-> [!NOTE]
-> This will take a few minutes
-```bash
-az aks enable-addons --name $AKS_CLUSTER_NAME --resource-group $RESOURCE_GROUP_NAME --addon ingress-appgw --appgw-id $APPLICATION_GATEWAY_ID
-```
-
-3. Store the node resource as an environment variable group by running the following:
-```bash
-NODE_RESOURCE_GROUP=$(az aks show --name myAKSCluster --resource-group $RESOURCE_GROUP_NAME --output tsv --query "nodeResourceGroup")
-```
-4. Store the Vnet name as an environment variable by running the following:
-```bash
-AKS_VNET_NAME=$(az network vnet list --resource-group $NODE_RESOURCE_GROUP --output tsv --query "[0].name")
-```
-
-5. Store the Vnet ID as an environment variable by running the following:
-```bash
-AKS_VNET_ID=$(az network vnet show --name $AKS_VNET_NAME --resource-group $NODE_RESOURCE_GROUP --output tsv --query "id")
-```
-## Peer the two virtual networks together 
-Since we deployed the AKS cluster in its own virtual network and the Application Gateway in another virtual network, you'll need to peer the two virtual networks together in order for traffic to flow from the Application Gateway to the pods in the cluster. Peering the two virtual networks requires running the Azure CLI command two separate times, to ensure that the connection is bi-directional. The first command will create a peering connection from the Application Gateway virtual network to the AKS virtual network; the second command will create a peering connection in the other direction.
-
-1. Create the peering from Application Gateway to AKS by runnig the following:
-```bash
-az network vnet peering create --name $APPGW_TO_AKS_PEERING_NAME --resource-group $RESOURCE_GROUP_NAME --vnet-name $VNET_NAME --remote-vnet $AKS_VNET_ID --allow-vnet-access 
-```
-
-2. Store Id of Application Gateway Vnet As enviornment variable by running the following:
-```bash
-APPLICATION_GATEWAY_VNET_ID=$(az network vnet show --name $VNET_NAME --resource-group $RESOURCE_GROUP_NAME --output tsv --query "id")
-```
-3. Create Vnet Peering from AKS to Application Gateway
-```bash
-az network vnet peering create --name $AKS_TO_APPGW_PEERING_NAME --resource-group $NODE_RESOURCE_GROUP --vnet-name $AKS_VNET_NAME --remote-vnet $APPLICATION_GATEWAY_VNET_ID --allow-vnet-access
-```
-4. Store New IP address as environment variable by running the following command:
-```bash
-runtime="2 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do export IP_ADDRESS=$(az network public-ip show --resource-group $RESOURCE_GROUP_NAME --name $PUBLIC_IP_NAME --query ipAddress --output tsv); if ! [ -z $IP_ADDRESS ]; then break; else sleep 10; fi; done
-```
-
-## Apply updated application YAML complete with AGIC
-In order to use the Application Gateway Ingress Controller we deployed we need to re-deploy an update Voting App YML file. The following command will update the application:
-
-The full updated YML file can be viewed at `azure-vote-agic-yml`
-```bash
-kubectl apply -f azure-vote-agic.yml
-```
-
-## Check that the application is reachable
-Now that the Application Gateway is set up to serve traffic to the AKS cluster, let's verify that your application is reachable. 
-
-Check that the sample application you created is up and running by either visiting the IP address of the Application Gateway that get from running the following command or check with curl. It may take Application Gateway a minute to get the update, so if the Application Gateway is still in an "Updating" state on Portal, then let it finish before trying to reach the IP address. Run the following to check the status:
-```bash
-kubectl get ingress
-```
-
-## Add custom subdomain to AGIC
-Now Application Gateway Ingress has been added to the application gateway the next step is to add a custom domain. This will allow the endpoint to be reached by a human readable URL as well as allow for SSL Termination at the endpoint.
-
-1. Store Unique ID of the Public IP Address as an environment variable by running the following:
-```bash
-export PUBLIC_IP_ID=$(az network public-ip list --query "[?ipAddress!=null]|[?contains(ipAddress, '$IP_ADDRESS')].[id]" --output tsv)
-```
-
-2. Update public IP to respond to custom domain requests by running the following:
-```bash
-az network public-ip update --ids $PUBLIC_IP_ID --dns-name $CUSTOM_DOMAIN_NAME
-```
-
-3. Validate the resource is reachable via the custom domain.
-```bash
-az network public-ip show --ids $PUBLIC_IP_ID --query "[dnsSettings.fqdn]" --output tsv
-```
-
-4. Store the custom domain as en enviornment variable. This will be used later when setting up https termination.
-```bash
-export FQDN=$(az network public-ip show --ids $PUBLIC_IP_ID --query "[dnsSettings.fqdn]" --output tsv)
+</head>
+<body>
+    <div id="container">
+        <form id="form" name="form" action="/"" method="post"><center>
+        <div id="logo">Azure Voting App</div>
+        <div id="space"></div>
+        <div id="form">
+        <button name="vote" value="Cats" onclick="send()" class="button button1">Cats</button>
+        <button name="vote" value="Dogs" onclick="send()" class="button button2">Dogs</button>
+        <button name="vote" value="reset" onclick="send()" class="button button3">Reset</button>
+        <div id="space"></div>
+        <div id="space"></div>
+        <div id="results"> Cats - 0 | Dogs - 0 </div>
+        </form>
+        </div>
+    </div>
+</body>
+</html>
 ```
 
 # Add HTTPS termination to custom domain 
-At this point in the tutorial you have an AKS web app with Application Gateway as the Ingress controller and a custom domain you can use to access your application. The next step is to add an SSL certificate to the domain so that users can reach your application securely via https.  
+At this point in the tutorial you have an AKS web app with NGINX as the Ingress controller and a custom domain you can use to access your application. The next step is to add an SSL certificate to the domain so that users can reach your application securely via https.  
 
 ## Set Up Cert Manager
 In order to add HTTPS we are going to use Cert Manager. Cert Manager is an open source tool used to obtain and manage SSL certificate for Kubernetes deployments. Cert Manager will obtain certificates from a variety of Issuers, both popular public Issuers as well as private Issuers, and ensure the certificates are valid and up-to-date, and will attempt to renew certificates at a configured time before expiry.
@@ -247,7 +251,6 @@ kubectl create namespace cert-manager
 ```bash
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.0/cert-manager.crds.yaml
 ```
-
 
 3. Add the certmanager.k8s.io/disable-validation: "true" label to the cert-manager namespace by running the following. This will allow the system resources that cert-manager requires to bootstrap TLS to be created in its own namespace.
 ```bash
@@ -279,16 +282,16 @@ helm install cert-manager jetstack/cert-manager --namespace cert-manager --versi
 
     ClusterIssuers are Kubernetes resources that represent certificate authorities (CAs) that are able to generate signed certificates by honoring certificate signing requests. All cert-manager certificates require a referenced issuer that is in a ready condition to attempt to honor the request.
 
-    The issuer we are using can be found in the `cluster-issuer-prod.yaml file`
+    The issuer we are using can be found in the `cluster-issuer-prod.yml file`
 ```bash
-envsubst < cluster-issuer-prod.yaml | kubectl apply -f -
+envsubst < cluster-issuer-prod.yml | kubectl apply -f -
 ```
 
 5. Upate Voting App Application to use Cert-Manager to obtain an SSL Certificate. 
 
-    The full YAML file can be found in `azure-vote-agic-ssl-yml`
+    The full YAML file can be found in `azure-vote-nginx-ssl.yml`
 ```bash
-envsubst < azure-vote-agic-ssl.yml | kubectl apply -f -
+envsubst < azure-vote-nginx-ssl.yml | kubectl apply -f -
 ```
 ## Validate application is working
 
@@ -302,10 +305,10 @@ Validate SSL certificate is True by running the follow command:
 ```bash
 kubectl get certificate --output jsonpath={..status.conditions[0].status}
 ```
-
 Results:
 
-```expected_similarity=0.8
+<!-- expected_similarity=0.3 -->
+```ASCII
 True
 ```
 
@@ -315,9 +318,45 @@ Run the following command to get the HTTPS endpoint for your application:
 >[!Note]
 > It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via https 
 ```bash
-echo https://$FQDN
+runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); echo $STATUS; if [ "$STATUS" = "$MY_STATIC_IP" ]; then break; else sleep 10; fi; done
+
+curl https://$FQDN
 ```
-Paste this into the browser to validate your deployment.
+Results:
+
+<!-- expected_similarity=0.3 -->
+```HTML
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="stylesheet" type="text/css" href="/static/default.css">
+    <title>Azure Voting App</title>
+
+    <script language="JavaScript">
+        function send(form){
+        }
+    </script>
+
+</head>
+<body>
+    <div id="container">
+        <form id="form" name="form" action="/"" method="post"><center>
+        <div id="logo">Azure Voting App</div>
+        <div id="space"></div>
+        <div id="form">
+        <button name="vote" value="Cats" onclick="send()" class="button button1">Cats</button>
+        <button name="vote" value="Dogs" onclick="send()" class="button button2">Dogs</button>
+        <button name="vote" value="reset" onclick="send()" class="button button3">Reset</button>
+        <div id="space"></div>
+        <div id="space"></div>
+        <div id="results"> Cats - 0 | Dogs - 0 </div>
+        </form>
+        </div>
+    </div>
+</body>
+</html>
+```
+
 
 ## Next Steps
 
