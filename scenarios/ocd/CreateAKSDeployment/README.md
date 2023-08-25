@@ -159,6 +159,7 @@ kubectl get nodes
 
 ```bash
 export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${MY_LOCATION} --location ${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
+
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
@@ -196,7 +197,43 @@ Validate that the application is running by either visiting the public ip or the
 >[!Note] 
 >It often takes 2-3 minutes for the PODs to be created and the site to be reachable via http
 ```bash
+runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get pods -l app=azure-vote-front -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'); echo $STATUS; if [ "$STATUS" = 'True' ]; then break; else sleep 10; fi; done
+
 curl "http://$FQDN"
+```
+Results:
+
+<!-- expected_similarity=0.3 -->
+```HTML
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="stylesheet" type="text/css" href="/static/default.css">
+    <title>Azure Voting App</title>
+
+    <script language="JavaScript">
+        function send(form){
+        }
+    </script>
+
+</head>
+<body>
+    <div id="container">
+        <form id="form" name="form" action="/"" method="post"><center>
+        <div id="logo">Azure Voting App</div>
+        <div id="space"></div>
+        <div id="form">
+        <button name="vote" value="Cats" onclick="send()" class="button button1">Cats</button>
+        <button name="vote" value="Dogs" onclick="send()" class="button button2">Dogs</button>
+        <button name="vote" value="reset" onclick="send()" class="button button3">Reset</button>
+        <div id="space"></div>
+        <div id="space"></div>
+        <div id="results"> Cats - 0 | Dogs - 0 </div>
+        </form>
+        </div>
+    </div>
+</body>
+</html>
 ```
 
 # Add HTTPS termination to custom domain 
@@ -252,7 +289,7 @@ envsubst < cluster-issuer-prod.yml | kubectl apply -f -
 
 5. Upate Voting App Application to use Cert-Manager to obtain an SSL Certificate. 
 
-    The full YAML file can be found in `azure-vote-nginx-ssl-yml`
+    The full YAML file can be found in `azure-vote-nginx-ssl.yml`
 ```bash
 envsubst < azure-vote-nginx-ssl.yml | kubectl apply -f -
 ```
@@ -268,10 +305,10 @@ Validate SSL certificate is True by running the follow command:
 ```bash
 kubectl get certificate --output jsonpath={..status.conditions[0].status}
 ```
-
 Results:
 
-```expected_similarity=0.8
+<!-- expected_similarity=0.3 -->
+```ASCII
 True
 ```
 
@@ -281,9 +318,45 @@ Run the following command to get the HTTPS endpoint for your application:
 >[!Note]
 > It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via https 
 ```bash
+runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); echo $STATUS; if [ "$STATUS" = "$MY_STATIC_IP" ]; then break; else sleep 10; fi; done
+
 curl https://$FQDN
 ```
-Paste this into the browser to validate your deployment.
+Results:
+
+<!-- expected_similarity=0.3 -->
+```HTML
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="stylesheet" type="text/css" href="/static/default.css">
+    <title>Azure Voting App</title>
+
+    <script language="JavaScript">
+        function send(form){
+        }
+    </script>
+
+</head>
+<body>
+    <div id="container">
+        <form id="form" name="form" action="/"" method="post"><center>
+        <div id="logo">Azure Voting App</div>
+        <div id="space"></div>
+        <div id="form">
+        <button name="vote" value="Cats" onclick="send()" class="button button1">Cats</button>
+        <button name="vote" value="Dogs" onclick="send()" class="button button2">Dogs</button>
+        <button name="vote" value="reset" onclick="send()" class="button button3">Reset</button>
+        <div id="space"></div>
+        <div id="space"></div>
+        <div id="results"> Cats - 0 | Dogs - 0 </div>
+        </form>
+        </div>
+    </div>
+</body>
+</html>
+```
+
 
 ## Next Steps
 
