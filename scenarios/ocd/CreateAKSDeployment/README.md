@@ -29,7 +29,8 @@ az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
 ```
 Results:
 
-```expected_similarity=0.3
+<!-- expected_similarity=0.3 -->
+```JSON
 {
   "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/resourceGroups/myResourceGroup210",
   "location": "eastus",
@@ -58,7 +59,8 @@ az network vnet create \
 ```
 Results:
 
-```expected_similarity=0.3
+<!-- expected_similarity=0.3 -->
+```JSON
 {
   "newVNet": {
     "addressSpace": {
