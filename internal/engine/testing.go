@@ -33,7 +33,7 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 			done := make(chan error)
 			var commandOutput shells.CommandOutput
 			go func(block parsers.CodeBlock) {
-				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, false)
+				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
 				commandOutput = output
 				done <- err
 			}(block)
