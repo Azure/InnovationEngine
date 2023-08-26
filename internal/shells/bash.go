@@ -50,10 +50,11 @@ func appendToBashHistory(command string, filePath string) error {
 	defer file.Close()
 
 	// Lock the file to prevent other processes from writing to it concurrently
+	// and then  unlock after we're done writing to it.
 	if err := unix.Flock(int(file.Fd()), unix.LOCK_EX); err != nil {
 		return fmt.Errorf("failed to lock file: %w", err)
 	}
-	defer unix.Flock(int(file.Fd()), unix.LOCK_UN) // Unlock the file when done
+	defer unix.Flock(int(file.Fd()), unix.LOCK_UN)
 
 	// Append the command and a newline to the file
 	_, err = file.WriteString(command + "\n")
@@ -144,10 +145,8 @@ func ExecuteBashCommand(command string, config BashCommandConfiguration) (Comman
 	err = commandToExecute.Run()
 
 	// TODO(vmarcella): Find a better way to handle this.
-	if config.InteractiveCommand && !config.WriteToHistory {
+	if config.InteractiveCommand {
 		return CommandOutput{}, err
-	} else if config.InteractiveCommand && config.WriteToHistory {
-		return CommandOutput{}, fmt.Errorf("interactive commands cannot be written to history")
 	}
 
 	standardOutput, standardError := stdoutBuffer.String(), stderrBuffer.String()
