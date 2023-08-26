@@ -112,7 +112,7 @@ func findResourceGroupName(commandOutput string) string {
 
 // Find all the deployed resources in a resource group.
 func findAllDeployedResourceURIs(resourceGroup string) []string {
-	output, err := shells.ExecuteBashCommand("az resource list -g"+resourceGroup, map[string]string{}, true, false)
+	output, err := shells.ExecuteBashCommand("az resource list -g"+resourceGroup, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
 
 	if err != nil {
 		logging.GlobalLogger.Error("Failed to list deployments", err)
@@ -187,7 +187,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				hideCursor()
 
 				go func(block parsers.CodeBlock) {
-					output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
+					output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
 					commandOutput = output
 					done <- err
 				}(block)
@@ -270,7 +270,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					reportOCDStatus(ocdStatus, e.Configuration.Environment)
 				}
 
-				output, err := shells.ExecuteBashCommand(block.Content, utils.CopyMap(env), true, interactiveCommand)
+				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: true})
 
 				if err == nil {
 					showCursor()

@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/Azure/InnovationEngine/internal/utils"
 )
 
@@ -40,6 +42,29 @@ func loadEnvFile(path string) (map[string]string, error) {
 	return env, nil
 }
 
+func appendToBashHistory(command string, filePath string) error {
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	// Lock the file to prevent other processes from writing to it concurrently
+	if err := unix.Flock(int(file.Fd()), unix.LOCK_EX); err != nil {
+		return fmt.Errorf("failed to lock file: %w", err)
+	}
+	defer unix.Flock(int(file.Fd()), unix.LOCK_UN) // Unlock the file when done
+
+	// Append the command and a newline to the file
+	_, err = file.WriteString(command + "\n")
+	if err != nil {
+		return fmt.Errorf("failed to write to file: %w", err)
+	}
+
+	return nil
+
+}
+
 // Resets the stored environment variables file.
 func ResetStoredEnvironmentVariables() error {
 	return os.Remove(environmentStateFile)
@@ -50,8 +75,15 @@ type CommandOutput struct {
 	StdErr string
 }
 
+type BashCommandConfiguration struct {
+	EnvironmentVariables map[string]string
+	InheritEnvironment   bool
+	InteractiveCommand   bool
+	WriteToHistory       bool
+}
+
 // Executes a bash command and returns the output or error.
-func ExecuteBashCommand(command string, env map[string]string, inheritEnvironment bool, forwardInputOutput bool) (CommandOutput, error) {
+func ExecuteBashCommand(command string, config BashCommandConfiguration) (CommandOutput, error) {
 	var commandWithStateSaved = []string{
 		command,
 		"IE_LAST_COMMAND_EXIT_CODE=\"$?\"",
@@ -63,7 +95,7 @@ func ExecuteBashCommand(command string, env map[string]string, inheritEnvironmen
 
 	var stdoutBuffer, stderrBuffer bytes.Buffer
 
-	if forwardInputOutput {
+	if config.InteractiveCommand {
 		commandToExecute.Stdout = os.Stdout
 		commandToExecute.Stderr = os.Stderr
 		commandToExecute.Stdin = os.Stdin
@@ -73,7 +105,7 @@ func ExecuteBashCommand(command string, env map[string]string, inheritEnvironmen
 		commandToExecute.Stderr = &stderrBuffer
 	}
 
-	if inheritEnvironment {
+	if config.InheritEnvironment {
 		commandToExecute.Env = os.Environ()
 	}
 
@@ -84,19 +116,38 @@ func ExecuteBashCommand(command string, env map[string]string, inheritEnvironmen
 	// isolated command calls.
 	envFromPreviousStep, err := loadEnvFile(environmentStateFile)
 	if err == nil {
-		merged := utils.MergeMaps(env, envFromPreviousStep)
+		merged := utils.MergeMaps(config.EnvironmentVariables, envFromPreviousStep)
 		for k, v := range merged {
 			commandToExecute.Env = append(commandToExecute.Env, fmt.Sprintf("%s=%s", k, v))
 		}
 	} else {
-		for k, v := range env {
+		for k, v := range config.EnvironmentVariables {
 			commandToExecute.Env = append(commandToExecute.Env, fmt.Sprintf("%s=%s", k, v))
 		}
 	}
 
+	if config.WriteToHistory {
+
+		homeDir, err := utils.GetHomeDirectory()
+
+		if err != nil {
+			return CommandOutput{}, fmt.Errorf("failed to get home directory: %w", err)
+		}
+
+		err = appendToBashHistory(command, homeDir+"/.bash_history")
+
+		if err != nil {
+			return CommandOutput{}, fmt.Errorf("failed to write command to history: %w", err)
+		}
+	}
+
 	err = commandToExecute.Run()
-	if forwardInputOutput {
+
+	// TODO(vmarcella): Find a better way to handle this.
+	if config.InteractiveCommand && !config.WriteToHistory {
 		return CommandOutput{}, err
+	} else if config.InteractiveCommand && config.WriteToHistory {
+		return CommandOutput{}, fmt.Errorf("interactive commands cannot be written to history")
 	}
 
 	standardOutput, standardError := stdoutBuffer.String(), stderrBuffer.String()
