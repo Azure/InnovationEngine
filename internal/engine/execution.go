@@ -270,7 +270,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					reportOCDStatus(ocdStatus, e.Configuration.Environment)
 				}
 
-				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: true})
+				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: false})
 
 				if err == nil {
 					showCursor()
