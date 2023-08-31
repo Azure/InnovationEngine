@@ -33,7 +33,7 @@ Results:
 <!-- expected_similarity=0.3 -->
 ```JSON
 {
-  "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/resourceGroups/myResourceGroup210",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup210",
   "location": "eastus",
   "managedBy": null,
   "name": "testResourceGroup",
@@ -70,19 +70,16 @@ Results:
       ]
     },
     "enableDdosProtection": false,
-    "etag": "W/\"1e065114-2ae3-4dee-91eb-c69667e60afb\"",
-    "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210",
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210",
     "location": "eastus",
     "name": "myVNet210",
     "provisioningState": "Succeeded",
     "resourceGroup": "myResourceGroup210",
-    "resourceGuid": "3e54a2e8-32fa-4157-b817-f4e4507dbac9",
     "subnets": [
       {
         "addressPrefix": "10.210.0.0/22",
         "delegations": [],
-        "etag": "W/\"1e065114-2ae3-4dee-91eb-c69667e60afb\"",
-        "id": "/subscriptions/bb318642-28fd-482d-8d07-79182df07999/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210/subnets/mySN210",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210/subnets/mySN210",
         "name": "mySN210",
         "privateEndpointNetworkPolicies": "Disabled",
         "privateLinkServiceNetworkPolicies": "Enabled",
