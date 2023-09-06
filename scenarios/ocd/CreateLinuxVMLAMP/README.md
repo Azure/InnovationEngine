@@ -43,6 +43,7 @@ export MY_MYSQL_SN_NAME="myMySQLSN$RANDOM_ID"
 export MY_WP_ADMIN_PW="$(openssl rand -base64 32)"
 export MY_WP_ADMIN_USER="wpcliadmin"
 export MY_AZURE_USER=$(az account show --query user.name --output tsv)
+export MY_AZURE_USER_ID=$(az ad user list --filter "mail eq '$MY_AZURE_USER'" --query "[0].id" -o tsv)
 export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
 ```
 
@@ -701,7 +702,7 @@ export MY_RESOURCE_GROUP_ID=$(az group show --resource-group $MY_RESOURCE_GROUP_
 
 az role assignment create \
     --role "Virtual Machine Administrator Login" \
-    --assignee $MY_AZURE_USER \
+    --assignee $MY_AZURE_USER_ID \
     --scope $MY_RESOURCE_GROUP_ID
 ```
 Results:
