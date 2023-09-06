@@ -59,7 +59,7 @@ func indentMultiLineCommand(content string, indentation int) string {
 
 // Compares the actual output of a command to the expected output of a command.
 func compareCommandOutputs(actualOutput string, expectedOutput string, expectedSimilarity float64, expectedOutputLanguage string) error {
-	if expectedOutputLanguage == "json" {
+	if strings.ToLower(expectedOutputLanguage) == "json" {
 		logging.GlobalLogger.Debugf("Comparing JSON strings:\nExpected: %s\nActual%s", expectedOutput, actualOutput)
 		meetsThreshold, err := utils.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
 
