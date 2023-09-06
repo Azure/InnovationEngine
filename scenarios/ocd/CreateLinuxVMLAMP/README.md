@@ -653,7 +653,7 @@ Results:
 It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
 
 ```bash
-runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(az vm show --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_VM_NAME --show-details --query powerState -o tsv); echo $STATUS; if [ "$STATUS" = 'VM running' ]; then break; else sleep 10; fi; done
+runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(ssh -o StrictHostKeyChecking=no $FQDN "cloud-init status"); echo $STATUS; if [ "$STATUS" = 'status: done' ]; then break; else sleep 10; fi; done
 ```
 
 ## Enable Azure AD login for a Linux Virtual Machine in Azure
