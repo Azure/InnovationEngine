@@ -50,7 +50,7 @@ export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
 ```bash
 az group create \
     --name $MY_RESOURCE_GROUP_NAME \
-    --location $MY_LOCATION
+    --location $MY_LOCATION -o JSON
 ```
 Results:
 
@@ -83,7 +83,7 @@ az network vnet create \
     --location $MY_LOCATION \
     --address-prefix $MY_VNET_PREFIX \
     --subnet-name $MY_SN_NAME \
-    --subnet-prefixes $MY_SN_PREFIX
+    --subnet-prefixes $MY_SN_PREFIX -o JSON
 ```
 Results:
 
@@ -137,7 +137,7 @@ az network public-ip create \
     --sku Standard \
     --allocation-method static \
     --version IPv4 \
-    --zone 1 2 3
+    --zone 1 2 3 -o JSON
 ```
 Results:
 
@@ -183,7 +183,7 @@ Security rules in network security groups enable you to filter the type of netwo
 az network nsg create \
     --name $MY_NSG_NAME \
     --resource-group $MY_RESOURCE_GROUP_NAME \
-    --location $MY_LOCATION
+    --location $MY_LOCATION -o JSON
 ```
 Results:
 
@@ -239,7 +239,7 @@ az network nsg rule create \
     --source-address-prefix '*' \
     --source-port-range '*' \
     --destination-address-prefix '*' \
-    --destination-port-range 22 80 443
+    --destination-port-range 22 80 443 -o JSON
 ```
 Results:
 
@@ -282,7 +282,7 @@ az network nic create \
     --subnet $MY_SN_NAME \
     --vnet-name $MY_VNET_NAME \
     --network-security-group $MY_NSG_NAME \
-    --public-ip-address $MY_PUBLIC_IP_NAME
+    --public-ip-address $MY_PUBLIC_IP_NAME -o JSON
 ```
 Results:
 
@@ -474,7 +474,7 @@ Azure Private DNS Zone integration allows you to resolve the private DNS within 
 ```bash
 az network private-dns zone create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
-    --name $MY_DNS_LABEL.private.mysql.database.azure.com
+    --name $MY_DNS_LABEL.private.mysql.database.azure.com -o JSON
 ```
 Results:
 
@@ -623,7 +623,7 @@ az vm create \
     --generate-ssh-keys \
     --storage-sku Premium_LRS \
     --nics $MY_VM_NIC_NAME \
-    --custom-data cloud-init.txt 
+    --custom-data cloud-init.txt -o JSON
 ```
 Results:
 
@@ -664,7 +664,7 @@ az vm extension set \
     --publisher Microsoft.Azure.ActiveDirectory \
     --name AADSSHLoginForLinux \
     --resource-group $MY_RESOURCE_GROUP_NAME \
-    --vm-name $MY_VM_NAME
+    --vm-name $MY_VM_NAME -o JSON
 ```
 Results:
 
@@ -702,7 +702,7 @@ export MY_RESOURCE_GROUP_ID=$(az group show --resource-group $MY_RESOURCE_GROUP_
 az role assignment create \
     --role "Virtual Machine Administrator Login" \
     --assignee $MY_AZURE_USER_ID \
-    --scope $MY_RESOURCE_GROUP_ID
+    --scope $MY_RESOURCE_GROUP_ID -o JSON
 ```
 Results:
 
