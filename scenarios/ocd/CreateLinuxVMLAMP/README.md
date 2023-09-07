@@ -191,7 +191,7 @@ Results:
 ```JSON
 {
   "NewNSG": {
-    "defaultSecurityRules": [
+    "defaultSecurityRules":
       {
         "access": "Allow",
         "description": "Allow inbound traffic from all VMs in VNET",
@@ -212,7 +212,6 @@ Results:
         "sourcePortRanges": [],
         "type": "Microsoft.Network/networkSecurityGroups/defaultSecurityRules"
       },
-    ],
     "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup104/providers/Microsoft.Network/networkSecurityGroups/protect-vms",
     "location": "eastus",
     "name": "protect-vms",
@@ -296,7 +295,7 @@ Results:
     "disableTcpStateTracking": false,
     "dnsSettings": {
       "appliedDnsServers": [],
-      "dnsServers": [],
+      "dnsServers": []
     },
     "enableAcceleratedNetworking": false,
     "enableIPForwarding": false,
