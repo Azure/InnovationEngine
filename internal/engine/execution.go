@@ -245,6 +245,8 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 							moveCursorPositionDown(lines)
 							fmt.Printf("  %s\n", errorMessageStyle.Render(commandErr.Error()))
 
+							logging.GlobalLogger.Errorf("Error executing command: %s", commandErr.Error())
+
 							ocdStatus.SetError(commandErr)
 							reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
