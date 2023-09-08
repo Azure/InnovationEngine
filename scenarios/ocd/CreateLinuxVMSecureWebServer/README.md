@@ -1,170 +1,496 @@
 # Intro to Create a NGINX Webserver Secured via HTTPS
-Welcome to this tutorial where we will create a VM. This tutorial assumes you are logged into Azure CLI already and have selected a subscription to use with the CLI. If you have not done this already. Press b and hit ctl c to exit the program. Following that you can enter 
+Welcome to this tutorial where we'll guide you through setting up a secure Azure Virtual Machine (VM). 
+Before you start:
+1. Make sure you've installed the Azure CLI. 
 
-'az login' followed by 'az account list --output table' and 'az account set --subscription "name of subscription to use"'
+    To install Azure CLI run the following command on your bash terminal:
+    ```bash
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    ```
+2. Ensure you're logged into Azure.
 
+    ```bash
+    az login
+    ```
+3. Verify you've selected the correct subscription.
 
-If you need to install Azure CLI run the following command - curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    ```bash
+    az account list --output table #To see the list of subscriptions available to you
+    az account set --subscription <subscription-name-or-id>
+    ```
 
+Instructions:
 
-Assuming the pre requisites are met press space bar to proceed
+- If you've met all the prerequisites, press the space bar to continue.
+- If not, press 'b', then 'Ctrl + C' to exit. Follow the subsequent steps provided. Once completed, you can return to and restart the initial program.
 
-## Create a resource Group
-The first thing we need to do is create a resource group. You can do this by running the following command
+## Variable Declaration
 
-'az group create --name $RESOURCE_GROUP_NAME --location $RESOURCE_LOCATION'
+List of all the environment variables you'll need to execute this tutorial:
 
 ```bash
-az group create --name $RESOURCE_GROUP_NAME --location $RESOURCE_LOCATION
+export UNIQUE_POSTFIX="$(($RANDOM % 254 + 1))"
+export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
+export MY_KEY_VAULT="myKeyVault$UNIQUE_POSTFIX"
+export MY_LOCATION="eastus"
+export MY_VM_NAME="myVMName$UNIQUE_POSTFIX"
+export MY_VM_IMAGE='Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest'
+export MY_VM_USERNAME="azureadmin"
+export MY_VM_SIZE='Standard_DS2_v2'
+export MY_VNET_NAME="myVNet$UNIQUE_POSTFIX"
+export MY_VNET_PREFIX="10.$UNIQUE_POSTFIX.0.0/16"
+export MY_SN_NAME="mySN$UNIQUE_POSTFIX"
+export MY_SN_PREFIX="10.$UNIQUE_POSTFIX.0.0/24"
+export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
+export MY_DNS_LABEL="mydnslabel$UNIQUE_POSTFIX"
+export MY_NSG_NAME="myNSGName$UNIQUE_POSTFIX"
+```
+
+## Create a Resource Group
+
+Before you can create a secure Linux VM, create a resource group with az group create. The following example creates a resource group named *myResourceGroup$UNIQUE_POSTFIX* in the *eastus* location:
+
+```bash
+az group create \
+    --name $MY_RESOURCE_GROUP_NAME \
+    --location $MY_LOCATION
 ```
 
 Results:
-```
+
+```JSON
 {
-  "id": "/subscriptions/8c487e6a-8bbb-42bb-81e6-3c122d1bb1c7/resourceGroups/$RESOURCE_GROUP_NAME",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242",
   "location": "eastus",
   "managedBy": null,
-  "name": "$RESOURCE_GROUP_NAME",
+  "name": "myResourceGroup242",
   "properties": {
     "provisioningState": "Succeeded"
   },
   "tags": null,
   "type": "Microsoft.Resources/resourceGroups"
 }
-
 ```
 
-## Create a Virtual Machine (VM)
-You can do this by running the following command:
-
-'az vm create --resource-group $RESOURCE_GROUP_NAME --name $VM_NAME --image $VM_IMAGE --admin-username $VM_ADMIN_USERNAME --generate-ssh-keys'
+# Create an Azure Key Vault
 
 ```bash
-az vm create --resource-group $RESOURCE_GROUP_NAME --name $VM_NAME --image $VM_IMAGE --admin-username $VM_ADMIN_USERNAME --generate-ssh-keys
+az keyvault create \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --name $MY_KEY_VAULT \
+    --location $MY_LOCATION \
+    --retention-days 7\
+    --enabled-for-deployment   
 ```
 
 Results:
 
-```
+```JSON
 {
-  "fqdns": "",
-  "id": "/subscriptions/<guid>/resourceGroups/$RESOURCE_GROUP_NAME2/providers/Microsoft.Compute/virtualMachines/$VM_NAME",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.KeyVault/vaults/myKeyVault242",
   "location": "eastus",
-  "macAddress": "00-0D-3A-23-9A-49",
-  "powerState": "VM running",
-  "privateIpAddress": "10.0.0.4",
-  "publicIpAddress": "52.174.34.95",
-  "resourceGroup": "$RESOURCE_GROUP_NAME"
+  "name": "myKeyVault242",
+  "properties": {
+    "accessPolicies": [
+      {
+        "applicationId": null,
+        "objectId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "permissions": {
+          "certificates": [
+            "all"
+          ],
+          "keys": [
+            "all"
+          ],
+          "secrets": [
+            "all"
+          ],
+          "storage": [
+            "all"
+          ]
+        },
+        "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+      }
+    ],
+    "createMode": null,
+    "enablePurgeProtection": null,
+    "enableRbacAuthorization": null,
+    "enableSoftDelete": true,
+    "enabledForDeployment": true,
+    "enabledForDiskEncryption": null,
+    "enabledForTemplateDeployment": null,
+    "hsmPoolResourceId": null,
+    "networkAcls": null,
+    "privateEndpointConnections": null,
+    "provisioningState": "Succeeded",
+    "publicNetworkAccess": "Enabled",
+    "sku": {
+      "family": "A",
+      "name": "standard"
+    },
+    "softDeleteRetentionInDays": 90,
+    "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "vaultUri": "https://mykeyvault242.vault.azure.net/"
+  },
+  "resourceGroup": "myResourceGroup242",
+  "systemData": {
+    "createdAt": "2023-09-08T14:55:45.691000+00:00",
+    "createdBy": "dummy.dummy@outlook.pt",
+    "createdByType": "User",
+    "lastModifiedAt": "2023-09-08T14:55:45.691000+00:00",
+    "lastModifiedBy": "dummy.dummy@outlook.pt",
+    "lastModifiedByType": "User"
+  },
+  "tags": {},
+  "type": "Microsoft.KeyVault/vaults"
 }
 ```
 
-Congrats you created a VM! Next we will open port 80 and install NGINX. 
-
-## Store IP Address as environment Variable 
-The following command will store the IP Address as a environment variable that we can access later to do SSH
-
-'export IP_ADDRESS=$(az vm show --show-details --resource-group $RESOURCE_GROUP_NAME --name $VM_NAME --query publicIps --output tsv)'
+## Create a certificate and store in Azure key Vault.
+For this article we’ll use a self signed certificate.
 
 ```bash
-export IP_ADDRESS=$(az vm show --show-details --resource-group $RESOURCE_GROUP_NAME --name $VM_NAME --query publicIps --output tsv)
+az keyvault certificate create \
+    --vault-name $MY_KEY_VAULT \
+    --name nginxcert \
+    --policy "$(az keyvault certificate get-default-policy)"
 ```
 
-## Validate IP_ADDRESS
-Let's make sure the IP Address is correctly stored
+```JSON
+{
+  "cancellationRequested": false,
+  "csr": "MIICrjCCAZYCA(...)K6ibPBZqhIH",
+  "error": null,
+  "id": "https://<MY_KEY_VAULT>.vault.azure.net/certificates/nginxcert/pending",
+  "issuerParameters": {
+    "certificateTransparency": null,
+    "certificateType": null,
+    "name": "Self"
+  },
+  "name": "nginxcert",
+  "requestId": "2109088929f3437c9da91bd69827f9a9",
+  "status": "completed",
+  "statusDetails": null,
+  "target": "https://<MY_KEY_VAULT>.vault.azure.net/certificates/nginxcert"
+}
+```
+
+## Set up VM Network
+
+Create the v-net:
 
 ```bash
-echo $IP_ADDRESS
+az network vnet create \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --name $MY_VNET_NAME \
+    --location $MY_LOCATION \ 
+    --address-prefix $MY_VNET_PREFIX \
+    --subnet-name $MY_SN_NAME \
+    --subnet-prefix $MY_SN_PREFIX
 ```
 
-# Open Port 80 to allow web traffic 
-Open port 80 with the following command:
+Results:
 
-'az vm open-port --port 80,443 --resource-group $RESOURCE_GROUP_NAME --name $VM_NAME'
+```JSON
+{
+  "newVNet": {
+    "addressSpace": {
+      "addressPrefixes": [
+        "10.242.0.0/16"
+      ]
+    },
+    "enableDdosProtection": false,
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/virtualNetworks/myVNet242",
+    "location": "eastus",
+    "name": "myVNet242",
+    "provisioningState": "Succeeded",
+    "resourceGroup": "myResourceGroup242",
+    "subnets": [
+      {
+        "addressPrefix": "10.242.0.0/24",
+        "delegations": [],
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/virtualNetworks/myVNet242/subnets/mySN242",
+        "name": "mySN242",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled",
+        "provisioningState": "Succeeded",
+        "resourceGroup": "myResourceGroup242",
+        "type": "Microsoft.Network/virtualNetworks/subnets"
+      }
+    ],
+    "type": "Microsoft.Network/virtualNetworks",
+    "virtualNetworkPeerings": []
+  }
+}
+```
+
+Create a public IP address
 
 ```bash
-az vm open-port --port 80,443 --resource-group $RESOURCE_GROUP_NAME --name $VM_NAME
+az network public-ip create \
+    --name $MY_PUBLIC_IP_NAME \
+    --location $MY_LOCATION \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --dns-name $MY_DNS_LABEL \
+    --sku Standard \
+    --allocation-method static \
+    --version IPv4 \
+    --zone 1 2 3 -o JSON
 ```
 
-## Validate SSH Connection
-To validate you are connected to your VM you can run the following command: 
+Results:
 
-'ssh -o StrictHostKeyChecking=no $VM_ADMIN_USERNAME@$IP_ADDRESS hostname'
-Note - For the following commands we place ssh before hand as we must connect to the VM each time to run commands
+```JSON
+{
+  "publicIp": {
+    "ddosSettings": {
+      "protectionMode": "VirtualNetworkInherited"
+    },
+    "dnsSettings": {
+      "domainNameLabel": "mydnslabel242",
+      "fqdn": "mydnslabel242.eastus.cloudapp.azure.com"
+    },
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/publicIPAddresses/myPublicIP242",
+    "idleTimeoutInMinutes": 4,
+    "ipAddress": "20.62.231.145",
+    "ipTags": [],
+    "location": "eastus",
+    "name": "myPublicIP242",
+    "provisioningState": "Succeeded",
+    "publicIPAddressVersion": "IPv4",
+    "publicIPAllocationMethod": "Static",
+    "resourceGroup": "myResourceGroup242",
+    "sku": {
+      "name": "Standard",
+      "tier": "Regional"
+    },
+    "type": "Microsoft.Network/publicIPAddresses",
+    "zones": [
+      "1",
+      "2",
+      "3"
+    ]
+  }
+}
+```
+
+Create the Network security group:
 
 ```bash
-ssh -o StrictHostKeyChecking=no $VM_ADMIN_USERNAME@$IP_ADDRESS hostname
+az network nsg create \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --name $MY_NSG_NAME \
+    --location $MY_LOCATION
 ```
 
-## Ensure VM is up to date
-Ensure the VM is up to date by running the following command: 
+Results:
 
-'sudo apt update'
-Note - This may take ~30 seconds to complete
+```JSON
+{
+  "NewNSG": {
+    "defaultSecurityRules": [
+      {
+        "access": "Allow",
+        "description": "Allow inbound traffic from all VMs in VNET",
+        "destinationAddressPrefix": "VirtualNetwork",
+        "destinationAddressPrefixes": [],
+        "destinationPortRange": "*",
+        "destinationPortRanges": [],
+        "direction": "Inbound",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/networkSecurityGroups/myNSGName242/defaultSecurityRules/AllowVnetInBound",
+        "name": "AllowVnetInBound",
+        "priority": 65000,
+        "protocol": "*",
+        "provisioningState": "Succeeded",
+        "resourceGroup": "myResourceGroup242",
+        "sourceAddressPrefix": "VirtualNetwork",
+        "sourceAddressPrefixes": [],
+        "sourcePortRange": "*",
+        "sourcePortRanges": [],
+        "type": "Microsoft.Network/networkSecurityGroups/defaultSecurityRules"
+      },
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/networkSecurityGroups/myNSGName242",
+        "location": "eastus",
+        "name": "myNSGName242",
+        "provisioningState": "Succeeded",
+        "resourceGroup": "myResourceGroup242",
+        "resourceGuid": "1aa33cc2-109c-4144-b6eb-64d0d56711a6",
+        "securityRules": [],
+        "type": "Microsoft.Network/networkSecurityGroups"
+  }
+}
+```
+
+Open ports 22 (SSH), 80 (HTTP) and 443 (HTTPS) to allow SSH and Web traffic
 
 ```bash
-ssh $VM_ADMIN_USERNAME@$IP_ADDRESS sudo apt update
+az network nsg rule create \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --nsg-name $MY_NSG_NAME \
+    --name Port_22 \
+    --protocol tcp \
+    --priority 200\
+    --destination-port-range 22 \
+    --access allow
+
+az network nsg rule create \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --nsg-name $MY_NSG_NAME \
+    --name Port_80 \
+    --protocol tcp \
+    --priority 300\
+    --destination-port-range 80 \
+    --access allow
+
+az network nsg rule create \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --nsg-name $MY_NSG_NAME \
+    --name Port_443 \
+    --protocol tcp \
+    --priority 400\
+    --destination-port-range 443 \
+    --access allow
 ```
 
-## Install NGINX
-Run the following command to install the NGINX webserver
+```JSON
 
-'sudo apt install nginx'
-This may take a few minutes...
+{
+  "access": "Allow",
+  "destinationAddressPrefix": "*",
+  "destinationAddressPrefixes": [],
+  "destinationPortRange": "22",
+  "destinationPortRanges": [],
+  "direction": "Inbound",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/networkSecurityGroups/myNSGName242/securityRules/Port_22",
+  "name": "Port_22",
+  "priority": 200,
+  "protocol": "Tcp",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "myResourceGroup242",
+  "sourceAddressPrefix": "*",
+  "sourceAddressPrefixes": [],
+  "sourcePortRange": "*",
+  "sourcePortRanges": [],
+  "type": "Microsoft.Network/networkSecurityGroups/securityRules"
+}
+
+{
+  "access": "Allow",
+  "destinationAddressPrefix": "*",
+  "destinationAddressPrefixes": [],
+  "destinationPortRange": "80",
+  "destinationPortRanges": [],
+  "direction": "Inbound",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/networkSecurityGroups/myNSGName242/securityRules/Port_80",
+  "name": "Port_80",
+  "priority": 300,
+  "protocol": "Tcp",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "myResourceGroup242",
+  "sourceAddressPrefix": "*",
+  "sourceAddressPrefixes": [],
+  "sourcePortRange": "*",
+  "sourcePortRanges": [],
+  "type": "Microsoft.Network/networkSecurityGroups/securityRules"
+}
+
+{
+  "access": "Allow",
+  "destinationAddressPrefix": "*",
+  "destinationAddressPrefixes": [],
+  "destinationPortRange": "443",
+  "destinationPortRanges": [],
+  "direction": "Inbound",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/networkSecurityGroups/myNSGName242/securityRules/Port_443",
+  "name": "Port_443",
+  "priority": 400,
+  "protocol": "Tcp",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "myResourceGroup242",
+  "sourceAddressPrefix": "*",
+  "sourceAddressPrefixes": [],
+  "sourcePortRange": "*",
+  "sourcePortRanges": [],
+  "type": "Microsoft.Network/networkSecurityGroups/securityRules"
+}
+```
+
+Associate NSG to subnet
 
 ```bash
-ssh $VM_ADMIN_USERNAME@$IP_ADDRESS sudo apt --yes --force-yes install nginx
+az network vnet subnet update \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --vnet-name $MY_VNET_NAME \
+    --name $MY_SN_NAME \
+    --network-security-group $MY_NSG_NAME
 ```
 
-## View Your webserver running
+Results:
+
+```JSON
+{
+  "addressPrefix": "10.242.0.0/24",
+  "delegations": [],
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/virtualNetworks/myVNet242/subnets/mySN242",
+  "name": "mySN242",
+  "networkSecurityGroup": {
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.Network/networkSecurityGroups/myNSGName242",
+    "resourceGroup": "myResourceGroup242"
+  },
+  "privateEndpointNetworkPolicies": "Disabled",
+  "privateLinkServiceNetworkPolicies": "Enabled",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "myResourceGroup242",
+  "type": "Microsoft.Network/virtualNetworks/subnets"
+}
+```
+
+## Create the VM
+
+Now create a VM with az vm create. Use the --custom-data parameter to pass in your cloud-init config file. Provide the full path to the cloud-init.txt config if you saved the file outside of your present working directory.
 
 ```bash
-echo $IP_ADDRESS
+cat > cloud-init-nginx.txt <<EOF
+#cloud-config
+# Install, update, and upgrade packages
+package_upgrade: true
+package_update: true
+# Install packages
+packages:
+  - nginx
+runcmd:
+  - mkdir /etc/nginx/ssl
+  - service nginx restart
+EOF
 ```
 
-Congratulations you have now created a Virtual Machine and installed a webserver!
-
-Press 1 to end the tutorial and 2 to secure your webserver via https 
-
-1. Quit the tutorial
-2. Secure your webserver via https and add a custom domain
-
-## Select unique custom domain Name 
-
-When prompted to enter a value for CUSTOM_DOMAIN_NAME enter a custom domain for your webserver Note - This must be unique on Azure
+The following example creates a VM named *myVMName$UNIQUE_POSTFIX*:
 
 ```bash
-echo $CUSTOM_DOMAIN_NAME
+az vm create \
+  --resource-group $MY_RESOURCE_GROUP_NAME \
+  --name $MY_VM_NAME \
+  --image $MY_VM_IMAGE \
+  --vnet-name $MY_VNET_NAME --subnet $MY_SN_NAME \
+  --admin-username $MY_VM_USERNAME \
+  --generate-ssh-keys \
+  --size $MY_VM_SIZE \
+  --custom-data cloud-init-nginx.txt \
+  --public-ip-address $MY_PUBLIC_IP_NAME
 ```
 
-install Az CLI extension for Front Door in order to add HTTPS
+Results:
 
-```bash
-az extension add --name front-door
+```JSON
+{
+  "fqdns": "mydnslabel155.eastus.cloudapp.azure.com",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup155/providers/Microsoft.Compute/virtualMachines/myVMName155",
+  "location": "eastus",
+  "macAddress": "00-0D-3A-56-05-89",
+  "powerState": "VM running",
+  "privateIpAddress": "10.155.0.4",
+  "publicIpAddress": "20.75.217.50",
+  "resourceGroup": "myResourceGroup155",
+  "zones": ""
+}
 ```
-
-## Setting Up HTTPS Terminated EndPoint
-
-The following command will set up a custom domain secured via https. This may take a few minutes 
-```bash
-az network front-door create --backend-address $IP_ADDRESS --name $CUSTOM_DOMAIN_NAME --resource-group $RESOURCE_GROUP_NAME --accepted-protocols Http Https --forwarding-protocol HttpOnly --protocol Http 
-```
-
-## See your webserver running HTTPS
-
-Run the following command to see the url of your webserver.
-NOTE - It may take ~5 minutes for backends to update appropriately and for your site to be secured via https.
-
-```bash
-az network front-door show --name $CUSTOM_DOMAIN_NAME --resource-group $RESOURCE_GROUP_NAME --query frontendEndpoints[*].hostName --output tsv
-```
-
-## Conclusion
-
-You have completed the tutorial! View your resources on portal.azure.com 
-
-# Next Steps
-
-* [VM Documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/)
-* [Create Vm Scale Set](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/flexible-virtual-machine-scale-sets-cli)
-* [Load Balance VMs](https://learn.microsoft.com/en-us/azure/load-balancer/quickstart-load-balancer-standard-public-cli)
-* [Baclup VMs](https://learn.microsoft.com/en-us/azure/virtual-machines/backup-recovery)
