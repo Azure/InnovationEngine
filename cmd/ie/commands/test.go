@@ -34,7 +34,7 @@ var testCommand = &cobra.Command{
 			CorrelationId: "",
 		})
 
-		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"})
+		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"}, nil)
 		if err != nil {
 			panic(err)
 		}

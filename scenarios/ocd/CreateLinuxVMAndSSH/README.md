@@ -7,7 +7,7 @@ The First step in this tutorial is to define environment variables
 ```bash
 export UNIQUE_POSTFIX="$(($RANDOM % 100 + 1))"
 export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
-export MY_LOCATION=EastUS
+export REGION=EastUS
 export MY_VM_NAME="myVM$UNIQUE_POSTFIX"
 export MY_USERNAME=azureuser
 export MY_VM_IMAGE="Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest"
@@ -19,10 +19,10 @@ In order to run commands against Azure using the CLI you need to login. This is 
 
 # Create a resource group
 
-A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $MY_LOCATION parameters.
+A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $REGION parameters.
 
 ```bash
-az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
+az group create --name $MY_RESOURCE_GROUP_NAME --location $REGION
 ```
 
 Results:
