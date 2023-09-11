@@ -22,7 +22,7 @@ func init() {
 	executeCommand.PersistentFlags().String("correlation-id", "", "Adds a correlation ID to the user agent used by a scenarios azure-cli commands.")
 	executeCommand.PersistentFlags().String("subscription", "", "Sets the subscription ID used by a scenarios azure-cli commands. Will rely on the default subscription if not set.")
 	executeCommand.PersistentFlags().String("working-directory", ".", "Sets the working directory for innovation engine to operate out of. Restores the current working directory when finished.")
-	executeCommand.PersistentFlags().StringArray("variables", []string{}, "Sets the environment variable for the scenario. Format: --variables <key>=<value>")
+	executeCommand.PersistentFlags().StringArray("var", []string{}, "Sets an environment variable for the scenario. Format: --var <key>=<value>")
 }
 
 var executeCommand = &cobra.Command{
@@ -42,9 +42,10 @@ var executeCommand = &cobra.Command{
 		subscription, _ := cmd.Flags().GetString("subscription")
 		correlationId, _ := cmd.Flags().GetString("correlation-id")
 		environment, _ := cmd.Flags().GetString("environment")
-		environmentVariables, _ := cmd.Flags().GetStringArray("variables")
+		environmentVariables, _ := cmd.Flags().GetStringArray("var")
 		workingDirectory, _ := cmd.Flags().GetString("working-directory")
 
+		fmt.Println("environmentVariables: ", environmentVariables)
 		userDefinedEnvironmentVariables := make(map[string]string)
 
 		for _, environmentVariable := range environmentVariables {
@@ -69,7 +70,7 @@ var executeCommand = &cobra.Command{
 		})
 
 		// Parse the markdown file and create a scenario
-		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"})
+		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"}, userDefinedEnvironmentVariables)
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating scenario: %s", err)
 			fmt.Printf("Error creating scenario: %s", err)

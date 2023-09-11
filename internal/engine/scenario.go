@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/logging"
@@ -51,11 +52,7 @@ func groupCodeBlocksIntoSteps(blocks []parsers.CodeBlock) []Step {
 // Creates a scenario object from a given markdown file. languagesToExecute is
 // used to filter out code blocks that should not be parsed out of the markdown
 // file.
-func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scenario, error) {
-	if path == "" {
-		return nil, nil
-	}
-
+func CreateScenarioFromMarkdown(path string, languagesToExecute []string, environmentVariableOverrides map[string]string) (*Scenario, error) {
 	if !utils.FileExists(path) {
 		return nil, fmt.Errorf("markdown file '%s' does not exist", path)
 	}
@@ -85,15 +82,62 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scen
 		}
 	}
 
+	// Convert the markdonw into an AST and extract the scenario variables.
 	markdown := parsers.ParseMarkdownIntoAst(source)
 	scenarioVariables := parsers.ExtractScenarioVariablesFromAst(markdown, source)
 	for key, value := range scenarioVariables {
 		environmentVariables[key] = value
 	}
 
+	// Extract the code blocks from the markdown file.
 	codeBlocks := parsers.ExtractCodeBlocksFromAst(markdown, source, languagesToExecute)
 	logging.GlobalLogger.WithField("CodeBlocks", codeBlocks).Debugf("Found %d code blocks", len(codeBlocks))
 
+	varsToExport := utils.CopyMap(environmentVariableOverrides)
+	for key, value := range environmentVariableOverrides {
+		logging.GlobalLogger.Debugf("Attempting to override %s with %s", key, value)
+		exportRegex := regexp.MustCompile(fmt.Sprintf(`export %s=["']?([a-z-A-Z0-9_]+)["']?`, key))
+
+		for index, codeBlock := range codeBlocks {
+			matches := exportRegex.FindAllStringSubmatch(codeBlock.Content, -1)
+
+			if len(matches) != 0 {
+				logging.GlobalLogger.Debugf("Found %d matches for %s, deleting from varsToExport", len(matches), key)
+				delete(varsToExport, key)
+			} else {
+				logging.GlobalLogger.Debugf("Found no matches for %s inside of %s", key, codeBlock.Content)
+			}
+
+			for _, match := range matches {
+				wholeLine := match[0]
+				oldValue := match[1]
+
+				// Replace the old export with the new export statement
+				newLine := strings.Replace(wholeLine, oldValue, value, 1)
+				logging.GlobalLogger.Debugf("Replacing '%s' with '%s'", wholeLine, newLine)
+
+				codeBlocks[index].Content = strings.Replace(codeBlock.Content, wholeLine, newLine, 1)
+			}
+
+		}
+	}
+
+	if len(varsToExport) != 0 {
+		logging.GlobalLogger.Debugf("Found %d variables to export", len(varsToExport))
+		exportCodeBlock := parsers.CodeBlock{
+			Language:       "bash",
+			Content:        "",
+			Header:         "Exporting variables defined via the CLI and not in the markdown file.",
+			ExpectedOutput: parsers.ExpectedOutputBlock{},
+		}
+		for key, value := range varsToExport {
+			exportCodeBlock.Content += fmt.Sprintf("export %s=\"%s\"\n", key, value)
+		}
+
+		codeBlocks = append([]parsers.CodeBlock{exportCodeBlock}, codeBlocks...)
+	}
+
+	// Group the code blocks into steps.
 	steps := groupCodeBlocksIntoSteps(codeBlocks)
 	title, err := parsers.ExtractScenarioTitleFromAst(markdown, source)
 	if err != nil {
@@ -108,6 +152,12 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string) (*Scen
 		Steps:       steps,
 		MarkdownAst: markdown,
 	}, nil
+}
+
+func (s *Scenario) OverwriteEnvironmentVariables(environmentVariables map[string]string) {
+	for key, value := range environmentVariables {
+		s.Environment[key] = value
+	}
 }
 
 // Convert a scenario into a shell script
