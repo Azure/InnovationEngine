@@ -45,9 +45,8 @@ var executeCommand = &cobra.Command{
 		environmentVariables, _ := cmd.Flags().GetStringArray("var")
 		workingDirectory, _ := cmd.Flags().GetString("working-directory")
 
-		fmt.Println("environmentVariables: ", environmentVariables)
-		userDefinedEnvironmentVariables := make(map[string]string)
-
+		// Parse the environment variables
+		cliEnvironmentVariables := make(map[string]string)
 		for _, environmentVariable := range environmentVariables {
 			keyValuePair := strings.SplitN(environmentVariable, "=", 2)
 			if len(keyValuePair) != 2 {
@@ -57,7 +56,7 @@ var executeCommand = &cobra.Command{
 				os.Exit(1)
 			}
 
-			userDefinedEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
+			cliEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
 		}
 
 		innovationEngine := engine.NewEngine(engine.EngineConfiguration{
@@ -70,7 +69,7 @@ var executeCommand = &cobra.Command{
 		})
 
 		// Parse the markdown file and create a scenario
-		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"}, userDefinedEnvironmentVariables)
+		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"}, cliEnvironmentVariables)
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating scenario: %s", err)
 			fmt.Printf("Error creating scenario: %s", err)

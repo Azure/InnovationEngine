@@ -22,7 +22,7 @@ First we will define a few variables that will help with the configuration of th
 export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
 export RANDOM_ID="$(openssl rand -hex 3)"
 export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
-export MY_LOCATION="eastus"
+export REGION="eastus"
 export MY_VM_NAME="myVMName$RANDOM_ID"
 export MY_VM_USERNAME="azureadmin"
 export MY_VM_SIZE='Standard_DS2_v2'
@@ -44,13 +44,13 @@ export MY_WP_ADMIN_PW="$(openssl rand -base64 32)"
 export MY_WP_ADMIN_USER="wpcliadmin"
 export MY_AZURE_USER=$(az account show --query user.name --output tsv)
 export MY_AZURE_USER_ID=$(az ad user list --filter "mail eq '$MY_AZURE_USER'" --query "[0].id" -o tsv)
-export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
+export FQDN="${MY_DNS_LABEL}.${REGION}.cloudapp.azure.com"
 ```
 
 ```bash
 az group create \
     --name $MY_RESOURCE_GROUP_NAME \
-    --location $MY_LOCATION -o JSON
+    --location $REGION -o JSON
 ```
 Results:
 
@@ -80,7 +80,7 @@ Use [az network vnet create](https://learn.microsoft.com/cli/azure/network/vnet#
 az network vnet create \
     --name $MY_VNET_NAME \
     --resource-group $MY_RESOURCE_GROUP_NAME \
-    --location $MY_LOCATION \
+    --location $REGION \
     --address-prefix $MY_VNET_PREFIX \
     --subnet-name $MY_SN_NAME \
     --subnet-prefixes $MY_SN_PREFIX -o JSON
@@ -131,7 +131,7 @@ Use [az network public-ip create](https://learn.microsoft.com/cli/azure/network/
 ```bash
 az network public-ip create \
     --name $MY_PUBLIC_IP_NAME \
-    --location $MY_LOCATION \
+    --location $REGION \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --dns-name $MY_DNS_LABEL \
     --sku Standard \
@@ -183,7 +183,7 @@ Security rules in network security groups enable you to filter the type of netwo
 az network nsg create \
     --name $MY_NSG_NAME \
     --resource-group $MY_RESOURCE_GROUP_NAME \
-    --location $MY_LOCATION -o JSON
+    --location $REGION -o JSON
 ```
 Results:
 
@@ -277,7 +277,7 @@ You'll use [az network nic create](https://learn.microsoft.com/cli/azure/network
 az network nic create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --name $MY_VM_NIC_NAME \
-    --location $MY_LOCATION \
+    --location $REGION \
     --ip-forwarding false \
     --subnet $MY_SN_NAME \
     --vnet-name $MY_VNET_NAME \
@@ -512,7 +512,7 @@ az mysql flexible-server create \
     --auto-scale-iops Disabled \
     --high-availability Disabled \
     --iops 500 \
-    --location $MY_LOCATION \
+    --location $REGION \
     --name $MY_MYSQL_DB_NAME \
     --database-name wp001 \
     --resource-group $MY_RESOURCE_GROUP_NAME \
@@ -614,7 +614,7 @@ az vm create \
     --admin-username $MY_VM_USERNAME \
     --authentication-type ssh \
     --image $MY_VM_IMAGE \
-    --location $MY_LOCATION \
+    --location $REGION \
     --nic-delete-option Delete \
     --os-disk-caching ReadOnly \
     --os-disk-delete-option Delete \
