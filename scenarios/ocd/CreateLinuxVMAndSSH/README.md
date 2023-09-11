@@ -2,7 +2,11 @@
 
 ## Define Environment Variables
 
+<<<<<<< HEAD
 The First step in this tutorial is to define environment variables.
+=======
+The First step in this tutorial is to define environment variables
+>>>>>>> 4370f5d (Fixing all markdownlint messages for the Linux doc)
 
 ```bash
 export RANDOM_ID="$(openssl rand -hex 3)"
@@ -28,7 +32,7 @@ az group create --name $MY_RESOURCE_GROUP_NAME --location $REGION
 Results:
 
 <!-- expected_similarity=0.3 -->
-```json   
+```json
 {
   "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMResourceGroup",
   "location": "eastus",
@@ -44,7 +48,7 @@ Results:
 
 ## Create the Virtual Machine
 
-To create a VM in this resource group we need to run a simple command, here we have provided the `--generate-ssh-keys` flag, this will cause the CLI to look for an avialable ssh key in `~/.ssh`, if one is found it will be used, otherwise one will be generated and stored in `~/.ssh`. We also provide the `--public-ip-sku Standard` flag to ensure that the machine is accessible via a public IP. Finally, we are deploying the latest `Ubuntu 22.04` image. 
+To create a VM in this resource group we need to run a simple command, here we have provided the `--generate-ssh-keys` flag, this will cause the CLI to look for an avialable ssh key in `~/.ssh`, if one is found it will be used, otherwise one will be generated and stored in `~/.ssh`. We also provide the `--public-ip-sku Standard` flag to ensure that the machine is accessible via a public IP. Finally, we are deploying the latest `Ubuntu 22.04` image.
 
 All other values are configured using environment variables.
 
@@ -54,7 +58,6 @@ az vm create \
     --name $MY_VM_NAME \
     --image $MY_VM_IMAGE \
     --admin-username $MY_USERNAME \
-    --assign-identity \
     --generate-ssh-keys \
     --public-ip-sku Standard
 ```
@@ -89,6 +92,7 @@ az vm extension set \
 ```
 
 # Store IP Address of VM in order to SSH
+
 run the following command to get the IP Address of the VM and store it as an environment variable
 
 ```bash
@@ -102,7 +106,25 @@ Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificat
 
 <!--
 ```bash
+<<<<<<< HEAD
 yes | az ssh config --file ~/.ssh/config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
+=======
+export MY_AZURE_USER=$(az account show --query user.name --output tsv)
+export MY_RESOURCE_GROUP_ID=$(az group show --resource-group $MY_RESOURCE_GROUP_NAME --query id -o tsv)
+
+az role assignment create \
+    --role "Virtual Machine Administrator Login" \
+    --assignee $MY_AZURE_USER \
+    --scope $MY_RESOURCE_GROUP_ID
+```
+
+## Export the SSH configuration for use with SSH clients that support OpenSSH
+
+Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. The following example exports the configuration for all IP addresses assigned to the VM:
+
+```bash
+az ssh config --file ~/.ssh/config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
+>>>>>>> 4370f5d (Fixing all markdownlint messages for the Linux doc)
 ```
 -->
 
