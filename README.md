@@ -23,11 +23,11 @@ cd InnovationEngine;
 make build-ie;
 ```
 
-Now you can run the interactive Innovation Engine tutorial with the following 
+Now you can run the Innovation Engine tutorial with the following 
 command:
 
 ```bash
-./bin/ie interactive tutorial.md
+./bin/ie execute scenarios/demos/tutorial.md
 ```
 
 The general format to run an executable document is: 
