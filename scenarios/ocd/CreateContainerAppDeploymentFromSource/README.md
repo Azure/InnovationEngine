@@ -16,7 +16,7 @@ The first step in this tutorial is to define environment variables. **Replace th
 ```bash
 export SUFFIX=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | fold -w 8 | head -n 1)
 export MY_RESOURCE_GROUP_NAME=rg$SUFFIX
-export MY_LOCATION=westus
+export REGION=westus
 export MY_STORAGE_ACCOUNT_NAME=storage$SUFFIX
 export MY_DATABASE_SERVER_NAME=dbserver$SUFFIX
 export MY_DATABASE_NAME=db$SUFFIX
@@ -43,10 +43,10 @@ In order to run commands against Azure using [the CLI ](https://learn.microsoft.
 
 ## Create a resource group
 
-A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $MY_LOCATION parameters.
+A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $REGION parameters.
 
 ```bash
-az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
+az group create --name $MY_RESOURCE_GROUP_NAME --location $REGION
 ```
 
 Results:
@@ -55,7 +55,7 @@ Results:
 ```json
 {
   "id": "/subscriptions/ab9d8365-2f65-47a4-8df4-7e40db70c8d2/resourceGroups/$MY_RESOURCE_GROUP_NAME",
-  "location": "$MY_LOCATION",
+  "location": "$REGION",
   "managedBy": null,
   "name": "$MY_RESOURCE_GROUP_NAME",
   "properties": {
@@ -71,7 +71,7 @@ Results:
 To create a storage account in this resource group we need to run a simple command. To this command, we are passing the name of the storage account, the resource group to deploy it in, the physical region to deploy it in, and the SKU of the storage account. All values are configured using environment variables.
 
 ```bash
-az storage account create --name $MY_STORAGE_ACCOUNT_NAME --resource-group $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION --sku Standard_LRS
+az storage account create --name $MY_STORAGE_ACCOUNT_NAME --resource-group $MY_RESOURCE_GROUP_NAME --location $REGION --sku Standard_LRS
 ```
 
 Results:
@@ -129,7 +129,7 @@ Results:
   "kind": "StorageV2",
   "largeFileSharesState": null,
   "lastGeoFailoverTime": null,
-  "location": "$MY_LOCATION",
+  "location": "$REGION",
   "minimumTlsVersion": "TLS1_0",
   "name": "$MY_STORAGE_ACCOUNT_NAME",
   "networkRuleSet": {
@@ -149,7 +149,7 @@ Results:
     "table": "https://$MY_STORAGE_ACCOUNT_NAME.table.core.windows.net/",
     "web": "https://$MY_STORAGE_ACCOUNT_NAME.z22.web.core.windows.net/"
   },
-  "primaryLocation": "$MY_LOCATION",
+  "primaryLocation": "$REGION",
   "privateEndpointConnections": [],
   "provisioningState": "Succeeded",
   "publicNetworkAccess": null,
@@ -213,7 +213,7 @@ az postgres flexible-server create \
   --name $MY_DATABASE_SERVER_NAME \
   --database-name $MY_DATABASE_NAME \
   --resource-group $MY_RESOURCE_GROUP_NAME \
-  --location $MY_LOCATION \
+  --location $REGION \
   --tier Burstable \
   --sku-name Standard_B1ms \
   --storage-size 32 \
@@ -233,7 +233,7 @@ Results:
   "firewallName": "FirewallIPAddress_2023-8-10_10-53-21",
   "host": "$MY_DATABASE_NAME.postgres.database.azure.com",
   "id": "/subscriptions/ab9d8365-2f65-47a4-8df4-7e40db70c8d2/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.DBforPostgreSQL/flexibleServers/$MY_DATABASE_NAME",
-  "location": "$MY_LOCATION",
+  "location": "$REGION",
   "password": "$MY_DATABASE_PASSWORD",
   "resourceGroup": "$MY_RESOURCE_GROUP_NAME",
   "skuname": "Standard_B1ms",
@@ -259,7 +259,7 @@ We will be creating a Computer Vision resource to be able to identify cats or do
 az cognitiveservices account create \
     --name $MY_COMPUTER_VISION_NAME \
     --resource-group $MY_RESOURCE_GROUP_NAME \
-    --location $MY_LOCATION \
+    --location $REGION \
     --kind ComputerVision \
     --sku S1 \
     --yes
@@ -274,7 +274,7 @@ Results:
   "id": "/subscriptions/ab9d8365-2f65-47a4-8df4-7e40db70c8d2/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.CognitiveServices/accounts/$MY_COMPUTER_VISION_NAME",
   "identity": null,
   "kind": "ComputerVision",
-  "location": "$MY_LOCATION",
+  "location": "$REGION",
   "name": "$MY_COMPUTER_VISION_NAME",
   "properties": {
     "allowedFqdnList": null,
@@ -365,10 +365,10 @@ Results:
     "disableLocalAuth": null,
     "dynamicThrottlingEnabled": null,
     "encryption": null,
-    "endpoint": "https://$MY_LOCATION.api.cognitive.microsoft.com/",
+    "endpoint": "https://$REGION.api.cognitive.microsoft.com/",
     "endpoints": {
-      "Computer Vision": "https://$MY_LOCATION.api.cognitive.microsoft.com/",
-      "Container": "https://$MY_LOCATION.api.cognitive.microsoft.com/"
+      "Computer Vision": "https://$REGION.api.cognitive.microsoft.com/",
+      "Container": "https://$REGION.api.cognitive.microsoft.com/"
     },
     "internalId": "93645816f9594fe49a8f4023c0bf34b4",
     "isMigrated": false,
@@ -430,7 +430,7 @@ This command will create an Azure Container Registry resource to host our Docker
 az containerapp up \
   --name $MY_CONTAINER_APP_NAME \
   --resource-group $MY_RESOURCE_GROUP_NAME \
-  --location $MY_LOCATION \
+  --location $REGION \
   --environment $MY_CONTAINER_APP_ENV_NAME \
   --context-path computer-vision-nextjs-webapp \
   --source computer-vision-nextjs-webapp \
@@ -472,7 +472,7 @@ Results:
         "customDomains": null,
         "exposedPort": 0,
         "external": true,
-        "fqdn": "$MY_CONTAINER_APP_NAME.kindocean-a506af76.$MY_LOCATION.azurecontainerapps.io",
+        "fqdn": "$MY_CONTAINER_APP_NAME.kindocean-a506af76.$REGION.azurecontainerapps.io",
         "ipSecurityRestrictions": null,
         "stickySessions": null,
         "targetPort": 3000,
@@ -491,9 +491,9 @@ Results:
     },
     "customDomainVerificationId": "06C64CD176439F8B6CCBBE1B531758828A5CACEABFB30B4DC9750641532924F6",
     "environmentId": "/subscriptions/fake3265-2f64-47a4-8df4-7e41ab70c8dh/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.App/managedEnvironments/$MY_CONTAINER_APP_ENV_NAME",
-    "eventStreamEndpoint": "https://$MY_LOCATION.azurecontainerapps.dev/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/$MY_RESOURCE_GROUP_NAME/containerApps/$MY_CONTAINER_APP_NAME/eventstream",
+    "eventStreamEndpoint": "https://$REGION.azurecontainerapps.dev/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/$MY_RESOURCE_GROUP_NAME/containerApps/$MY_CONTAINER_APP_NAME/eventstream",
     "latestReadyRevisionName": "$MY_CONTAINER_APP_NAME--jl6fh75",
-    "latestRevisionFqdn": "$MY_CONTAINER_APP_NAME--jl6fh75.kindocean-a506af76.$MY_LOCATION.azurecontainerapps.io",
+    "latestRevisionFqdn": "$MY_CONTAINER_APP_NAME--jl6fh75.kindocean-a506af76.$REGION.azurecontainerapps.io",
     "latestRevisionName": "$MY_CONTAINER_APP_NAME--jl6fh75",
     "managedEnvironmentId": "/subscriptions/eb9d8265-2f64-47a4-8df4-7e41db70c8d8/resourceGroups/$MY_RESOURCE_GROUP_NAME/providers/Microsoft.App/managedEnvironments/$MY_CONTAINER_APP_ENV_NAME",
     "outboundIpAddresses": ["20.237.221.47"],

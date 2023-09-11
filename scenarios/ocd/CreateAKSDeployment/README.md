@@ -10,7 +10,7 @@ export SSL_EMAIL_ADDRESS="$(az account show --query user.name --output tsv)"
 export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
 export RANDOM_ID="$(openssl rand -hex 3)"
 export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
-export MY_LOCATION="eastus"
+export REGION="eastus"
 export MY_AKS_CLUSTER_NAME="myAKSCluster$RANDOM_ID"
 export MY_PUBLIC_IP_NAME="myPublicIP$RANDOM_ID"
 export MY_DNS_LABEL="mydnslabel$RANDOM_ID"
@@ -18,15 +18,15 @@ export MY_VNET_NAME="myVNet$RANDOM_ID"
 export MY_VNET_PREFIX="10.$NETWORK_PREFIX.0.0/16"
 export MY_SN_NAME="mySN$RANDOM_ID"
 export MY_SN_PREFIX="10.$NETWORK_PREFIX.0.0/22"
-export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
+export FQDN="${MY_DNS_LABEL}.${REGION}.cloudapp.azure.com"
 ```
 
 # Create a resource group
 
-A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $MY_LOCATION parameters.
+A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $REGION parameters.
 
 ```bash
-az group create --name $MY_RESOURCE_GROUP_NAME --location $MY_LOCATION
+az group create --name $MY_RESOURCE_GROUP_NAME --location $REGION
 ```
 Results:
 
@@ -52,7 +52,7 @@ A virtual network is the fundamental building block for private networks in Azur
 ```bash
 az network vnet create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
-    --location $MY_LOCATION \
+    --location $REGION \
     --name $MY_VNET_NAME \
     --address-prefix $MY_VNET_PREFIX \
     --subnet-name $MY_SN_NAME \
@@ -115,7 +115,7 @@ az aks create \
   --auto-upgrade-channel stable \
   --enable-cluster-autoscaler \
   --enable-addons monitoring \
-  --location $MY_LOCATION \
+  --location $REGION \
   --node-count 1 \
   --min-count 1 \
   --max-count 3 \
@@ -156,7 +156,7 @@ kubectl get nodes
 ## Install NGINX Ingress Controller
 
 ```bash
-export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${MY_LOCATION} --location ${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
+export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${REGION} --location ${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
 
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
