@@ -2,11 +2,7 @@
 
 ## Define Environment Variables
 
-<<<<<<< HEAD
 The First step in this tutorial is to define environment variables.
-=======
-The First step in this tutorial is to define environment variables
->>>>>>> 4370f5d (Fixing all markdownlint messages for the Linux doc)
 
 ```bash
 export RANDOM_ID="$(openssl rand -hex 3)"
@@ -15,6 +11,7 @@ export REGION=EastUS
 export MY_VM_NAME="myVM$RANDOM_ID"
 export MY_USERNAME=azureuser
 export MY_VM_IMAGE="Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest"
+export MY_AZURE_USER=$(az account show --query user.name --output tsv)
 ```
 
 # Login to Azure using the CLI
@@ -93,7 +90,7 @@ az vm extension set \
 
 # Store IP Address of VM in order to SSH
 
-run the following command to get the IP Address of the VM and store it as an environment variable
+Run the following command to get the IP Address of the VM and store it as an environment variable.
 
 ```bash
 export IP_ADDRESS=$(az vm show --show-details --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_VM_NAME --query publicIps --output tsv)
@@ -106,9 +103,13 @@ Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificat
 
 <!--
 ```bash
-<<<<<<< HEAD
 yes | az ssh config --file ~/.ssh/config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
-=======
+```
+-->
+
+The following example uses [az role assignment create](https://learn.microsoft.com/cli/azure/role/assignment#az-role-assignment-create) to assign the Virtual Machine Administrator Login role to the VM for your current Azure user.
+
+```bash
 export MY_AZURE_USER=$(az account show --query user.name --output tsv)
 export MY_RESOURCE_GROUP_ID=$(az group show --resource-group $MY_RESOURCE_GROUP_NAME --query id -o tsv)
 
@@ -119,14 +120,11 @@ az role assignment create \
 ```
 
 ## Export the SSH configuration for use with SSH clients that support OpenSSH
-
 Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. The following example exports the configuration for all IP addresses assigned to the VM:
 
 ```bash
 az ssh config --file ~/.ssh/config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
->>>>>>> 4370f5d (Fixing all markdownlint messages for the Linux doc)
 ```
--->
 
 You can now SSH into the VM by running the output of the following command in your ssh client of choice
 
