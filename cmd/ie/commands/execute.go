@@ -22,6 +22,8 @@ func init() {
 	executeCommand.PersistentFlags().String("correlation-id", "", "Adds a correlation ID to the user agent used by a scenarios azure-cli commands.")
 	executeCommand.PersistentFlags().String("subscription", "", "Sets the subscription ID used by a scenarios azure-cli commands. Will rely on the default subscription if not set.")
 	executeCommand.PersistentFlags().String("working-directory", ".", "Sets the working directory for innovation engine to operate out of. Restores the current working directory when finished.")
+
+	// StringArray flags
 	executeCommand.PersistentFlags().StringArray("var", []string{}, "Sets an environment variable for the scenario. Format: --var <key>=<value>")
 }
 
@@ -39,13 +41,15 @@ var executeCommand = &cobra.Command{
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		doNotDelete, _ := cmd.Flags().GetBool("do-not-delete")
+
 		subscription, _ := cmd.Flags().GetString("subscription")
 		correlationId, _ := cmd.Flags().GetString("correlation-id")
 		environment, _ := cmd.Flags().GetString("environment")
-		environmentVariables, _ := cmd.Flags().GetStringArray("var")
 		workingDirectory, _ := cmd.Flags().GetString("working-directory")
 
-		// Parse the environment variables
+		environmentVariables, _ := cmd.Flags().GetStringArray("var")
+
+		// Parse the environment variables from the command line into a map
 		cliEnvironmentVariables := make(map[string]string)
 		for _, environmentVariable := range environmentVariables {
 			keyValuePair := strings.SplitN(environmentVariable, "=", 2)
@@ -59,6 +63,14 @@ var executeCommand = &cobra.Command{
 			cliEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
 		}
 
+		// Parse the markdown file and create a scenario
+		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"}, cliEnvironmentVariables)
+		if err != nil {
+			logging.GlobalLogger.Errorf("Error creating scenario: %s", err)
+			fmt.Printf("Error creating scenario: %s", err)
+			os.Exit(1)
+		}
+
 		innovationEngine := engine.NewEngine(engine.EngineConfiguration{
 			Verbose:          verbose,
 			DoNotDelete:      doNotDelete,
@@ -67,14 +79,6 @@ var executeCommand = &cobra.Command{
 			Environment:      environment,
 			WorkingDirectory: workingDirectory,
 		})
-
-		// Parse the markdown file and create a scenario
-		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"}, cliEnvironmentVariables)
-		if err != nil {
-			logging.GlobalLogger.Errorf("Error creating scenario: %s", err)
-			fmt.Printf("Error creating scenario: %s", err)
-			os.Exit(1)
-		}
 
 		// Execute the scenario
 		err = innovationEngine.ExecuteScenario(scenario)

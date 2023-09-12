@@ -96,12 +96,14 @@ func ExecuteBashCommand(command string, config BashCommandConfiguration) (Comman
 
 	var stdoutBuffer, stderrBuffer bytes.Buffer
 
+	// If the command requires interaction, we provide the user with the ability
+	// to interact with the command. However, we cannot capture the buffer this
+	// way.
 	if config.InteractiveCommand {
 		commandToExecute.Stdout = os.Stdout
 		commandToExecute.Stderr = os.Stderr
 		commandToExecute.Stdin = os.Stdin
 	} else {
-		// Capture std out and std err as separate buffers.
 		commandToExecute.Stdout = &stdoutBuffer
 		commandToExecute.Stderr = &stderrBuffer
 	}

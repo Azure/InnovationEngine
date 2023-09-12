@@ -28,8 +28,7 @@ type Scenario struct {
 }
 
 // Groups the codeblocks into steps based on the header of the codeblock.
-// This organizes the codeblocks into steps that can be executed in a linear
-// order.
+// This organizes the codeblocks into steps that can be executed linearly.
 func groupCodeBlocksIntoSteps(blocks []parsers.CodeBlock) []Step {
 	var groupedSteps []Step
 	var headerIndex = make(map[string]int)
@@ -109,21 +108,25 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string, enviro
 			}
 
 			for _, match := range matches {
-				wholeLine := match[0]
+				oldLine := match[0]
 				oldValue := match[1]
 
 				// Replace the old export with the new export statement
-				newLine := strings.Replace(wholeLine, oldValue, value, 1)
-				logging.GlobalLogger.Debugf("Replacing '%s' with '%s'", wholeLine, newLine)
+				newLine := strings.Replace(oldLine, oldValue, value, 1)
+				logging.GlobalLogger.Debugf("Replacing '%s' with '%s'", oldLine, newLine)
 
-				codeBlocks[index].Content = strings.Replace(codeBlock.Content, wholeLine, newLine, 1)
+				// Update the code block with the new export statement
+				codeBlocks[index].Content = strings.Replace(codeBlock.Content, oldLine, newLine, 1)
 			}
 
 		}
 	}
 
+	// If there are some variables left after going through each of the codeblocks,
+	// do not update the scenario
+	// steps.
 	if len(varsToExport) != 0 {
-		logging.GlobalLogger.Debugf("Found %d variables to export", len(varsToExport))
+		logging.GlobalLogger.Debugf("Found %d variables to add to the scenario as a step.", len(varsToExport))
 		exportCodeBlock := parsers.CodeBlock{
 			Language:       "bash",
 			Content:        "",
