@@ -49,6 +49,7 @@ export MY_SN_PREFIX="10.$UNIQUE_POSTFIX.0.0/24"
 export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
 export MY_DNS_LABEL="mydnslabel$UNIQUE_POSTFIX"
 export MY_NSG_NAME="myNSGName$UNIQUE_POSTFIX"
+export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
 ```
 
 ## Create a Resource Group
@@ -499,4 +500,24 @@ Results:
   "resourceGroup": "myResourceGroup155",
   "zones": ""
 }
+```
+
+## Check the Azure Linux Virtual Machine status
+
+It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
+
+```bash
+runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(ssh -o StrictHostKeyChecking=no $FQDN "cloud-init status"); echo $STATUS; if [ "$STATUS" = 'status: done' ]; then break; else sleep 10; fi; done
+```
+
+## Enable Azure AD login for a Linux Virtual Machine in Azure
+
+The following example deploys a VM and then installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
+
+```bash
+az vm extension set \
+    --publisher Microsoft.Azure.ActiveDirectory \
+    --name AADSSHLoginForLinux \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --vm-name $MY_VM_NAME -o JSON
 ```
