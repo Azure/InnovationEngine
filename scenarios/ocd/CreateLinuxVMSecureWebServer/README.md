@@ -1,17 +1,22 @@
 # Intro to Create a NGINX Webserver Secured via HTTPS
-Welcome to this tutorial where we'll guide you through setting up a secure Azure Virtual Machine (VM). 
+
+Welcome to this tutorial where we'll guide you through setting up a secure Azure Virtual Machine (VM).
 Before you start:
-1. Make sure you've installed the Azure CLI. 
+
+1. Make sure you've installed the Azure CLI.
 
     To install Azure CLI run the following command on your bash terminal:
+
     ```bash
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
     ```
+
 2. Ensure you're logged into Azure.
 
     ```bash
     az login
     ```
+
 3. Verify you've selected the correct subscription.
 
     ```bash
@@ -72,7 +77,7 @@ Results:
 }
 ```
 
-# Create an Azure Key Vault
+## Create an Azure Key Vault
 
 ```bash
 az keyvault create \
@@ -146,7 +151,8 @@ Results:
 }
 ```
 
-## Create a certificate and store in Azure key Vault.
+## Create a certificate and store in Azure key Vault
+
 For this article we’ll use a self signed certificate.
 
 ```bash
