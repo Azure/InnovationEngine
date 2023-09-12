@@ -1,4 +1,6 @@
-# Intro to Create a NGINX Webserver Secured via HTTPS
+# This is a change
+
+## Intro to Create a NGINX Webserver Secured via HTTPS
 
 Welcome to this tutorial where we'll guide you through setting up a secure Azure Virtual Machine (VM).
 Before you start:
@@ -49,7 +51,6 @@ export MY_SN_PREFIX="10.$UNIQUE_POSTFIX.0.0/24"
 export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
 export MY_DNS_LABEL="mydnslabel$UNIQUE_POSTFIX"
 export MY_NSG_NAME="myNSGName$UNIQUE_POSTFIX"
-export FQDN="${MY_DNS_LABEL}.${MY_LOCATION}.cloudapp.azure.com"
 ```
 
 ## Create a Resource Group
@@ -77,120 +78,15 @@ Results:
   "type": "Microsoft.Resources/resourceGroups"
 }
 ```
-
-## Create an Azure Key Vault
-
-```bash
-az keyvault create \
-    --resource-group $MY_RESOURCE_GROUP_NAME \
-    --name $MY_KEY_VAULT \
-    --location $MY_LOCATION \
-    --retention-days 7\
-    --enabled-for-deployment   
-```
-
-Results:
-
-```JSON
-{
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.KeyVault/vaults/myKeyVault242",
-  "location": "eastus",
-  "name": "myKeyVault242",
-  "properties": {
-    "accessPolicies": [
-      {
-        "applicationId": null,
-        "objectId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-        "permissions": {
-          "certificates": [
-            "all"
-          ],
-          "keys": [
-            "all"
-          ],
-          "secrets": [
-            "all"
-          ],
-          "storage": [
-            "all"
-          ]
-        },
-        "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-      }
-    ],
-    "createMode": null,
-    "enablePurgeProtection": null,
-    "enableRbacAuthorization": null,
-    "enableSoftDelete": true,
-    "enabledForDeployment": true,
-    "enabledForDiskEncryption": null,
-    "enabledForTemplateDeployment": null,
-    "hsmPoolResourceId": null,
-    "networkAcls": null,
-    "privateEndpointConnections": null,
-    "provisioningState": "Succeeded",
-    "publicNetworkAccess": "Enabled",
-    "sku": {
-      "family": "A",
-      "name": "standard"
-    },
-    "softDeleteRetentionInDays": 90,
-    "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    "vaultUri": "https://mykeyvault242.vault.azure.net/"
-  },
-  "resourceGroup": "myResourceGroup242",
-  "systemData": {
-    "createdAt": "2023-09-08T14:55:45.691000+00:00",
-    "createdBy": "dummy.dummy@outlook.pt",
-    "createdByType": "User",
-    "lastModifiedAt": "2023-09-08T14:55:45.691000+00:00",
-    "lastModifiedBy": "dummy.dummy@outlook.pt",
-    "lastModifiedByType": "User"
-  },
-  "tags": {},
-  "type": "Microsoft.KeyVault/vaults"
-}
-```
-
-## Create a certificate and store in Azure key Vault
-
-For this article we’ll use a self signed certificate.
-
-```bash
-az keyvault certificate create \
-    --vault-name $MY_KEY_VAULT \
-    --name nginxcert \
-    --policy "$(az keyvault certificate get-default-policy)"
-```
-
-```JSON
-{
-  "cancellationRequested": false,
-  "csr": "MIICrjCCAZYCA(...)K6ibPBZqhIH",
-  "error": null,
-  "id": "https://<MY_KEY_VAULT>.vault.azure.net/certificates/nginxcert/pending",
-  "issuerParameters": {
-    "certificateTransparency": null,
-    "certificateType": null,
-    "name": "Self"
-  },
-  "name": "nginxcert",
-  "requestId": "2109088929f3437c9da91bd69827f9a9",
-  "status": "completed",
-  "statusDetails": null,
-  "target": "https://<MY_KEY_VAULT>.vault.azure.net/certificates/nginxcert"
-}
-```
-
 ## Set up VM Network
 
-Create the v-net:
+Use az network vnet create to create a virtual network named *$MY_VNET_NAME* with a subnet named *$MY_SN_NAME*in the *$MY_RESOURCE_GROUP_NAME*resource group.
 
 ```bash
 az network vnet create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --name $MY_VNET_NAME \
-    --location $MY_LOCATION \ 
+    --location $MY_LOCATION \
     --address-prefix $MY_VNET_PREFIX \
     --subnet-name $MY_SN_NAME \
     --subnet-prefix $MY_SN_PREFIX
@@ -231,7 +127,7 @@ Results:
 }
 ```
 
-Create a public IP address
+Use az network public-ip create to create a standard zone-redundant public IPv4 address named *$MY_PUBLIC_IP_NAME* in *$MY_RESOURCE_GROUP_NAME*.
 
 ```bash
 az network public-ip create \
@@ -281,7 +177,7 @@ Results:
 }
 ```
 
-Create the Network security group:
+Security rules in network security groups enable you to filter the type of network traffic that can flow in and out of virtual network subnets and network interfaces. To learn more about network security groups, see [Network security group overview](https://learn.microsoft.com/azure/virtual-network/network-security-groups-overview).
 
 ```bash
 az network nsg create \
@@ -451,6 +347,109 @@ Results:
   "type": "Microsoft.Network/virtualNetworks/subnets"
 }
 ```
+## Create an Azure Key Vault
+
+```bash
+az keyvault create \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --name $MY_KEY_VAULT \
+    --location $MY_LOCATION \
+    --retention-days 7\
+    --enabled-for-deployment   
+```
+
+Results:
+
+```JSON
+{
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup242/providers/Microsoft.KeyVault/vaults/myKeyVault242",
+  "location": "eastus",
+  "name": "myKeyVault242",
+  "properties": {
+    "accessPolicies": [
+      {
+        "applicationId": null,
+        "objectId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "permissions": {
+          "certificates": [
+            "all"
+          ],
+          "keys": [
+            "all"
+          ],
+          "secrets": [
+            "all"
+          ],
+          "storage": [
+            "all"
+          ]
+        },
+        "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+      }
+    ],
+    "createMode": null,
+    "enablePurgeProtection": null,
+    "enableRbacAuthorization": null,
+    "enableSoftDelete": true,
+    "enabledForDeployment": true,
+    "enabledForDiskEncryption": null,
+    "enabledForTemplateDeployment": null,
+    "hsmPoolResourceId": null,
+    "networkAcls": null,
+    "privateEndpointConnections": null,
+    "provisioningState": "Succeeded",
+    "publicNetworkAccess": "Enabled",
+    "sku": {
+      "family": "A",
+      "name": "standard"
+    },
+    "softDeleteRetentionInDays": 90,
+    "tenantId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "vaultUri": "https://mykeyvault242.vault.azure.net/"
+  },
+  "resourceGroup": "myResourceGroup242",
+  "systemData": {
+    "createdAt": "2023-09-08T14:55:45.691000+00:00",
+    "createdBy": "dummy.dummy@outlook.pt",
+    "createdByType": "User",
+    "lastModifiedAt": "2023-09-08T14:55:45.691000+00:00",
+    "lastModifiedBy": "dummy.dummy@outlook.pt",
+    "lastModifiedByType": "User"
+  },
+  "tags": {},
+  "type": "Microsoft.KeyVault/vaults"
+}
+```
+
+## Create a certificate and store in Azure key Vault
+
+For this article we’ll use a self signed certificate.
+
+```bash
+az keyvault certificate create \
+    --vault-name $MY_KEY_VAULT \
+    --name nginxcert \
+    --policy "$(az keyvault certificate get-default-policy)"
+```
+
+```JSON
+{
+  "cancellationRequested": false,
+  "csr": "MIICrjCCAZYCA(...)K6ibPBZqhIH",
+  "error": null,
+  "id": "https://<MY_KEY_VAULT>.vault.azure.net/certificates/nginxcert/pending",
+  "issuerParameters": {
+    "certificateTransparency": null,
+    "certificateType": null,
+    "name": "Self"
+  },
+  "name": "nginxcert",
+  "requestId": "2109088929f3437c9da91bd69827f9a9",
+  "status": "completed",
+  "statusDetails": null,
+  "target": "https://<MY_KEY_VAULT>.vault.azure.net/certificates/nginxcert"
+}
+```
 
 ## Create the VM
 
@@ -465,6 +464,15 @@ package_update: true
 # Install packages
 packages:
   - nginx
+write_files:
+  - owner: www-data:www-data
+  - path: /etc/nginx/sites-available/default
+    content: |
+      server {
+        listen 443 ssl;
+        ssl_certificate /etc/nginx/ssl/nginxcert.cert;
+        ssl_certificate_key /etc/nginx/ssl/nginxcert.prv;
+      }
 runcmd:
   - mkdir /etc/nginx/ssl
   - service nginx restart
@@ -488,36 +496,47 @@ az vm create \
 
 Results:
 
-```JSON
-{
-  "fqdns": "mydnslabel155.eastus.cloudapp.azure.com",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup155/providers/Microsoft.Compute/virtualMachines/myVMName155",
-  "location": "eastus",
-  "macAddress": "00-0D-3A-56-05-89",
-  "powerState": "VM running",
-  "privateIpAddress": "10.155.0.4",
-  "publicIpAddress": "20.75.217.50",
-  "resourceGroup": "myResourceGroup155",
-  "zones": ""
-}
-```
-
-## Check the Azure Linux Virtual Machine status
-
-It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
+Enable the system assigned identity on a VM with the 'Contributor' role.
+//https://learn.microsoft.com/en-us/cli/azure/vm/identity?view=azure-cli-latest#az-vm-identity-assign
 
 ```bash
-runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(ssh -o StrictHostKeyChecking=no $FQDN "cloud-init status"); echo $STATUS; if [ "$STATUS" = 'status: done' ]; then break; else sleep 10; fi; done
-```
-
-## Enable Azure AD login for a Linux Virtual Machine in Azure
-
-The following example deploys a VM and then installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
-
-```bash
-az vm extension set \
-    --publisher Microsoft.Azure.ActiveDirectory \
-    --name AADSSHLoginForLinux \
+az vm identity assign \
     --resource-group $MY_RESOURCE_GROUP_NAME \
-    --vm-name $MY_VM_NAME -o JSON
+    --name $MY_VM_NAME \
+    --role Contributor \
+    --scope /subscriptions/0bb78609-cc8b-4e7d-be30-eee8cf2dbea4/resourceGroups/myResourceGroup3
+```
+
+```bash
+az keyvault set-policy \
+    --name $MY_KEY_VAULT \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --object-id 'a93f8699-ab75-4b63-a3f2-2e59d114561d' \
+    --secret-permissions get list delete
+```
+
+Start extension deployment
+
+```bash
+settings_value=$(cat <<EOF
+{
+  "secretsManagementSettings": {
+    "pollingIntervalInS": "3600",
+    "certificateStoreLocation": "/var/lib/waagent/Microsoft.Azure.KeyVault",
+    "observedCertificates": [
+      "https://mykeyvault210.vault.azure.net/certificates/nginxcert"
+    ]
+  }
+}
+EOF
+```
+
+```bash
+az vm extension set -n "KeyVaultForLinux" \
+     --publisher Microsoft.Azure.KeyVault \
+     -g $MY_RESOURCE_GROUP_NAME \
+     --vm-name $MY_VM_NAME \
+     --version 2.0 \
+     --enable-auto-upgrade true \
+     --settings "$settings_value"
 ```
