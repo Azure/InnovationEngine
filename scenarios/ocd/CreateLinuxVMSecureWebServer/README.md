@@ -17,31 +17,34 @@ If you choose to install and use the CLI locally, this tutorial requires that yo
 List of all the environment variables you'll need to execute this tutorial:
 
 ```bash
-export UNIQUE_POSTFIX="$(($RANDOM % 254 + 1))"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
-export MY_KEY_VAULT="myKeyVault$UNIQUE_POSTFIX"
-export MY_LOCATION="eastus"
-export MY_VM_NAME="myVMName$UNIQUE_POSTFIX"
+export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
+export RANDOM_ID="$(openssl rand -hex 3)"
+export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
+export MY_KEY_VAULT="myKeyVault$RANDOM_ID"
+export REGION="eastus"
+export MY_VM_NAME="myVMName$RANDOM_ID"
 export MY_VM_IMAGE='Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest'
-export MY_VM_USERNAME="azureadmin"
+export MY_VM_USERNAME="azureuser"
 export MY_VM_SIZE='Standard_DS2_v2'
-export MY_VNET_NAME="myVNet$UNIQUE_POSTFIX"
-export MY_VNET_PREFIX="10.$UNIQUE_POSTFIX.0.0/16"
-export MY_SN_NAME="mySN$UNIQUE_POSTFIX"
-export MY_SN_PREFIX="10.$UNIQUE_POSTFIX.0.0/24"
-export MY_PUBLIC_IP_NAME="myPublicIP$UNIQUE_POSTFIX"
-export MY_DNS_LABEL="mydnslabel$UNIQUE_POSTFIX"
-export MY_NSG_NAME="myNSGName$UNIQUE_POSTFIX"
+export MY_VNET_NAME="myVNet$RANDOM_ID"
+export MY_VM_NIC_NAME="myVMNicName$RANDOM_ID"
+export MY_VNET_PREFIX="10.$NETWORK_PREFIX.0.0/16"
+export MY_SN_NAME="mySN$RANDOM_ID"
+export MY_SN_PREFIX="10.$NETWORK_PREFIX.0.0/24"
+export MY_PUBLIC_IP_NAME="myPublicIP$RANDOM_ID"
+export MY_DNS_LABEL="mydnslabel$RANDOM_ID"
+export MY_NSG_NAME="myNSGName$RANDOM_ID"
+export FQDN="${MY_DNS_LABEL}.${REGION}.cloudapp.azure.com"
 ```
 
 ## Create a Resource Group
 
-Before you can create a secure Linux VM, create a resource group with az group create. The following example creates a resource group named *myResourceGroup$UNIQUE_POSTFIX* in the *eastus* location:
+Before you can create a secure Linux VM, create a resource group with az group create. The following example creates a resource group equal to the contents of the variable *MY_RESOURCE_GROUP_NAME* in the location specified by the variable contents *REGION*:
 
 ```bash
 az group create \
     --name $MY_RESOURCE_GROUP_NAME \
-    --location $MY_LOCATION
+    --location $REGION
 ```
 
 Results:
@@ -67,7 +70,7 @@ Use az network vnet create to create a virtual network named *$MY_VNET_NAME* wit
 az network vnet create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --name $MY_VNET_NAME \
-    --location $MY_LOCATION \
+    --location $REGION \
     --address-prefix $MY_VNET_PREFIX \
     --subnet-name $MY_SN_NAME \
     --subnet-prefix $MY_SN_PREFIX
@@ -113,7 +116,7 @@ Use az network public-ip create to create a standard zone-redundant public IPv4 
 ```bash
 az network public-ip create \
     --name $MY_PUBLIC_IP_NAME \
-    --location $MY_LOCATION \
+    --location $REGION \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --dns-name $MY_DNS_LABEL \
     --sku Standard \
@@ -164,7 +167,7 @@ Security rules in network security groups enable you to filter the type of netwo
 az network nsg create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --name $MY_NSG_NAME \
-    --location $MY_LOCATION
+    --location $REGION
 ```
 
 Results:
@@ -334,7 +337,7 @@ Results:
 az keyvault create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --name $MY_KEY_VAULT \
-    --location $MY_LOCATION \
+    --location $REGION \
     --retention-days 7\
     --enabled-for-deployment   
 ```
@@ -466,6 +469,7 @@ The following example creates a VM named *myVMName$UNIQUE_POSTFIX*:
 az vm create \
   --resource-group $MY_RESOURCE_GROUP_NAME \
   --name $MY_VM_NAME \
+  --location $REGION \
   --image $MY_VM_IMAGE \
   --vnet-name $MY_VNET_NAME --subnet $MY_SN_NAME \
   --admin-username $MY_VM_USERNAME \
