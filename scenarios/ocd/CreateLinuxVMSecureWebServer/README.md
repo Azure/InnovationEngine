@@ -1,33 +1,16 @@
 # Intro to Create a NGINX Webserver Secured via HTTPS
 
-Welcome to this tutorial where we'll guide you through setting up a secure Azure Virtual Machine (VM).
-Before you start:
+To secure web servers, a Transport Layer Security (TLS), previously known as Secure Sockets Layer (SSL), certificate can be used to encrypt web traffic. These TLS/SSL certificates can be stored in Azure Key Vault, and allow secure deployments of certificates to Linux virtual machines (VMs) in Azure. In this tutorial you learn how to:
 
-1. Make sure you've installed the Azure CLI.
+> [!div class="checklist"]
 
-    To install Azure CLI run the following command on your bash terminal:
+> * Setup and secure Azure Networking
+> * Create an Azure Key Vault
+> * Generate or upload a certificate to the Key Vault
+> * Create a VM and install the NGINX web server
+> * Inject the certificate into the VM and configure NGINX with a TLS binding
 
-    ```bash
-    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-    ```
-
-2. Ensure you're logged into Azure.
-
-    ```bash
-    az login
-    ```
-
-3. Verify you've selected the correct subscription.
-
-    ```bash
-    az account list --output table #To see the list of subscriptions available to you
-    az account set --subscription <subscription-name-or-id>
-    ```
-
-Instructions:
-
-- If you've met all the prerequisites, press the space bar to continue.
-- If not, press 'b', then 'Ctrl + C' to exit. Follow the subsequent steps provided. Once completed, you can return to and restart the initial program.
+If you choose to install and use the CLI locally, this tutorial requires that you're running the Azure CLI version 2.0.30 or later. Run `az --version` to find the version. If you need to install or upgrade, see [Install Azure CLI]( https://learn.microsoft.com//cli/azure/install-azure-cli ).
 
 ## Variable Declaration
 
