@@ -1,6 +1,4 @@
-# This is a change
-
-## Intro to Create a NGINX Webserver Secured via HTTPS
+# Intro to Create a NGINX Webserver Secured via HTTPS
 
 Welcome to this tutorial where we'll guide you through setting up a secure Azure Virtual Machine (VM).
 Before you start:
