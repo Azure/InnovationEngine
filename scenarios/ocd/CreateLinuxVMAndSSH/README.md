@@ -96,18 +96,6 @@ export IP_ADDRESS=$(az vm show --show-details --resource-group $MY_RESOURCE_GROU
 ```
 # SSH Into VM
 
-The following example uses [az role assignment create](https://learn.microsoft.com/cli/azure/role/assignment#az-role-assignment-create) to assign the Virtual Machine Administrator Login role to the VM for your current Azure user.
-
-```bash
-export MY_AZURE_USER=$(az account show --query user.name --output tsv)
-export MY_RESOURCE_GROUP_ID=$(az group show --resource-group $MY_RESOURCE_GROUP_NAME --query id -o tsv)
-
-az role assignment create \
-    --role "Virtual Machine Administrator Login" \
-    --assignee $MY_AZURE_USER \
-    --scope $MY_RESOURCE_GROUP_ID
-```
-
 ## Export the SSH configuration for use with SSH clients that support OpenSSH
 Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. The following example exports the configuration for all IP addresses assigned to the VM:
 
