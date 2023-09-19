@@ -102,6 +102,7 @@ Results:
 Verify Microsoft.OperationsManagement and Microsoft.OperationalInsights providers are registered on your subscription. These are Azure resource providers required to support [Container insights](https://docs.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-overview). To check the registration status, run the following commands
 
 ```bash
+az provider register --namespace Microsoft.Insights
 az provider register --namespace Microsoft.OperationsManagement
 az provider register --namespace Microsoft.OperationalInsights
 ```
