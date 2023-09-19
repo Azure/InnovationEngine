@@ -188,6 +188,8 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 
 				go func(block parsers.CodeBlock) {
 					output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+					logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
+					logging.GlobalLogger.Infof("Command output to stderr:\n %s", output.StdErr)
 					commandOutput = output
 					done <- err
 				}(block)

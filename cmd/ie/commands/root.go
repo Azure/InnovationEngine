@@ -26,11 +26,13 @@ var rootCommand = &cobra.Command{
 		environment, err := cmd.Flags().GetString("environment")
 		if err != nil {
 			fmt.Printf("Error getting environment: %s", err)
+			logging.GlobalLogger.Errorf("Error getting environment: %s", err)
 			os.Exit(1)
 		}
 
 		if !engine.IsValidEnvironment(environment) {
 			fmt.Printf("Invalid environment: %s", environment)
+			logging.GlobalLogger.Errorf("Invalid environment: %s", err)
 			os.Exit(1)
 		}
 	},
