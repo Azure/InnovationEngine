@@ -39,10 +39,40 @@ type Engine struct {
 }
 
 // / Create a new engine instance.
-func NewEngine(configuration EngineConfiguration) *Engine {
+func NewEngine(configuration EngineConfiguration) (*Engine, error) {
+	err := refreshAccessToken()
+	if err != nil {
+		logging.GlobalLogger.Errorf("Invalid Config: Failed to login: %s", err)
+		return nil, err
+	}
+
+	err = setSubscription(configuration.Subscription)
+	if err != nil {
+		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
+		return nil, err
+	}
+
 	return &Engine{
 		Configuration: configuration,
+	}, nil
+}
+
+func refreshAccessToken() error {
+	// Login
+	command := "az account get-access-token > ~/.azure/accessTokens.json"
+	logging.GlobalLogger.Info("Logging into the azure cli.")
+	output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InteractiveCommand: true, WriteToHistory: false, InheritEnvironment: false})
+
+	logging.GlobalLogger.Debugf("Login stdout: %s", output.StdOut)
+	logging.GlobalLogger.Debugf("Login stderr: %s", output.StdErr)
+
+	if err != nil {
+		logging.GlobalLogger.Errorf("Failed to login %s", err)
+		return err
 	}
+
+	logging.GlobalLogger.Infof("Login successful.")
+	return nil
 }
 
 func setSubscription(subscription string) error {
@@ -75,13 +105,18 @@ func setWorkingDirectory(directory string) error {
 	return nil
 }
 
+// If the correlation ID is set, we need to set the AZURE_HTTP_USER_AGENT
+// environment variable so that the Azure CLI will send the correlation ID
+// with Azure Resource Manager requests.
+func setCorrelationId(correlationId string, env map[string]string) {
+	if correlationId != "" {
+		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("innovation-engine-%s")
+		logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
+	}
+}
+
 // Executes a deployment scenario.
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
-	err := setSubscription(e.Configuration.Subscription)
-	if err != nil {
-		return err
-	}
-
 	// Store the current directory so we can restore it later
 	originalDirectory, err := os.Getwd()
 	if err != nil {
@@ -90,6 +125,7 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	}
 
 	setWorkingDirectory(e.Configuration.WorkingDirectory)
+	setCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
 	// Execute the steps
 	fmt.Println(scenarioTitleStyle.Render(scenario.Name))
@@ -103,12 +139,19 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 
 // Validates a deployment scenario.
 func (e *Engine) TestScenario(scenario *Scenario) error {
-	err := setSubscription(e.Configuration.Subscription)
+	// Store the current directory so we can restore it later
+	originalDirectory, err := os.Getwd()
 	if err != nil {
+		logging.GlobalLogger.Error("Failed to get current directory", err)
 		return err
 	}
 
+	setWorkingDirectory(e.Configuration.WorkingDirectory)
+	setCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
+
 	fmt.Println(scenarioTitleStyle.Render(scenario.Name))
 	e.TestSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
+
+	setWorkingDirectory(originalDirectory)
 	return nil
 }

@@ -45,6 +45,7 @@ func ExecuteCLI() {
 
 	if err := rootCommand.Execute(); err != nil {
 		fmt.Println(err)
+		logging.GlobalLogger.Errorf("Error executing command: %s", err)
 		os.Exit(1)
 	}
 }

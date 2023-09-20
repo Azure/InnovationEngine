@@ -59,7 +59,7 @@ var executeCommand = &cobra.Command{
 			cliEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
 		}
 
-		innovationEngine := engine.NewEngine(engine.EngineConfiguration{
+		innovationEngine, err := engine.NewEngine(engine.EngineConfiguration{
 			Verbose:          verbose,
 			DoNotDelete:      doNotDelete,
 			Subscription:     subscription,
@@ -67,6 +67,12 @@ var executeCommand = &cobra.Command{
 			Environment:      environment,
 			WorkingDirectory: workingDirectory,
 		})
+
+		if err != nil {
+			logging.GlobalLogger.Errorf("Error creating engine: %s", err)
+			fmt.Printf("Error creating engine: %s", err)
+			os.Exit(1)
+		}
 
 		// Parse the markdown file and create a scenario
 		scenario, err := engine.CreateScenarioFromMarkdown(markdownFile, []string{"bash", "azurecli", "azurecli-interactive", "terraform"}, cliEnvironmentVariables)
