@@ -305,6 +305,8 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
     The issuer we are using can be found in the `cluster-issuer-prod.yml file`
 
     ```bash
+    export PATH=$PATH:$(go env GOPATH)/bin
+    go install github.com/a8m/envsubst/cmd/envsubst@v1.4.2
     envsubst < cluster-issuer-prod.yml | kubectl apply -f -
     ```
 
