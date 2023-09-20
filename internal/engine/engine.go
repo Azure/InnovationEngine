@@ -40,13 +40,14 @@ type Engine struct {
 
 // / Create a new engine instance.
 func NewEngine(configuration EngineConfiguration) (*Engine, error) {
-	err := refreshAccessToken()
-	if err != nil {
-		logging.GlobalLogger.Errorf("Invalid Config: Failed to login: %s", err)
-		return nil, err
-	}
+	// Temporarily disable until login code worked out.
+	// err := refreshAccessToken()
+	// if err != nil {
+	// logging.GlobalLogger.Errorf("Invalid Config: Failed to login: %s", err)
+	// return nil, err
+	// }
 
-	err = setSubscription(configuration.Subscription)
+	err := setSubscription(configuration.Subscription)
 	if err != nil {
 		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
 		return nil, err
