@@ -110,7 +110,7 @@ func setWorkingDirectory(directory string) error {
 // with Azure Resource Manager requests.
 func setCorrelationId(correlationId string, env map[string]string) {
 	if correlationId != "" {
-		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("innovation-engine-%s")
+		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("innovation-engine-%s", correlationId)
 		logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
 	}
 }
