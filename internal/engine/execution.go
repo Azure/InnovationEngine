@@ -129,14 +129,6 @@ func findAllDeployedResourceURIs(resourceGroup string) []string {
 // Executes the steps from a scenario and renders the output to the terminal.
 func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 
-	// If the correlation ID is set, we need to set the AZURE_HTTP_USER_AGENT
-	// environment variable so that the Azure CLI will send the correlation ID
-	// with Azure Resource Manager requests.
-	if e.Configuration.CorrelationId != "" {
-		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("innovation-engine-%s", e.Configuration.CorrelationId)
-		logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
-	}
-
 	var resourceGroupName string
 	var ocdStatus = ocd.NewOneClickDeploymentStatus()
 
