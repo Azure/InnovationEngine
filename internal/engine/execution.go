@@ -22,7 +22,8 @@ const (
 )
 
 var (
-	sshCommand = regexp.MustCompile(`(^|\s)\bssh\b\s`)
+	// An SSH command regex where there must be a username@host somewhere present in the command.
+	sshCommand = regexp.MustCompile(`(^|\s)\bssh\b\s+([^\s]+(\s+|$))+((?P<username>[a-zA-Z0-9_-]+|\$[A-Z_0-9]+)@(?P<host>[a-zA-Z0-9.-]+|\$[A-Z_0-9]+))`)
 
 	// Az cli command regex
 	azCommand     = regexp.MustCompile(`az\s+([a-z]+)\s+([a-z]+)`)
