@@ -1,0 +1,28 @@
+name: scenario-testing
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"
+  push:
+    branches:
+      - main
+      - vmarcella/port-to-go
+
+jobs:
+  build-test-release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build all targets.
+      run: |
+        make build-all
+
+    - name: Sign into Azure.
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Run all one click deployment scenarios.
+      run: |
+        make test-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
+
