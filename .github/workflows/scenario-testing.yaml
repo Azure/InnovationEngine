@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - dev
       - vmarcella/port-to-go
 
 jobs:
@@ -27,4 +28,9 @@ jobs:
       with:
         inlineScript: |
           make test-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
+
+    - name: Display ie.log file
+      run: |
+        cat ie.log
+
 
