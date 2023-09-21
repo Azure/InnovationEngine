@@ -305,7 +305,8 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
     The issuer we are using can be found in the `cluster-issuer-prod.yml file`
 
     ```bash
-    envsubst < cluster-issuer-prod.yml | kubectl apply -f -
+    cluster_issuer_variables=$(<cluster-issuer-prod.yml)
+    echo "${cluster_issuer_variables//\$SSL_EMAIL_ADDRESS/$SSL_EMAIL_ADDRESS}" | kubectl apply -f -
     ```
 
 5. Upate Voting App Application to use Cert-Manager to obtain an SSL Certificate.
@@ -313,7 +314,8 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
     The full YAML file can be found in `azure-vote-nginx-ssl.yml`
 
     ```bash
-    envsubst < azure-vote-nginx-ssl.yml | kubectl apply -f -
+    azure_vote_nginx_ssl_variables=$(<azure-vote-nginx-ssl.yml)
+    echo "${azure_vote_nginx_ssl_variables//\$FQDN/$FQDN}" | kubectl apply -f -
     ```
 
 ## Validate application is working
