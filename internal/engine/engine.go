@@ -82,7 +82,7 @@ func setSubscription(subscription string) error {
 		_, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InteractiveCommand: false, WriteToHistory: false, InheritEnvironment: false})
 
 		if err != nil {
-			logging.GlobalLogger.Error("Failed to set subscription", err)
+			logging.GlobalLogger.Errorf("Failed to set subscription: %s", err)
 			return err
 		}
 

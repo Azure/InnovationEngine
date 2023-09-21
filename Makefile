@@ -30,8 +30,8 @@ test-all:
 SUBSCRIPTION_ID ?= 00000000-0000-0000-0000-000000000000
 SCENARIO ?= ./README.md
 test-scenario:
-		@echo "Running scenario $(SCENARIO)"
-		$(IE_BINARY) execute $(SCENARIO) --subscription $(SCENARIO)
+	@echo "Running scenario $(SCENARIO)"
+	$(IE_BINARY) test $(SCENARIO) --subscription $(SCENARIO)
 
 test-scenarios:
 	@echo "Testing out the scenarios"
