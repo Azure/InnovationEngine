@@ -9,7 +9,7 @@ on:
       - vmarcella/port-to-go
 
 jobs:
-  build-test-release:
+  test-ocd-scenarios:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
