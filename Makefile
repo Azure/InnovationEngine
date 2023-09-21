@@ -36,7 +36,7 @@ test-scenario:
 test-scenarios:
 	@echo "Testing out the scenarios"
 	for dir in ./scenarios/ocd/*/; do \
-		 $(MAKE) test-scenario SCENARIO="$${dir}README.md"; \
+		 $(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION_ID)"; \
 	done
 
 # ------------------------------- Run targets ----------------------------------
