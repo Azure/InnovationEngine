@@ -237,14 +237,15 @@ Results:
         "sourcePortRange": "*",
         "sourcePortRanges": [],
         "type": "Microsoft.Network/networkSecurityGroups/defaultSecurityRules"
-      },
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroupb1404f/providers/Microsoft.Network/networkSecurityGroups/myNSGNameb1404f",
-        "location": "eastus",
-        "name": "myNSGNameb1404f",
-        "provisioningState": "Succeeded",
-        "resourceGroup": "myResourceGroupb1404f",
-        "securityRules": [],
-        "type": "Microsoft.Network/networkSecurityGroups"
+      }
+    ],
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroupb1404f/providers/Microsoft.Network/networkSecurityGroups/myNSGNameb1404f",
+    "location": "eastus",
+    "name": "myNSGNameb1404f",
+    "provisioningState": "Succeeded",
+    "resourceGroup": "myResourceGroupb1404f",
+    "securityRules": [],
+    "type": "Microsoft.Network/networkSecurityGroups"
   }
 }
 ```
