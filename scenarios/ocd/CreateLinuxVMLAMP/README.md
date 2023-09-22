@@ -762,14 +762,6 @@ Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificat
 az ssh config --file ~/.ssh/azure-config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
 ```
 
-Results:
-
-<!-- expected_similarity=0.3 -->
-```ASCII
-Generated SSH certificate /home/admn/.ssh/az_ssh_config/myResourceGroupfa636b-myVMNamefa636b/id_rsa.pub-aadcert.pub is valid until 2023-09-04 12:37:25 PM in local time.
-/home/admn/.ssh/az_ssh_config/myResourceGroupfa636b-myVMNamefa636b contains sensitive information (id_rsa, id_rsa.pub, id_rsa.pub-aadcert.pub). Please delete it once you no longer need this config file.
-```
-
 ## Browse your WordPress website
 
 [WordPress](https://www.wordpress.org) is an open source content management system (CMS) used by over 40% of the web to create websites, blogs, and other applications. WordPress can be run on a few different Azure services: [AKS](https://learn.microsoft.com/azure/mysql/flexible-server/tutorial-deploy-wordpress-on-aks), Virtual Machines, and App Service. For a full list of WordPress options on Azure, see [WordPress on Azure Marketplace](https://azuremarketplace.microsoft.com/marketplace/apps?page=1&search=wordpress).
