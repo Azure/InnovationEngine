@@ -624,6 +624,7 @@ az vm create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --admin-username $MY_VM_USERNAME \
     --authentication-type ssh \
+    --assign-identity \
     --image $MY_VM_IMAGE \
     --location $REGION \
     --nic-delete-option Delete \
@@ -664,7 +665,10 @@ Results:
 It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
 
 ```bash
-runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(ssh -o StrictHostKeyChecking=no $FQDN "cloud-init status"); echo $STATUS; if [ "$STATUS" = 'status: done' ]; then break; else sleep 10; fi; done
+runtime="10 minute";
+endtime=$(date -ud "$runtime" +%s);
+
+while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(ssh -o StrictHostKeyChecking=no $FQDN "cloud-init status"); echo $STATUS; if [ "$STATUS" = 'status: done' ]; then break; else sleep 10; fi; done
 ```
 
 ## Enable Azure AD login for a Linux Virtual Machine in Azure
@@ -747,7 +751,7 @@ Results:
 Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. The following example exports the configuration for all IP addresses assigned to the VM:
 
 ```bash
-az ssh config --file ~/.ssh/config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
+az ssh config --file ~/.ssh/azure-config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
 ```
 
 Results:
