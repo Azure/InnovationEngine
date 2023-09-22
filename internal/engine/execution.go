@@ -210,7 +210,11 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 								moveCursorPositionDown(lines)
 								fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
 								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
-								break loop
+
+								ocdStatus.SetError(err)
+								reportOCDStatus(ocdStatus, e.Configuration.Environment)
+
+								os.Exit(1)
 							}
 
 							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))

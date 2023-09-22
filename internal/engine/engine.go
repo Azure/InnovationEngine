@@ -72,7 +72,7 @@ func refreshAccessToken() error {
 		return err
 	}
 
-	logging.GlobalLogger.Infof("Login successful.")
+	logging.GlobalLogger.Info("Login successful.")
 	return nil
 }
 
