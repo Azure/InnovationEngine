@@ -186,7 +186,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					commandOutput = output
 					done <- err
 				}(block)
-			loop:
+			renderingLoop:
 				// While the command is executing, render the spinner.
 				for {
 					select {
@@ -252,7 +252,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 							os.Exit(1)
 						}
 
-						break loop
+						break renderingLoop
 					default:
 						frame = (frame + 1) % len(spinnerFrames)
 						fmt.Printf("\r  %s", spinnerStyle.Render(string(spinnerFrames[frame])))
