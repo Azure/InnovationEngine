@@ -323,15 +323,15 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
 Wait for SSL certificate to issue. The following command will query the status of the SSL certificate for 3 minutes.
  In rare occasions it may take up to 15 minutes for Lets Encrypt to issue a successful challenge and the ready state to be 'True'
 
-```bash
+<!-- ```bash
 runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get certificate --output jsonpath={..status.conditions[0].status}); echo $STATUS; if [ "$STATUS" = 'True' ]; then break; else sleep 10; fi; done
-```
+``` -->
 
 Validate SSL certificate is True by running the follow command:
 
-```bash
+<!-- ```bash
 kubectl get certificate --output jsonpath={..status.conditions[0].status}
-```
+``` -->
 
 Results:
 
@@ -347,11 +347,11 @@ Run the following command to get the HTTPS endpoint for your application:
 >[!Note]
 > It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via https.
 
-```bash
+<!-- ```bash
 runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); echo $STATUS; if [ "$STATUS" = "$MY_STATIC_IP" ]; then break; else sleep 10; fi; done
 
 curl https://$FQDN
-```
+``` -->
 
 Results:
 
