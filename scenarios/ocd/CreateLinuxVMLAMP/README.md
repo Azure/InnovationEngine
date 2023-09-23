@@ -717,6 +717,7 @@ Results:
 }
 ```
 
+<!--
 ## Assign Azure AD RBAC for Azure AD login for Linux Virtual Machine
 
 The below command uses [az role assignment create](https://learn.microsoft.com/cli/azure/role/assignment#az-role-assignment-create) to assign the `Virtual Machine Administrator Login` role to the VM for your current Azure user.
@@ -729,10 +730,10 @@ az role assignment create \
     --assignee $MY_AZURE_USER_ID \
     --scope $MY_RESOURCE_GROUP_ID -o JSON
 ```
+-->
 
 Results:
-
-<!-- expected_similarity=0.3 -->
+<!-- expected_similarity=0.3
 ```JSON
 {
   "condition": null,
@@ -753,6 +754,7 @@ Results:
   "updatedOn": "2023-09-04T09:29:17.237445+00:00"
 }
 ```
+-->
 
 ## Export the SSH configuration for use with SSH clients that support OpenSSH
 

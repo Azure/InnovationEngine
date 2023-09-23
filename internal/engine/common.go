@@ -61,22 +61,17 @@ func indentMultiLineCommand(content string, indentation int) string {
 func compareCommandOutputs(actualOutput string, expectedOutput string, expectedSimilarity float64, expectedOutputLanguage string) error {
 	if strings.ToLower(expectedOutputLanguage) == "json" {
 		logging.GlobalLogger.Debugf("Comparing JSON strings:\nExpected: %s\nActual%s", expectedOutput, actualOutput)
-		meetsThreshold, err := utils.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
+		results, err := utils.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
 
 		if err != nil {
 			return err
 		}
 
-		if !meetsThreshold {
+		if !results.AboveThreshold {
 			return fmt.Errorf(errorMessageStyle.Render("Expected output does not match actual output."))
 		}
 
-		score, _ := utils.ComputeJsonStringSimilarity(actualOutput, expectedOutput)
-
-		actual, _ := utils.OrderJsonFields(actualOutput)
-		expected, _ := utils.OrderJsonFields(expectedOutput)
-
-		logging.GlobalLogger.WithField("actual", actual).WithField("expected", expected).Debugf("Jaro score: %f Expected Similarity: %f", score, expectedSimilarity)
+		logging.GlobalLogger.Debugf("Expected Similarity: %f, Actual Similarity: %f", expectedSimilarity, results.Score)
 	} else {
 		score := smetrics.JaroWinkler(expectedOutput, actualOutput, 0.7, 4)
 
