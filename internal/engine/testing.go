@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
-	"github.com/Azure/InnovationEngine/internal/utils"
 )
 
 func (e *Engine) TestSteps(steps []Step, env map[string]string) {
@@ -28,7 +28,7 @@ testRunner:
 			var commandOutput shells.CommandOutput
 			go func(block parsers.CodeBlock) {
 				logging.GlobalLogger.Infof("Executing command: %s", block.Content)
-				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
 				logging.GlobalLogger.Infof("Command stdout: %s", output.StdOut)
 				logging.GlobalLogger.Infof("Command stderr: %s", output.StdErr)
 				commandOutput = output
@@ -96,7 +96,7 @@ testRunner:
 		fmt.Printf("\n")
 		fmt.Printf("Deleting resource group: %s\n", resourceGroupName)
 		command := fmt.Sprintf("az group delete --name %s --yes", resourceGroupName)
-		output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+		output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
 		if err != nil {
 			fmt.Print(errorStyle.Render("Error deleting resource group: %s\n", err.Error()))
 			logging.GlobalLogger.Errorf("Error deleting resource group: %s", err.Error())

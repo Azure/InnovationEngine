@@ -1,4 +1,4 @@
-package utils
+package lib
 
 // Makes a copy of a map
 func CopyMap(m map[string]string) map[string]string {

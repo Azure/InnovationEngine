@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
-	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/xrash/smetrics"
 )
@@ -61,7 +61,7 @@ func indentMultiLineCommand(content string, indentation int) string {
 func compareCommandOutputs(actualOutput string, expectedOutput string, expectedSimilarity float64, expectedOutputLanguage string) error {
 	if strings.ToLower(expectedOutputLanguage) == "json" {
 		logging.GlobalLogger.Debugf("Comparing JSON strings:\nExpected: %s\nActual%s", expectedOutput, actualOutput)
-		results, err := utils.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
+		results, err := lib.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
 
 		if err != nil {
 			return err
