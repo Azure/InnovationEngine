@@ -3,7 +3,7 @@ package kube
 import (
 	"context"
 
-	"github.com/Azure/InnovationEngine/internal/utils"
+	"github.com/Azure/InnovationEngine/internal/lib"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +17,7 @@ func GetAgentDeployment(id string) *appsv1.Deployment {
 			Name: "runner-" + id,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: utils.Int32Ptr(1),
+			Replicas: lib.Int32Ptr(1),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": "runner",

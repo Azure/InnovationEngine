@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/ocd"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
-	"github.com/Azure/InnovationEngine/internal/utils"
 )
 
 const (
@@ -180,7 +180,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				hideCursor()
 
 				go func(block parsers.CodeBlock) {
-					output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+					output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
 					logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
 					logging.GlobalLogger.Infof("Command output to stderr:\n %s", output.StdErr)
 					commandOutput = output
@@ -209,7 +209,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								moveCursorPositionDown(lines)
 								fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
-								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
+								fmt.Printf("	%s\n", lib.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
 
 								ocdStatus.SetError(err)
 								reportOCDStatus(ocdStatus, e.Configuration.Environment)
@@ -271,7 +271,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					reportOCDStatus(ocdStatus, e.Configuration.Environment)
 				}
 
-				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: false})
+				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: false})
 
 				if err == nil {
 					showCursor()

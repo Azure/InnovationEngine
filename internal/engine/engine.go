@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Azure/InnovationEngine/internal/az"
+	"github.com/Azure/InnovationEngine/internal/lib"
+	"github.com/Azure/InnovationEngine/internal/lib/fs"
 	"github.com/Azure/InnovationEngine/internal/logging"
-	"github.com/Azure/InnovationEngine/internal/shells"
-	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -47,7 +48,7 @@ func NewEngine(configuration EngineConfiguration) (*Engine, error) {
 	// return nil, err
 	// }
 
-	err := setSubscription(configuration.Subscription)
+	err := az.SetSubscription(configuration.Subscription)
 	if err != nil {
 		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
 		return nil, err
@@ -56,54 +57,6 @@ func NewEngine(configuration EngineConfiguration) (*Engine, error) {
 	return &Engine{
 		Configuration: configuration,
 	}, nil
-}
-
-func refreshAccessToken() error {
-	// Login
-	command := "az account get-access-token > ~/.azure/accessTokens.json"
-	logging.GlobalLogger.Info("Logging into the azure cli.")
-	output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InteractiveCommand: true, WriteToHistory: false, InheritEnvironment: false})
-
-	logging.GlobalLogger.Debugf("Login stdout: %s", output.StdOut)
-	logging.GlobalLogger.Debugf("Login stderr: %s", output.StdErr)
-
-	if err != nil {
-		logging.GlobalLogger.Errorf("Failed to login %s", err)
-		return err
-	}
-
-	logging.GlobalLogger.Info("Login successful.")
-	return nil
-}
-
-func setSubscription(subscription string) error {
-	if subscription != "" {
-		command := fmt.Sprintf("az account set --subscription %s", subscription)
-		_, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InteractiveCommand: false, WriteToHistory: false, InheritEnvironment: false})
-
-		if err != nil {
-			logging.GlobalLogger.Errorf("Failed to set subscription: %s", err)
-			return err
-		}
-
-		logging.GlobalLogger.Infof("Set subscription to %s", subscription)
-	}
-
-	return nil
-}
-
-func setWorkingDirectory(directory string) error {
-	// Change working directory if specified
-	if directory != "" {
-		err := os.Chdir(directory)
-		if err != nil {
-			logging.GlobalLogger.Error("Failed to change working directory", err)
-			return err
-		}
-
-		logging.GlobalLogger.Infof("Changed directory to %s", directory)
-	}
-	return nil
 }
 
 // If the correlation ID is set, we need to set the AZURE_HTTP_USER_AGENT
@@ -125,15 +78,15 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 		return err
 	}
 
-	setWorkingDirectory(e.Configuration.WorkingDirectory)
+	fs.SetWorkingDirectory(e.Configuration.WorkingDirectory)
 	setCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
 	// Execute the steps
 	fmt.Println(scenarioTitleStyle.Render(scenario.Name))
-	e.ExecuteAndRenderSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
+	e.ExecuteAndRenderSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 	fmt.Printf(scriptHeader.Render("# Generated bash to replicate what just happened:")+"\n%s\n", scriptText.Render(scenario.ToShellScript()))
 
-	setWorkingDirectory(originalDirectory)
+	fs.SetWorkingDirectory(originalDirectory)
 
 	return nil
 }
@@ -147,12 +100,12 @@ func (e *Engine) TestScenario(scenario *Scenario) error {
 		return err
 	}
 
-	setWorkingDirectory(e.Configuration.WorkingDirectory)
+	fs.SetWorkingDirectory(e.Configuration.WorkingDirectory)
 	setCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
 	fmt.Println(scenarioTitleStyle.Render(scenario.Name))
-	e.TestSteps(scenario.Steps, utils.CopyMap(scenario.Environment))
+	e.TestSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 
-	setWorkingDirectory(originalDirectory)
+	fs.SetWorkingDirectory(originalDirectory)
 	return nil
 }
