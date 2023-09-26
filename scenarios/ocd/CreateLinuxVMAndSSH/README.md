@@ -5,7 +5,7 @@
 The First step in this tutorial is to define environment variables 
 
 ```bash
-export UNIQUE_POSTFIX="$(($RANDOM % 100000 + 1))"
+export UNIQUE_POSTFIX="$(date +%M%S)$$"
 export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
 export REGION=EastUS
 export MY_VM_NAME="myVM$UNIQUE_POSTFIX"
