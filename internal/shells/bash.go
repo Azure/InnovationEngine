@@ -16,7 +16,7 @@ import (
 
 // Location where the environment state from commands is captured and sent to
 // for being able to share state across commands.
-var environmentStateFile = "/tmp/env.txt"
+var environmentStateFile = "/tmp/env-vars"
 
 func loadEnvFile(path string) (map[string]string, error) {
 	if !fs.FileExists(path) {
@@ -89,7 +89,7 @@ func ExecuteBashCommand(command string, config BashCommandConfiguration) (Comman
 	var commandWithStateSaved = []string{
 		command,
 		"IE_LAST_COMMAND_EXIT_CODE=\"$?\"",
-		"env > /tmp/env.txt",
+		"env > " + environmentStateFile,
 		"exit $IE_LAST_COMMAND_EXIT_CODE",
 	}
 

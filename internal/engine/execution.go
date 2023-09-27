@@ -303,5 +303,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 	attachResourceURIsToOCDStatus(&ocdStatus, resourceGroupName, e.Configuration.Environment)
 	reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
-	shells.ResetStoredEnvironmentVariables()
+	if e.Configuration.Environment != "ocd" {
+		shells.ResetStoredEnvironmentVariables()
+	}
 }

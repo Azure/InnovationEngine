@@ -41,12 +41,13 @@ type Engine struct {
 
 // / Create a new engine instance.
 func NewEngine(configuration EngineConfiguration) (*Engine, error) {
-	// Temporarily disable until login code worked out.
-	// err := refreshAccessToken()
-	// if err != nil {
-	// logging.GlobalLogger.Errorf("Invalid Config: Failed to login: %s", err)
-	// return nil, err
-	// }
+	if configuration.Environment == "ocd" {
+		err := az.LoginWithMSI()
+		if err != nil {
+			logging.GlobalLogger.Errorf("Invalid Config: Failed to login: %s", err)
+			return nil, err
+		}
+	}
 
 	err := az.SetSubscription(configuration.Subscription)
 	if err != nil {
