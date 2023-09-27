@@ -11,7 +11,7 @@ func LoginWithMSI() error {
 	// Login
 	command := "az login --identity"
 	logging.GlobalLogger.Info("Logging into the azure cli.")
-	output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InteractiveCommand: true, WriteToHistory: false, InheritEnvironment: false})
+	output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InteractiveCommand: false, WriteToHistory: false, InheritEnvironment: true})
 
 	logging.GlobalLogger.Debugf("Login stdout: %s", output.StdOut)
 	logging.GlobalLogger.Debugf("Login stderr: %s", output.StdErr)
