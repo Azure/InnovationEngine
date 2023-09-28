@@ -3,15 +3,16 @@
 This article walks you through how to deploy an NGINX web server, Azure MySQL Flexible Server, and PHP (the LEMP stack) on an Ubuntu Linux VM in Azure. To see the LEMP server in action, you can optionally install and configure a WordPress site. In this tutorial you learn how to:
 
 > [!div class="checklist"]
-> * Create a Linux Ubuntu VM 
+
+> * Create a Linux Ubuntu VM
 > * Open ports 80 and 443 for web traffic
 > * Install and Secure NGINX, Azure Flexible MySQL Server, and PHP
 > * Verify installation and configuration
-> * Install WordPress 
+> * Install WordPress
 
-# Create RG
+## Create RG
 
-Create a resource group with the [az group create](https://learn.microsoft.com/cli/azure/group#az-group-create) command. An Azure resource group is a logical container into which Azure resources are deployed and managed. 
+Create a resource group with the [az group create](https://learn.microsoft.com/cli/azure/group#az-group-create) command. An Azure resource group is a logical container into which Azure resources are deployed and managed.
 The following example creates a resource group named `$MY_RESOURCE_GROUP_NAME` in the `eastus` location.
 
 ## Variable declaration
@@ -52,6 +53,7 @@ az group create \
     --name $MY_RESOURCE_GROUP_NAME \
     --location $REGION -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -69,7 +71,7 @@ Results:
 }
 ```
 
-# Setup LAMP networking
+## Setup LAMP networking
 
 ## Create an Azure Virtual Network
 
@@ -85,6 +87,7 @@ az network vnet create \
     --subnet-name $MY_SN_NAME \
     --subnet-prefixes $MY_SN_PREFIX -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -139,6 +142,7 @@ az network public-ip create \
     --version IPv4 \
     --zone 1 2 3 -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -185,6 +189,7 @@ az network nsg create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --location $REGION -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -241,6 +246,7 @@ az network nsg rule create \
     --destination-address-prefix '*' \
     --destination-port-range 22 80 443 -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -284,6 +290,7 @@ az network nic create \
     --network-security-group $MY_NSG_NAME \
     --public-ip-address $MY_PUBLIC_IP_NAME -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -334,7 +341,7 @@ Results:
 }
 ```
 
-# Cloud-init overview
+## Cloud-init overview
 
 Cloud-init is a widely used approach to customize a Linux VM as it boots for the first time. You can use cloud-init to install packages and write files, or to configure users and security. As cloud-init runs during the initial boot process, there are no additional steps or required agents to apply your configuration.
 
@@ -342,8 +349,7 @@ Cloud-init also works across distributions. For example, you don't use apt-get i
 
 We are working with our partners to get cloud-init included and working in the images that they provide to Azure. For detailed information cloud-init support for each distribution, see [Cloud-init support for VMs in Azure](https://learn.microsoft.com/azure/virtual-machines/linux/using-cloud-init).
 
-
-## Create cloud-init config file
+### Create cloud-init config file
 
 To see cloud-init in action, create a VM that installs a LAMP stack and runs a simple Wordpress app secured with an SSL certificate. The following cloud-init configuration installs the required packages, creates the Wordpress website, then initialize and starts the website.
 
@@ -476,6 +482,7 @@ az network private-dns zone create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --name $MY_DNS_LABEL.private.mysql.database.azure.com -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -497,7 +504,7 @@ Results:
 }
 ```
 
-# Create an Azure Database for MySQL - Flexible Server
+## Create an Azure Database for MySQL - Flexible Server
 
 Azure Database for MySQL - Flexible Server is a managed service that you can use to run, manage, and scale highly available MySQL servers in the cloud. Create a flexible server with the [az mysql flexible-server create](https://learn.microsoft.com/cli/azure/mysql/flexible-server#az-mysql-flexible-server-create) command. A server can contain multiple databases. The following command creates a server using service defaults and variable values from your Azure CLI's local environment:
 
@@ -526,6 +533,7 @@ az mysql flexible-server create \
     --vnet $MY_VNET_NAME \
     --yes -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -544,9 +552,10 @@ Results:
 ```
 
 The server created has the below attributes:
-- The server name, admin username, admin password, resource group name, location are already specified in local context environment of the cloud shell, and will be created in the same location as your the resource group and the other Azure components.
-- Service defaults for remaining server configurations: compute tier (Burstable), compute size/SKU (Standard_B2s), backup retention period (7 days), and MySQL version (8.0.21)
-- The default connectivity method is Private access (VNet Integration) with a linked virtual network and a auto-generated subnet.
+
+* The server name, admin username, admin password, resource group name, location are already specified in local context environment of the cloud shell, and will be created in the same location as your the resource group and the other Azure components.
+* Service defaults for remaining server configurations: compute tier (Burstable), compute size/SKU (Standard_B2s), backup retention period (7 days), and MySQL version (8.0.21)
+* The default connectivity method is Private access (VNet Integration) with a linked virtual network and a auto-generated subnet.
 
 > [!NOTE]
 > The connectivity method cannot be changed after creating the server. For example, if you selected `Private access (VNet Integration)` during create then you cannot change to `Public access (allowed IP addresses)` after create. We highly recommend creating a server with Private access to securely access your server using VNet Integration. Learn more about Private access in the [concepts article](https://learn.microsoft.com/azure/mysql/flexible-server/concepts-networking-vnet).
@@ -556,11 +565,12 @@ If you'd like to change any defaults, please refer to the Azure CLI [reference d
 ## Check the Azure Database for MySQL - Flexible Server status
 
 It takes a few minutes to create the Azure Database for MySQL - Flexible Server and supporting resources.
+
 ```bash
 runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(az mysql flexible-server show -g $MY_RESOURCE_GROUP_NAME -n $MY_MYSQL_DB_NAME --query state -o tsv); echo $STATUS; if [ "$STATUS" = 'Ready' ]; then break; else sleep 10; fi; done
 ```
 
-## Configure server parameters in Azure Database for MySQL - Flexible Server 
+## Configure server parameters in Azure Database for MySQL - Flexible Server
 
 You can manage Azure Database for MySQL - Flexible Server configuration using server parameters. The server parameters are configured with the default and recommended value when you create the server.
 
@@ -578,6 +588,7 @@ az mysql flexible-server parameter set \
     -s $MY_MYSQL_DB_NAME \
     -n require_secure_transport -v "OFF" -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -600,12 +611,12 @@ Results:
 }
 ```
 
-# Create an Azure Linux Virtual Machine
+## Create an Azure Linux Virtual Machine
 
 The following example creates a VM named `$MY_VM_NAME` and creates SSH keys if they do not already exist in a default key location. The command also sets `$MY_VM_USERNAME` as an administrator user name.
 To improve the security of Linux virtual machines in Azure, you can integrate with Azure Active Directory authentication. You can now use Azure AD as a core authentication platform and a certificate authority to SSH into a Linux VM by using Azure AD and OpenSSH certificate-based authentication. This functionality allows organizations to manage access to VMs with Azure role-based access control and Conditional Access policies.
 
-Create a VM with the [az vm create](https://learn.microsoft.com/cli/azure/vm#az-vm-create) command. 
+Create a VM with the [az vm create](https://learn.microsoft.com/cli/azure/vm#az-vm-create) command.
 
 ```bash
 az vm create \
@@ -613,6 +624,7 @@ az vm create \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --admin-username $MY_VM_USERNAME \
     --authentication-type ssh \
+    --assign-identity \
     --image $MY_VM_IMAGE \
     --location $REGION \
     --nic-delete-option Delete \
@@ -625,6 +637,7 @@ az vm create \
     --nics $MY_VM_NIC_NAME \
     --custom-data cloud-init.txt -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -652,7 +665,18 @@ Results:
 It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
 
 ```bash
-runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(ssh -o StrictHostKeyChecking=no $FQDN "cloud-init status"); echo $STATUS; if [ "$STATUS" = 'status: done' ]; then break; else sleep 10; fi; done
+runtime="10 minute";
+endtime=$(date -ud "$runtime" +%s);
+
+while [[ $(date -u +%s) -le $endtime ]]; do 
+    STATUS=$(ssh -o StrictHostKeyChecking=no $FQDN "cloud-init status"); 
+    echo $STATUS; 
+    if [ "$STATUS" = 'status: done' ]; then 
+        break; 
+    else 
+        sleep 10; 
+    fi;
+done
 ```
 
 ## Enable Azure AD login for a Linux Virtual Machine in Azure
@@ -666,6 +690,7 @@ az vm extension set \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --vm-name $MY_VM_NAME -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -692,6 +717,7 @@ Results:
 }
 ```
 
+<!--
 ## Assign Azure AD RBAC for Azure AD login for Linux Virtual Machine
 
 The below command uses [az role assignment create](https://learn.microsoft.com/cli/azure/role/assignment#az-role-assignment-create) to assign the `Virtual Machine Administrator Login` role to the VM for your current Azure user.
@@ -704,9 +730,10 @@ az role assignment create \
     --assignee $MY_AZURE_USER_ID \
     --scope $MY_RESOURCE_GROUP_ID -o JSON
 ```
-Results:
+-->
 
-<!-- expected_similarity=0.3 -->
+Results:
+<!-- expected_similarity=0.3
 ```JSON
 {
   "condition": null,
@@ -727,22 +754,19 @@ Results:
   "updatedOn": "2023-09-04T09:29:17.237445+00:00"
 }
 ```
+-->
 
+<!-- 
 ## Export the SSH configuration for use with SSH clients that support OpenSSH
+
 Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. The following example exports the configuration for all IP addresses assigned to the VM:
 
 ```bash
-az ssh config --file ~/.ssh/config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
+az ssh config --file ~/.ssh/azure-config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
 ```
-Results:
+-->
 
-<!-- expected_similarity=0.3 -->
-```ASCII
-Generated SSH certificate /home/admn/.ssh/az_ssh_config/myResourceGroupfa636b-myVMNamefa636b/id_rsa.pub-aadcert.pub is valid until 2023-09-04 12:37:25 PM in local time.
-/home/admn/.ssh/az_ssh_config/myResourceGroupfa636b-myVMNamefa636b contains sensitive information (id_rsa, id_rsa.pub, id_rsa.pub-aadcert.pub). Please delete it once you no longer need this config file.
-```
-
-# Browse your WordPress website
+## Browse your WordPress website
 
 [WordPress](https://www.wordpress.org) is an open source content management system (CMS) used by over 40% of the web to create websites, blogs, and other applications. WordPress can be run on a few different Azure services: [AKS](https://learn.microsoft.com/azure/mysql/flexible-server/tutorial-deploy-wordpress-on-aks), Virtual Machines, and App Service. For a full list of WordPress options on Azure, see [WordPress on Azure Marketplace](https://azuremarketplace.microsoft.com/marketplace/apps?page=1&search=wordpress).
 
@@ -753,6 +777,7 @@ Validate that the application is running by visiting the application url:
 ```bash
 curl --max-time 120 "https://$FQDN"
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
