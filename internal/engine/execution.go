@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/ocd"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
-	"github.com/Azure/InnovationEngine/internal/utils"
 )
 
 const (
@@ -22,7 +22,8 @@ const (
 )
 
 var (
-	sshCommand = regexp.MustCompile(`(^|\s)\bssh\b\s`)
+	// An SSH command regex where there must be a username@host somewhere present in the command.
+	sshCommand = regexp.MustCompile(`(^|\s)\bssh\b\s+([^\s]+(\s+|$))+((?P<username>[a-zA-Z0-9_-]+|\$[A-Z_0-9]+)@(?P<host>[a-zA-Z0-9.-]+|\$[A-Z_0-9]+))`)
 
 	// Az cli command regex
 	azCommand     = regexp.MustCompile(`az\s+([a-z]+)\s+([a-z]+)`)
@@ -129,14 +130,6 @@ func findAllDeployedResourceURIs(resourceGroup string) []string {
 // Executes the steps from a scenario and renders the output to the terminal.
 func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 
-	// If the correlation ID is set, we need to set the AZURE_HTTP_USER_AGENT
-	// environment variable so that the Azure CLI will send the correlation ID
-	// with Azure Resource Manager requests.
-	if e.Configuration.CorrelationId != "" {
-		env["AZURE_HTTP_USER_AGENT"] = fmt.Sprintf("innovation-engine-%s", e.Configuration.CorrelationId)
-		logging.GlobalLogger.Info("Resource tracking enabled. Tracking ID: " + env["AZURE_HTTP_USER_AGENT"])
-	}
-
 	var resourceGroupName string
 	var ocdStatus = ocd.NewOneClickDeploymentStatus()
 
@@ -187,11 +180,13 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				hideCursor()
 
 				go func(block parsers.CodeBlock) {
-					output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+					output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+					logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
+					logging.GlobalLogger.Infof("Command output to stderr:\n %s", output.StdErr)
 					commandOutput = output
 					done <- err
 				}(block)
-			loop:
+			renderingLoop:
 				// While the command is executing, render the spinner.
 				for {
 					select {
@@ -214,8 +209,12 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
 								moveCursorPositionDown(lines)
 								fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
-								fmt.Printf("	%s\n", utils.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
-								break loop
+								fmt.Printf("	%s\n", lib.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
+
+								ocdStatus.SetError(err)
+								reportOCDStatus(ocdStatus, e.Configuration.Environment)
+
+								os.Exit(1)
 							}
 
 							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
@@ -253,7 +252,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 							os.Exit(1)
 						}
 
-						break loop
+						break renderingLoop
 					default:
 						frame = (frame + 1) % len(spinnerFrames)
 						fmt.Printf("\r  %s", spinnerStyle.Render(string(spinnerFrames[frame])))
@@ -272,7 +271,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					reportOCDStatus(ocdStatus, e.Configuration.Environment)
 				}
 
-				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: false})
+				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: false})
 
 				if err == nil {
 					showCursor()
@@ -304,5 +303,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 	attachResourceURIsToOCDStatus(&ocdStatus, resourceGroupName, e.Configuration.Environment)
 	reportOCDStatus(ocdStatus, e.Configuration.Environment)
 
-	shells.ResetStoredEnvironmentVariables()
+	if e.Configuration.Environment != "ocd" {
+		shells.ResetStoredEnvironmentVariables()
+	}
 }

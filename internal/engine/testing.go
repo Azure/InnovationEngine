@@ -2,38 +2,35 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
+	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
-	"github.com/Azure/InnovationEngine/internal/utils"
 )
 
 func (e *Engine) TestSteps(steps []Step, env map[string]string) {
-	for stepNumber, step := range steps {
-		fmt.Printf("%d. %s\n", stepNumber+1, step.Name)
+	var resourceGroupName string
+	stepsToExecute := filterDeletionCommands(steps, true)
+
+testRunner:
+	for stepNumber, step := range stepsToExecute {
+		stepTitle := fmt.Sprintf("  %d. %s\n", stepNumber+1, step.Name)
+		fmt.Println(stepTitleStyle.Render(stepTitle))
+		moveCursorPositionUp(1)
+		hideCursor()
+
 		for _, block := range step.CodeBlocks {
-			// Render the codeblock.
-			indentedBlock := indentMultiLineCommand(block.Content, 4)
-			fmt.Print("    " + indentedBlock)
-
-			// Grab the number of lines it contains & set the cursor to the
-			// beginning of the block.
-			lines := strings.Count(block.Content, "\n")
-			fmt.Printf("\033[%dA", lines)
-
-			// Render the spinner and hide the cursor.
-			fmt.Print(spinnerStyle.Render("  "+string(spinnerFrames[0])) + " ")
-			fmt.Print("\033[?25l")
-
 			// execute the command as a goroutine to allow for the spinner to be
 			// rendered while the command is executing.
 			done := make(chan error)
 			var commandOutput shells.CommandOutput
 			go func(block parsers.CodeBlock) {
-				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: utils.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+				logging.GlobalLogger.Infof("Executing command: %s", block.Content)
+				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+				logging.GlobalLogger.Infof("Command stdout: %s", output.StdOut)
+				logging.GlobalLogger.Infof("Command stderr: %s", output.StdErr)
 				commandOutput = output
 				done <- err
 			}(block)
@@ -46,9 +43,7 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 			for {
 				select {
 				case err = <-done:
-					// Show the cursor, check the result of the command, and display the
-					// final status.
-					fmt.Print("\033[?25h")
+					showCursor()
 
 					if err == nil {
 						actualOutput := commandOutput.StdOut
@@ -60,21 +55,30 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 
 						if err != nil {
 							logging.GlobalLogger.Errorf("Error comparing command outputs: %s", err.Error())
-							fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-							moveCursorPositionDown(lines)
-							fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
+							fmt.Print(errorStyle.Render("Error when comparing the command outputs: %s\n", err.Error()))
+						}
 
+						// Extract the resource group name from the command output if
+						// it's not already set.
+						if resourceGroupName == "" && azCommand.MatchString(block.Content) {
+							tmpResourceGroup := findResourceGroupName(commandOutput.StdOut)
+							if tmpResourceGroup != "" {
+								logging.GlobalLogger.Infof("Found resource group: %s", tmpResourceGroup)
+								resourceGroupName = tmpResourceGroup
+							}
 						}
 
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
-						fmt.Printf("\033[%dB\n", lines)
-						if e.Configuration.Verbose {
-							fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
-						}
+						moveCursorPositionDown(1)
 					} else {
+
 						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-						fmt.Printf("\033[%dB", lines)
-						fmt.Printf("    %s\n", errorMessageStyle.Render(err.Error()))
+						moveCursorPositionDown(1)
+						fmt.Printf(" %s\n", errorStyle.Render("Error executing command: %s\n", err.Error()))
+
+						logging.GlobalLogger.Errorf("Error executing command: %s", err.Error())
+
+						break testRunner
 					}
 
 					break loop
@@ -86,5 +90,20 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) {
 			}
 		}
 	}
+
+	// If the resource group name was set, delete it.
+	if resourceGroupName != "" {
+		fmt.Printf("\n")
+		fmt.Printf("Deleting resource group: %s\n", resourceGroupName)
+		command := fmt.Sprintf("az group delete --name %s --yes", resourceGroupName)
+		output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+		if err != nil {
+			fmt.Print(errorStyle.Render("Error deleting resource group: %s\n", err.Error()))
+			logging.GlobalLogger.Errorf("Error deleting resource group: %s", err.Error())
+		} else {
+			fmt.Print(output.StdOut)
+		}
+	}
+
 	shells.ResetStoredEnvironmentVariables()
 }

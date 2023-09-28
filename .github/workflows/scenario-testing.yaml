@@ -1,0 +1,36 @@
+name: scenario-testing
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"
+  push:
+    branches:
+      - main
+      - dev
+      - vmarcella/port-to-go
+
+jobs:
+  test-ocd-scenarios:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build all targets.
+      run: |
+        make build-all
+
+    - name: Sign into Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Run all one click deployment scenarios.
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          make test-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
+
+    - name: Display ie.log file
+      run: |
+        cat ie.log
+
+

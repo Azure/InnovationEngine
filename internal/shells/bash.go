@@ -10,15 +10,16 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/Azure/InnovationEngine/internal/utils"
+	"github.com/Azure/InnovationEngine/internal/lib"
+	"github.com/Azure/InnovationEngine/internal/lib/fs"
 )
 
 // Location where the environment state from commands is captured and sent to
 // for being able to share state across commands.
-var environmentStateFile = "/tmp/env.txt"
+var environmentStateFile = "/tmp/env-vars"
 
 func loadEnvFile(path string) (map[string]string, error) {
-	if !utils.FileExists(path) {
+	if !fs.FileExists(path) {
 		return nil, fmt.Errorf("env file '%s' does not exist", path)
 	}
 
@@ -88,7 +89,7 @@ func ExecuteBashCommand(command string, config BashCommandConfiguration) (Comman
 	var commandWithStateSaved = []string{
 		command,
 		"IE_LAST_COMMAND_EXIT_CODE=\"$?\"",
-		"env > /tmp/env.txt",
+		"env > " + environmentStateFile,
 		"exit $IE_LAST_COMMAND_EXIT_CODE",
 	}
 
@@ -119,7 +120,7 @@ func ExecuteBashCommand(command string, config BashCommandConfiguration) (Comman
 	// isolated command calls.
 	envFromPreviousStep, err := loadEnvFile(environmentStateFile)
 	if err == nil {
-		merged := utils.MergeMaps(config.EnvironmentVariables, envFromPreviousStep)
+		merged := lib.MergeMaps(config.EnvironmentVariables, envFromPreviousStep)
 		for k, v := range merged {
 			commandToExecute.Env = append(commandToExecute.Env, fmt.Sprintf("%s=%s", k, v))
 		}
@@ -131,7 +132,7 @@ func ExecuteBashCommand(command string, config BashCommandConfiguration) (Comman
 
 	if config.WriteToHistory {
 
-		homeDir, err := utils.GetHomeDirectory()
+		homeDir, err := lib.GetHomeDirectory()
 
 		if err != nil {
 			return CommandOutput{}, fmt.Errorf("failed to get home directory: %w", err)

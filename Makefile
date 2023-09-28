@@ -27,6 +27,18 @@ test-all:
 	@go clean -testcache
 	@go test -v ./...
 
+SUBSCRIPTION ?= 00000000-0000-0000-0000-000000000000
+SCENARIO ?= ./README.md
+test-scenario:
+	@echo "Running scenario $(SCENARIO)"
+	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION)
+
+test-scenarios:
+	@echo "Testing out the scenarios"
+	for dir in ./scenarios/ocd/*/; do \
+		 $(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)"; \
+	done
+
 # ------------------------------- Run targets ----------------------------------
 
 run-ie: build-ie

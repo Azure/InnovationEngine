@@ -7,9 +7,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Azure/InnovationEngine/internal/lib"
+	"github.com/Azure/InnovationEngine/internal/lib/fs"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
-	"github.com/Azure/InnovationEngine/internal/utils"
 	"github.com/yuin/goldmark/ast"
 )
 
@@ -52,7 +53,7 @@ func groupCodeBlocksIntoSteps(blocks []parsers.CodeBlock) []Step {
 // used to filter out code blocks that should not be parsed out of the markdown
 // file.
 func CreateScenarioFromMarkdown(path string, languagesToExecute []string, environmentVariableOverrides map[string]string) (*Scenario, error) {
-	if !utils.FileExists(path) {
+	if !fs.FileExists(path) {
 		return nil, fmt.Errorf("markdown file '%s' does not exist", path)
 	}
 
@@ -66,7 +67,7 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string, enviro
 	environmentVariables := make(map[string]string)
 
 	// Check if the INI file exists & load it.
-	if !utils.FileExists(markdownINI) {
+	if !fs.FileExists(markdownINI) {
 		logging.GlobalLogger.Infof("INI file '%s' does not exist, skipping...", markdownINI)
 	} else {
 		logging.GlobalLogger.Infof("INI file '%s' exists, loading...", markdownINI)
@@ -92,7 +93,7 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string, enviro
 	codeBlocks := parsers.ExtractCodeBlocksFromAst(markdown, source, languagesToExecute)
 	logging.GlobalLogger.WithField("CodeBlocks", codeBlocks).Debugf("Found %d code blocks", len(codeBlocks))
 
-	varsToExport := utils.CopyMap(environmentVariableOverrides)
+	varsToExport := lib.CopyMap(environmentVariableOverrides)
 	for key, value := range environmentVariableOverrides {
 		logging.GlobalLogger.Debugf("Attempting to override %s with %s", key, value)
 		exportRegex := regexp.MustCompile(fmt.Sprintf(`export %s=["']?([a-z-A-Z0-9_]+)["']?`, key))
