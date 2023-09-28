@@ -88,31 +88,28 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	setCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
 	if e.Configuration.Environment == "ocd" {
-		tokens := make(map[string]string)
+		tokenURLs := AzureTokens{
+			Tokens: []string{},
+		}
 
 		for _, step := range scenario.Steps {
 			for _, codeblock := range step.CodeBlocks {
 				for _, provider := range az.AzureTokenProviders {
 					if provider.Regex.MatchString(codeblock.Content) {
-						accessToken, err := az.GetAccessToken(provider)
-						if err != nil {
-							logging.GlobalLogger.Errorf("Failed to get access token: %s", err)
-							return err
-						}
+						// accessToken, err := az.GetAccessToken(provider)
+						// if err != nil {
+						// 	logging.GlobalLogger.Errorf("Failed to get access token: %s", err)
+						// 	return err
+						// }
 
-						tokens[provider.Resource] = accessToken
+						tokenURLs.Tokens = append(tokenURLs.Tokens, provider.Resource)
+
 					}
 				}
 			}
 		}
 
-		ocdTokens := AzureTokens{
-			Tokens: []string{},
-		}
-		for _, token := range tokens {
-			ocdTokens.Tokens = append(ocdTokens.Tokens, token)
-		}
-		json, err := json.Marshal(ocdTokens)
+		json, err := json.Marshal(tokenURLs)
 		if err != nil {
 			logging.GlobalLogger.Errorf("Failed to marshal tokens: %s", err)
 			return err
