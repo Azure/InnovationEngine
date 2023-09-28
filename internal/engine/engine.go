@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -70,6 +71,10 @@ func setCorrelationId(correlationId string, env map[string]string) {
 	}
 }
 
+type AzureTokens struct {
+	Tokens []string `json:"tokens"`
+}
+
 // Executes a deployment scenario.
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	// Store the current directory so we can restore it later
@@ -81,6 +86,39 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 
 	fs.SetWorkingDirectory(e.Configuration.WorkingDirectory)
 	setCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
+
+	if e.Configuration.Environment == "ocd" {
+		tokens := make(map[string]string)
+
+		for _, step := range scenario.Steps {
+			for _, codeblock := range step.CodeBlocks {
+				for _, provider := range az.AzureTokenProviders {
+					if provider.Regex.MatchString(codeblock.Content) {
+						accessToken, err := az.GetAccessToken(provider)
+						if err != nil {
+							logging.GlobalLogger.Errorf("Failed to get access token: %s", err)
+							return err
+						}
+
+						tokens[provider.Resource] = accessToken
+					}
+				}
+			}
+		}
+
+		ocdTokens := AzureTokens{
+			Tokens: []string{},
+		}
+		for _, token := range tokens {
+			ocdTokens.Tokens = append(ocdTokens.Tokens, token)
+		}
+		json, err := json.Marshal(ocdTokens)
+		if err != nil {
+			logging.GlobalLogger.Errorf("Failed to marshal tokens: %s", err)
+			return err
+		}
+		fmt.Printf("ie_us%sie_ue\n", string(json))
+	}
 
 	// Execute the steps
 	fmt.Println(scenarioTitleStyle.Render(scenario.Name))

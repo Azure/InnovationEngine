@@ -2,6 +2,7 @@ package az
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/shells"
@@ -39,4 +40,30 @@ func SetSubscription(subscription string) error {
 	}
 
 	return nil
+}
+
+type AzureTokenProvider struct {
+	Resource string
+	Regex    *regexp.Regexp
+}
+
+var KeyVaultProvider = AzureTokenProvider{
+	Resource: "https://vault.azure.net",
+	Regex:    regexp.MustCompile("az keyvault"),
+}
+
+var AzureTokenProviders = []AzureTokenProvider{
+	KeyVaultProvider,
+}
+
+func GetAccessToken(provider AzureTokenProvider) (string, error) {
+	command := fmt.Sprintf("az account get-access-token --resource %s --query accessToken -o tsv", provider.Resource)
+	output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InteractiveCommand: false, WriteToHistory: false, InheritEnvironment: true})
+
+	if err != nil {
+		logging.GlobalLogger.Errorf("Failed to get access token: %s", err)
+		return "", err
+	}
+
+	return output.StdOut, nil
 }
