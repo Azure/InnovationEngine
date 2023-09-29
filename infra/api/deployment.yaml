@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: innovation-engine-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: innovation-engine-api
+  template:
+    metadata:
+      labels:
+        app: innovation-engine-api
+    spec:
+      containers:
+        - name: innovation-engine-api
+          image: innovation-engine-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080

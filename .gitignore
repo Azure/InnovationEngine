@@ -4,5 +4,8 @@ __pycache__
 #VS Code
 .vscode
 
-# Generated Files
-bin
+# Ignore all binaries.
+bin/
+
+# Ignore ie logs
+ie.log
