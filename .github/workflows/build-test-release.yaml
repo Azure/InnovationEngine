@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - vmarcella/port-to-go
 
 jobs:
   build-test-release:
