@@ -41,12 +41,13 @@ az vm create \
   --name $MY_VM_NAME \
   --image $MY_VM_IMAGE \
   --admin-username $MY_ADMIN_USERNAME \
+  --public-ip-sku Standard \
   --generate-ssh-keys
 ```
 
 It takes a few minutes to create the VM and supporting resources. The following example output shows the VM create operation was successful.
-<!--expected_similarity=0.2-->
-```Output
+<!--expected_similarity=0.8-->
+```json
 {
   "fqdns": "",
   "id": "/subscriptions/<guid>/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM",
