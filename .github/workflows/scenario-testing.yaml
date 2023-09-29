@@ -6,8 +6,6 @@ on:
   push:
     branches:
       - main
-      - dev
-      - vmarcella/port-to-go
 
 jobs:
   test-ocd-scenarios:
@@ -17,6 +15,7 @@ jobs:
     - name: Build all targets.
       run: |
         make build-all
+        make test-all
 
     - name: Sign into Azure
       uses: azure/login@v1
