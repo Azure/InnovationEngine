@@ -220,9 +220,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 							moveCursorPositionDown(lines)
 
-							if e.Configuration.Verbose {
-								fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
-							}
+							fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 
 							// Extract the resource group name from the command output if
 							// it's not already set.
@@ -278,9 +276,8 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
 					moveCursorPositionDown(lines)
 
-					if e.Configuration.Verbose {
-						fmt.Printf("  %s\n", verboseStyle.Render(output.StdOut))
-					}
+					fmt.Printf("  %s\n", verboseStyle.Render(output.StdOut))
+
 					if stepNumber != len(stepsToExecute)-1 {
 						reportOCDStatus(ocdStatus, e.Configuration.Environment)
 					}
