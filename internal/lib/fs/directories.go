@@ -19,3 +19,30 @@ func SetWorkingDirectory(directory string) error {
 	}
 	return nil
 }
+
+// Executes a function within a given working directory and restores
+// the original working directory when the function completes.
+func UsingDirectory(directory string, function func() error) error {
+
+	originalDirectory, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	err = SetWorkingDirectory(directory)
+	if err != nil {
+		return err
+	}
+
+	err = function()
+	if err != nil {
+		return err
+	}
+
+	err = SetWorkingDirectory(originalDirectory)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

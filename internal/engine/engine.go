@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/Azure/InnovationEngine/internal/az"
 	"github.com/Azure/InnovationEngine/internal/lib"
@@ -20,10 +19,17 @@ const (
 	EnvironmentsLocal = "local"
 	EnvironmentsCI    = "ci"
 	EnvironmentsOCD   = "ocd"
+	EnvironmentsAzure = "azure"
 )
 
 func IsValidEnvironment(environment string) bool {
-	return environment == EnvironmentsLocal || environment == EnvironmentsCI || environment == EnvironmentsOCD
+	switch environment {
+	case EnvironmentsLocal, EnvironmentsCI, EnvironmentsOCD, EnvironmentsAzure:
+		return true
+	default:
+		return false
+	}
+
 }
 
 type EngineConfiguration struct {
@@ -58,41 +64,25 @@ type AzureTokens struct {
 
 // Executes a deployment scenario.
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
-	// Store the current directory so we can restore it later
-	originalDirectory, err := os.Getwd()
-	if err != nil {
-		logging.GlobalLogger.Error("Failed to get current directory", err)
+	return fs.UsingDirectory(e.Configuration.WorkingDirectory, func() error {
+		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
+
+		// Execute the steps
+		fmt.Println(scenarioTitleStyle.Render(scenario.Name))
+		err := e.ExecuteAndRenderSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 		return err
-	}
-
-	fs.SetWorkingDirectory(e.Configuration.WorkingDirectory)
-	az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
-
-	// Execute the steps
-	fmt.Println(scenarioTitleStyle.Render(scenario.Name))
-	e.ExecuteAndRenderSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
-	fmt.Printf(scriptHeader.Render("# Generated bash to replicate what just happened:")+"\n%s\n", scriptText.Render(scenario.ToShellScript()))
-
-	fs.SetWorkingDirectory(originalDirectory)
-
-	return nil
+	})
 }
 
 // Validates a deployment scenario.
 func (e *Engine) TestScenario(scenario *Scenario) error {
-	// Store the current directory so we can restore it later
-	originalDirectory, err := os.Getwd()
-	if err != nil {
-		logging.GlobalLogger.Error("Failed to get current directory", err)
+	return fs.UsingDirectory(e.Configuration.WorkingDirectory, func() error {
+		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
+
+		// Execute the steps
+		fmt.Println(scenarioTitleStyle.Render(scenario.Name))
+		fmt.Println(scenarioTitleStyle.Render(scenario.Name))
+		err := e.TestSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 		return err
-	}
-
-	fs.SetWorkingDirectory(e.Configuration.WorkingDirectory)
-	az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
-
-	fmt.Println(scenarioTitleStyle.Render(scenario.Name))
-	e.TestSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
-
-	fs.SetWorkingDirectory(originalDirectory)
-	return nil
+	})
 }

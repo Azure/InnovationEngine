@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,10 +11,11 @@ import (
 	"github.com/Azure/InnovationEngine/internal/shells"
 )
 
-func (e *Engine) TestSteps(steps []Step, env map[string]string) {
+func (e *Engine) TestSteps(steps []Step, env map[string]string) error {
 	var resourceGroupName string
 	stepsToExecute := filterDeletionCommands(steps, true)
 
+	var testRunnerError error = nil
 testRunner:
 	for stepNumber, step := range stepsToExecute {
 		stepTitle := fmt.Sprintf("  %d. %s\n", stepNumber+1, step.Name)
@@ -78,6 +80,7 @@ testRunner:
 
 						logging.GlobalLogger.Errorf("Error executing command: %s", err.Error())
 
+						testRunnerError = err
 						break testRunner
 					}
 
@@ -97,13 +100,16 @@ testRunner:
 		fmt.Printf("Deleting resource group: %s\n", resourceGroupName)
 		command := fmt.Sprintf("az group delete --name %s --yes", resourceGroupName)
 		output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+
 		if err != nil {
 			fmt.Print(errorStyle.Render("Error deleting resource group: %s\n", err.Error()))
 			logging.GlobalLogger.Errorf("Error deleting resource group: %s", err.Error())
-		} else {
-			fmt.Print(output.StdOut)
+			testRunnerError = errors.Join(testRunnerError, err)
 		}
+
+		fmt.Print(output.StdOut)
 	}
 
 	shells.ResetStoredEnvironmentVariables()
+	return testRunnerError
 }

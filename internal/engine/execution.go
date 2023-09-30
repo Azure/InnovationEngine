@@ -128,7 +128,7 @@ func findAllDeployedResourceURIs(resourceGroup string) []string {
 }
 
 // Executes the steps from a scenario and renders the output to the terminal.
-func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
+func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) error {
 
 	var resourceGroupName string
 	var ocdStatus = ocd.NewOneClickDeploymentStatus()
@@ -303,4 +303,6 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 	if e.Configuration.Environment != "ocd" {
 		shells.ResetStoredEnvironmentVariables()
 	}
+
+	return nil
 }
