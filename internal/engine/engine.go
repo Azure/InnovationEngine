@@ -53,10 +53,6 @@ func NewEngine(configuration EngineConfiguration) (*Engine, error) {
 	}, nil
 }
 
-type AzureTokens struct {
-	Tokens []string `json:"tokens"`
-}
-
 // Executes a deployment scenario.
 func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 	return fs.UsingDirectory(e.Configuration.WorkingDirectory, func() error {

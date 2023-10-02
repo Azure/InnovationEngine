@@ -12,6 +12,7 @@ import (
 	"github.com/Azure/InnovationEngine/internal/ocd"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
+	"github.com/Azure/InnovationEngine/internal/terminal"
 )
 
 const (
@@ -173,11 +174,11 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 				// Grab the number of lines it contains & set the cursor to the
 				// beginning of the block.
 				lines := strings.Count(block.Content, "\n")
-				moveCursorPositionUp(lines)
+				terminal.MoveCursorPositionUp(lines)
 
 				// Render the spinner and hide the cursor.
 				fmt.Print(spinnerStyle.Render("  "+string(spinnerFrames[0])) + " ")
-				hideCursor()
+				terminal.HideCursor()
 
 				go func(block parsers.CodeBlock) {
 					output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
@@ -193,7 +194,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 					case commandErr = <-done:
 						// Show the cursor, check the result of the command, and display the
 						// final status.
-						showCursor()
+						terminal.ShowCursor()
 
 						if commandErr == nil {
 
@@ -207,7 +208,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							if err != nil {
 								logging.GlobalLogger.Errorf("Error comparing command outputs: %s", err.Error())
 								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-								moveCursorPositionDown(lines)
+								terminal.MoveCursorPositionDown(lines)
 								fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
 								fmt.Printf("	%s\n", lib.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
 
@@ -218,7 +219,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							}
 
 							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
-							moveCursorPositionDown(lines)
+							terminal.MoveCursorPositionDown(lines)
 
 							fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
 
@@ -237,9 +238,9 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							}
 
 						} else {
-							showCursor()
+							terminal.ShowCursor()
 							fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-							moveCursorPositionDown(lines)
+							terminal.MoveCursorPositionDown(lines)
 							fmt.Printf("  %s\n", errorMessageStyle.Render(commandErr.Error()))
 
 							logging.GlobalLogger.Errorf("Error executing command: %s", commandErr.Error())
@@ -272,9 +273,9 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: false})
 
 				if err == nil {
-					showCursor()
+					terminal.ShowCursor()
 					fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
-					moveCursorPositionDown(lines)
+					terminal.MoveCursorPositionDown(lines)
 
 					fmt.Printf("  %s\n", verboseStyle.Render(output.StdOut))
 
@@ -282,9 +283,9 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 						reportOCDStatus(ocdStatus, e.Configuration.Environment)
 					}
 				} else {
-					showCursor()
+					terminal.ShowCursor()
 					fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-					moveCursorPositionDown(lines)
+					terminal.MoveCursorPositionDown(lines)
 					fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
 
 					ocdStatus.SetError(err)

@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/shells"
+	"github.com/Azure/InnovationEngine/internal/terminal"
 )
 
 func (e *Engine) TestSteps(steps []Step, env map[string]string) error {
@@ -20,8 +21,8 @@ testRunner:
 	for stepNumber, step := range stepsToExecute {
 		stepTitle := fmt.Sprintf("  %d. %s\n", stepNumber+1, step.Name)
 		fmt.Println(stepTitleStyle.Render(stepTitle))
-		moveCursorPositionUp(1)
-		hideCursor()
+		terminal.MoveCursorPositionUp(1)
+		terminal.HideCursor()
 
 		for _, block := range step.CodeBlocks {
 			// execute the command as a goroutine to allow for the spinner to be
@@ -45,7 +46,7 @@ testRunner:
 			for {
 				select {
 				case err = <-done:
-					showCursor()
+					terminal.ShowCursor()
 
 					if err == nil {
 						actualOutput := commandOutput.StdOut
@@ -71,11 +72,11 @@ testRunner:
 						}
 
 						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
-						moveCursorPositionDown(1)
+						terminal.MoveCursorPositionDown(1)
 					} else {
 
 						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-						moveCursorPositionDown(1)
+						terminal.MoveCursorPositionDown(1)
 						fmt.Printf(" %s\n", errorStyle.Render("Error executing command: %s\n", err.Error()))
 
 						logging.GlobalLogger.Errorf("Error executing command: %s", err.Error())
