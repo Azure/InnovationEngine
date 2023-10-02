@@ -7,12 +7,6 @@ import (
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/lib/fs"
 	"github.com/Azure/InnovationEngine/internal/logging"
-	"github.com/charmbracelet/lipgloss"
-)
-
-var (
-	scriptHeader = lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF")).Bold(true)
-	scriptText   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
 )
 
 const (
@@ -22,6 +16,7 @@ const (
 	EnvironmentsAzure = "azure"
 )
 
+// Check if the environment is valid.
 func IsValidEnvironment(environment string) bool {
 	switch environment {
 	case EnvironmentsLocal, EnvironmentsCI, EnvironmentsOCD, EnvironmentsAzure:
@@ -79,8 +74,7 @@ func (e *Engine) TestScenario(scenario *Scenario) error {
 	return fs.UsingDirectory(e.Configuration.WorkingDirectory, func() error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
-		// Execute the steps
-		fmt.Println(scenarioTitleStyle.Render(scenario.Name))
+		// Test the steps
 		fmt.Println(scenarioTitleStyle.Render(scenario.Name))
 		err := e.TestSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 		return err

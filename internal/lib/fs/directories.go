@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"errors"
 	"os"
 
 	"github.com/Azure/InnovationEngine/internal/logging"
@@ -22,8 +23,7 @@ func SetWorkingDirectory(directory string) error {
 
 // Executes a function within a given working directory and restores
 // the original working directory when the function completes.
-func UsingDirectory(directory string, function func() error) error {
-
+func UsingDirectory(directory string, executor func() error) error {
 	originalDirectory, err := os.Getwd()
 	if err != nil {
 		return err
@@ -34,15 +34,8 @@ func UsingDirectory(directory string, function func() error) error {
 		return err
 	}
 
-	err = function()
-	if err != nil {
-		return err
-	}
-
+	executionError := executor()
 	err = SetWorkingDirectory(originalDirectory)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return errors.Join(executionError, err)
 }
