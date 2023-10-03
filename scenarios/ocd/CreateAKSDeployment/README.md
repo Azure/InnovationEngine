@@ -347,11 +347,11 @@ Run the following command to get the HTTPS endpoint for your application:
 >[!Note]
 > It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via https.
 
-<!-- ```bash
+```bash
 runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); echo $STATUS; if [ "$STATUS" = "$MY_STATIC_IP" ]; then break; else sleep 10; fi; done
 
 curl https://$FQDN
-``` -->
+```
 
 Results:
 

@@ -27,6 +27,7 @@ func IsValidEnvironment(environment string) bool {
 
 }
 
+// Configuration for the engine.
 type EngineConfiguration struct {
 	Verbose          bool
 	DoNotDelete      bool
