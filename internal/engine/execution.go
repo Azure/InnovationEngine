@@ -149,8 +149,15 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 
 		for _, block := range step.CodeBlocks {
 			// Render the codeblock.
-			indentedBlock := indentMultiLineCommand(block.Content, 4)
-			fmt.Print("    " + indentedBlock)
+			escapedCommand := strings.ReplaceAll(block.Content, "\\\n", "\\\\\n")
+			renderedCommand, err := shells.ExecuteBashCommand("echo -e \""+escapedCommand+"\"", shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InteractiveCommand: false, WriteToHistory: false, InheritEnvironment: true})
+			if err != nil {
+				logging.GlobalLogger.Errorf("Failed to render command: %s", err.Error())
+				return err
+			}
+			renderedOutput := indentMultiLineCommand(renderedCommand.StdOut, 4)
+
+			fmt.Print("    " + renderedOutput)
 
 			// execute the command as a goroutine to allow for the spinner to be
 			// rendered while the command is executing.
@@ -173,7 +180,8 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 			if !interactiveCommand {
 				// Grab the number of lines it contains & set the cursor to the
 				// beginning of the block.
-				lines := strings.Count(block.Content, "\n")
+
+				lines := strings.Count(renderedOutput, "\n")
 				terminal.MoveCursorPositionUp(lines)
 
 				// Render the spinner and hide the cursor.
