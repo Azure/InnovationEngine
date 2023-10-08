@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -55,7 +54,7 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) error {
 
 	var resourceGroupName string
-	var azureStatus = environments.NewOneClickDeploymentStatus()
+	var azureStatus = environments.NewAzureDeploymentStatus()
 
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
 
@@ -218,7 +217,15 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 					environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 				}
 
-				output, commandExecutionError := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: false})
+				output, commandExecutionError := shells.ExecuteBashCommand(
+					block.Content,
+					shells.BashCommandConfiguration{
+						EnvironmentVariables: lib.CopyMap(env),
+						InheritEnvironment:   true,
+						InteractiveCommand:   true,
+						WriteToHistory:       false,
+					},
+				)
 
 				terminal.ShowCursor()
 
@@ -238,7 +245,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 
 					azureStatus.SetError(commandExecutionError)
 					environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
-					os.Exit(1)
+					return commandExecutionError
 				}
 			}
 		}

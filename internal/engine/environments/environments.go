@@ -16,3 +16,7 @@ func IsValidEnvironment(environment string) bool {
 		return false
 	}
 }
+
+func IsAzureEnvironment(environment string) bool {
+	return environment == EnvironmentsAzure || environment == EnvironmentsOCD
+}

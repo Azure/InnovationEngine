@@ -10,7 +10,7 @@ import (
 )
 
 // / The status of a one-click deployment.
-type OneClickDeploymentStatus struct {
+type AzureDeploymentStatus struct {
 	Steps        []string `json:"steps"`
 	CurrentStep  int      `json:"currentStep"`
 	Status       string   `json:"status"`
@@ -18,8 +18,8 @@ type OneClickDeploymentStatus struct {
 	Error        string   `json:"error"`
 }
 
-func NewOneClickDeploymentStatus() OneClickDeploymentStatus {
-	return OneClickDeploymentStatus{
+func NewAzureDeploymentStatus() AzureDeploymentStatus {
+	return AzureDeploymentStatus{
 		Steps:        []string{},
 		CurrentStep:  0,
 		Status:       "Executing",
@@ -29,7 +29,7 @@ func NewOneClickDeploymentStatus() OneClickDeploymentStatus {
 }
 
 // Get the status as a JSON string.
-func (status *OneClickDeploymentStatus) AsJsonString() (string, error) {
+func (status *AzureDeploymentStatus) AsJsonString() (string, error) {
 	json, err := json.Marshal(status)
 	if err != nil {
 		logging.GlobalLogger.Error("Failed to marshal status", err)
@@ -39,22 +39,22 @@ func (status *OneClickDeploymentStatus) AsJsonString() (string, error) {
 	return string(json), nil
 }
 
-func (status *OneClickDeploymentStatus) AddStep(step string) {
+func (status *AzureDeploymentStatus) AddStep(step string) {
 	status.Steps = append(status.Steps, step)
 }
 
-func (status *OneClickDeploymentStatus) AddResourceURI(uri string) {
+func (status *AzureDeploymentStatus) AddResourceURI(uri string) {
 	status.ResourceURIs = append(status.ResourceURIs, uri)
 }
 
-func (status *OneClickDeploymentStatus) SetError(err error) {
+func (status *AzureDeploymentStatus) SetError(err error) {
 	status.Status = "Failed"
 	status.Error = err.Error()
 }
 
-// Print out the one click deployment status if in the correct environment.
-func ReportAzureStatus(status OneClickDeploymentStatus, environment string) {
-	if environment != EnvironmentsOCD {
+// Print out the status JSON for azure/cloudshell if in the correct environment.
+func ReportAzureStatus(status AzureDeploymentStatus, environment string) {
+	if !IsAzureEnvironment(environment) {
 		return
 	}
 
@@ -72,16 +72,15 @@ func ReportAzureStatus(status OneClickDeploymentStatus, environment string) {
 // Attach deployed resource URIs to the one click deployment status if we're in
 // the correct environment & we have a resource group name.
 func AttachResourceURIsToAzureStatus(
-	status *OneClickDeploymentStatus,
+	status *AzureDeploymentStatus,
 	resourceGroupName string,
 	environment string,
 ) {
 
-	if environment != EnvironmentsOCD {
+	if !IsAzureEnvironment(environment) {
 		logging.GlobalLogger.Info(
 			"Not fetching resource URIs because we're not in the OCD environment.",
 		)
-		return
 	}
 
 	if resourceGroupName == "" {

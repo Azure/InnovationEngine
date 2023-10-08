@@ -10,7 +10,15 @@ import (
 func SetSubscription(subscription string) error {
 	if subscription != "" {
 		command := fmt.Sprintf("az account set --subscription %s", subscription)
-		_, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InteractiveCommand: false, WriteToHistory: false, InheritEnvironment: false})
+		_, err := shells.ExecuteBashCommand(
+			command,
+			shells.BashCommandConfiguration{
+				EnvironmentVariables: map[string]string{},
+				InteractiveCommand:   false,
+				WriteToHistory:       false,
+				InheritEnvironment:   false,
+			},
+		)
 
 		if err != nil {
 			logging.GlobalLogger.Errorf("Failed to set subscription: %s", err)

@@ -2,8 +2,8 @@ package commands
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/engine"
@@ -19,12 +19,11 @@ type AzureScript struct {
 var toBashCommand = &cobra.Command{
 	Use:   "to-bash",
 	Short: "Convert a markdown scenario into a bash script.",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		markdownFile := args[0]
 		if markdownFile == "" {
 			logging.GlobalLogger.Errorf("Error: No markdown file specified.")
-			cmd.Help()
-			os.Exit(1)
+			return errors.New("error: No markdown file specified")
 		}
 
 		environment, _ := cmd.Flags().GetString("environment")
@@ -41,7 +40,10 @@ var toBashCommand = &cobra.Command{
 				)
 				fmt.Printf("Error: Invalid environment variable format: %s", environmentVariable)
 				cmd.Help()
-				os.Exit(1)
+				return fmt.Errorf(
+					"error: Invalid environment variable format, %s",
+					environmentVariable,
+				)
 			}
 
 			cliEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
@@ -56,25 +58,27 @@ var toBashCommand = &cobra.Command{
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating scenario: %s", err)
 			fmt.Printf("Error creating scenario: %s", err)
-			os.Exit(0)
+			return err
 		}
 
-		switch environment {
-
-		case environments.EnvironmentsAzure, environments.EnvironmentsOCD:
+		// If within cloudshell, we need to wrap the script in a json object to
+		// communicate it to the portal.
+		if environments.IsAzureEnvironment(environment) {
 			script := AzureScript{Script: scenario.ToShellScript()}
 			scriptJson, err := json.Marshal(script)
 
 			if err != nil {
 				logging.GlobalLogger.Errorf("Error converting to json: %s", err)
 				fmt.Printf("Error converting to json: %s", err)
-				os.Exit(1)
+				return err
 			}
 
 			fmt.Printf("ie_us%sie_ue\n", scriptJson)
-		default:
+		} else {
 			fmt.Printf("%s", scenario.ToShellScript())
 		}
+
+		return nil
 
 	},
 }
