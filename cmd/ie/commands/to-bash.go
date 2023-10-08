@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/engine"
+	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
 
-type OcdScript struct {
+type AzureScript struct {
 	Script string `json:"script"`
 }
 
@@ -34,7 +35,10 @@ var toBashCommand = &cobra.Command{
 		for _, environmentVariable := range environmentVariables {
 			keyValuePair := strings.SplitN(environmentVariable, "=", 2)
 			if len(keyValuePair) != 2 {
-				logging.GlobalLogger.Errorf("Error: Invalid environment variable format: %s", environmentVariable)
+				logging.GlobalLogger.Errorf(
+					"Error: Invalid environment variable format: %s",
+					environmentVariable,
+				)
 				fmt.Printf("Error: Invalid environment variable format: %s", environmentVariable)
 				cmd.Help()
 				os.Exit(1)
@@ -55,8 +59,10 @@ var toBashCommand = &cobra.Command{
 			os.Exit(0)
 		}
 
-		if environment == "ocd" {
-			script := OcdScript{Script: scenario.ToShellScript()}
+		switch environment {
+
+		case environments.EnvironmentsAzure, environments.EnvironmentsOCD:
+			script := AzureScript{Script: scenario.ToShellScript()}
 			scriptJson, err := json.Marshal(script)
 
 			if err != nil {
@@ -66,7 +72,7 @@ var toBashCommand = &cobra.Command{
 			}
 
 			fmt.Printf("ie_us%sie_ue\n", scriptJson)
-		} else {
+		default:
 			fmt.Printf("%s", scenario.ToShellScript())
 		}
 
@@ -75,5 +81,6 @@ var toBashCommand = &cobra.Command{
 
 func init() {
 	rootCommand.AddCommand(toBashCommand)
-	toBashCommand.PersistentFlags().StringArray("var", []string{}, "Sets an environment variable for the scenario. Format: --var <key>=<value>")
+	toBashCommand.PersistentFlags().
+		StringArray("var", []string{}, "Sets an environment variable for the scenario. Format: --var <key>=<value>")
 }

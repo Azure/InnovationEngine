@@ -52,7 +52,11 @@ func groupCodeBlocksIntoSteps(blocks []parsers.CodeBlock) []Step {
 // Creates a scenario object from a given markdown file. languagesToExecute is
 // used to filter out code blocks that should not be parsed out of the markdown
 // file.
-func CreateScenarioFromMarkdown(path string, languagesToExecute []string, environmentVariableOverrides map[string]string) (*Scenario, error) {
+func CreateScenarioFromMarkdown(
+	path string,
+	languagesToExecute []string,
+	environmentVariableOverrides map[string]string,
+) (*Scenario, error) {
 	if !fs.FileExists(path) {
 		return nil, fmt.Errorf("markdown file '%s' does not exist", path)
 	}
@@ -91,7 +95,8 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string, enviro
 
 	// Extract the code blocks from the markdown file.
 	codeBlocks := parsers.ExtractCodeBlocksFromAst(markdown, source, languagesToExecute)
-	logging.GlobalLogger.WithField("CodeBlocks", codeBlocks).Debugf("Found %d code blocks", len(codeBlocks))
+	logging.GlobalLogger.WithField("CodeBlocks", codeBlocks).
+		Debugf("Found %d code blocks", len(codeBlocks))
 
 	varsToExport := lib.CopyMap(environmentVariableOverrides)
 	for key, value := range environmentVariableOverrides {
@@ -102,7 +107,11 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string, enviro
 			matches := exportRegex.FindAllStringSubmatch(codeBlock.Content, -1)
 
 			if len(matches) != 0 {
-				logging.GlobalLogger.Debugf("Found %d matches for %s, deleting from varsToExport", len(matches), key)
+				logging.GlobalLogger.Debugf(
+					"Found %d matches for %s, deleting from varsToExport",
+					len(matches),
+					key,
+				)
 				delete(varsToExport, key)
 			} else {
 				logging.GlobalLogger.Debugf("Found no matches for %s inside of %s", key, codeBlock.Content)
@@ -127,7 +136,10 @@ func CreateScenarioFromMarkdown(path string, languagesToExecute []string, enviro
 	// do not update the scenario
 	// steps.
 	if len(varsToExport) != 0 {
-		logging.GlobalLogger.Debugf("Found %d variables to add to the scenario as a step.", len(varsToExport))
+		logging.GlobalLogger.Debugf(
+			"Found %d variables to add to the scenario as a step.",
+			len(varsToExport),
+		)
 		exportCodeBlock := parsers.CodeBlock{
 			Language:       "bash",
 			Content:        "",
