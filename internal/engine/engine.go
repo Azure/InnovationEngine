@@ -7,25 +7,8 @@ import (
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/lib/fs"
 	"github.com/Azure/InnovationEngine/internal/logging"
+	"github.com/Azure/InnovationEngine/internal/ui"
 )
-
-const (
-	EnvironmentsLocal = "local"
-	EnvironmentsCI    = "ci"
-	EnvironmentsOCD   = "ocd"
-	EnvironmentsAzure = "azure"
-)
-
-// Check if the environment is valid.
-func IsValidEnvironment(environment string) bool {
-	switch environment {
-	case EnvironmentsLocal, EnvironmentsCI, EnvironmentsOCD, EnvironmentsAzure:
-		return true
-	default:
-		return false
-	}
-
-}
 
 // Configuration for the engine.
 type EngineConfiguration struct {
@@ -60,7 +43,7 @@ func (e *Engine) ExecuteScenario(scenario *Scenario) error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
 		// Execute the steps
-		fmt.Println(scenarioTitleStyle.Render(scenario.Name))
+		fmt.Println(ui.ScenarioTitleStyle.Render(scenario.Name))
 		err := e.ExecuteAndRenderSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 		return err
 	})
@@ -72,7 +55,7 @@ func (e *Engine) TestScenario(scenario *Scenario) error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
 		// Test the steps
-		fmt.Println(scenarioTitleStyle.Render(scenario.Name))
+		fmt.Println(ui.ScenarioTitleStyle.Render(scenario.Name))
 		err := e.TestSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 		return err
 	})
