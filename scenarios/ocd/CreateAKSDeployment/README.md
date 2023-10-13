@@ -145,7 +145,7 @@ To manage a Kubernetes cluster, use the Kubernetes command-line client, kubectl.
 1. Install az aks CLI locally using the az aks install-cli command
 
    ```bash
-   if ! [ -x '$(command -v kubectl)' ]; then az aks install-cli; fi
+   if ! [ -x "$(command -v kubectl)" ]; then az aks install-cli; fi
    ```
 
 2. Configure kubectl to connect to your Kubernetes cluster using the az aks get-credentials command. The following command:
