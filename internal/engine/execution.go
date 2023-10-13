@@ -2,16 +2,18 @@ package engine
 
 import (
 	"fmt"
-	"os"
-	"regexp"
 	"strings"
 	"time"
 
+	"github.com/Azure/InnovationEngine/internal/az"
+	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
-	"github.com/Azure/InnovationEngine/internal/ocd"
 	"github.com/Azure/InnovationEngine/internal/parsers"
+	"github.com/Azure/InnovationEngine/internal/patterns"
 	"github.com/Azure/InnovationEngine/internal/shells"
+	"github.com/Azure/InnovationEngine/internal/terminal"
+	"github.com/Azure/InnovationEngine/internal/ui"
 )
 
 const (
@@ -19,19 +21,6 @@ const (
 	// spinnerFrames  = `⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏`
 	spinnerFrames  = `-\|/`
 	spinnerRefresh = 100 * time.Millisecond
-)
-
-var (
-	// An SSH command regex where there must be a username@host somewhere present in the command.
-	sshCommand = regexp.MustCompile(`(^|\s)\bssh\b\s+([^\s]+(\s+|$))+((?P<username>[a-zA-Z0-9_-]+|\$[A-Z_0-9]+)@(?P<host>[a-zA-Z0-9.-]+|\$[A-Z_0-9]+))`)
-
-	// Az cli command regex
-	azCommand     = regexp.MustCompile(`az\s+([a-z]+)\s+([a-z]+)`)
-	azGroupDelete = regexp.MustCompile(`az group delete`)
-
-	// ARM regex
-	azResourceURI       = regexp.MustCompile(`\"id\": \"(/subscriptions/[^\"]+)\"`)
-	azResourceGroupName = regexp.MustCompile(`resourceGroups/([^\"]+)`)
 )
 
 // If a scenario has an `az group delete` command and the `--do-not-delete`
@@ -42,7 +31,7 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 		for _, step := range steps {
 			newBlocks := []parsers.CodeBlock{}
 			for _, block := range step.CodeBlocks {
-				if azGroupDelete.MatchString(block.Content) {
+				if patterns.AzGroupDelete.MatchString(block.Content) {
 					continue
 				} else {
 					newBlocks = append(newBlocks, block)
@@ -61,95 +50,44 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 	return filteredSteps
 }
 
-// Print out the one click deployment status if in the correct environment.
-func reportOCDStatus(status ocd.OneClickDeploymentStatus, environment string) {
-	if environment != EnvironmentsOCD {
-		return
-	}
-
-	statusJson, err := status.AsJsonString()
-	if err != nil {
-		logging.GlobalLogger.Error("Failed to marshal status", err)
-	} else {
-		// We add these strings to the output so that the portal can find and parse
-		// the JSON status.
-		ocdStatus := fmt.Sprintf("ie_us%sie_ue\n", statusJson)
-		fmt.Println(ocdStatusUpdateStyle.Render(ocdStatus))
-	}
-}
-
-// Attach deployed resource URIs to the one click deployment status if we're in
-// the correct environment & we have a resource group name.
-func attachResourceURIsToOCDStatus(status *ocd.OneClickDeploymentStatus, resourceGroupName string, environment string) {
-
-	if environment != EnvironmentsOCD {
-		logging.GlobalLogger.Info("Not fetching resource URIs because we're not in the OCD environment.")
-		return
-	}
-
-	if resourceGroupName == "" {
-		logging.GlobalLogger.Warn("No resource group name found.")
-		return
-	}
-
-	resourceURIs := findAllDeployedResourceURIs(resourceGroupName)
-
-	if len(resourceURIs) > 0 {
-		logging.GlobalLogger.WithField("resourceURIs", resourceURIs).Info("Found deployed resources.")
-		status.ResourceURIs = resourceURIs
-	} else {
-		logging.GlobalLogger.Warn("No deployed resources found.")
-	}
-}
-
-// Find the resource group name from the output of an az command.
-func findResourceGroupName(commandOutput string) string {
-	matches := azResourceGroupName.FindStringSubmatch(commandOutput)
-	if len(matches) > 1 {
-		return matches[1]
-	}
-	return ""
-}
-
-// Find all the deployed resources in a resource group.
-func findAllDeployedResourceURIs(resourceGroup string) []string {
-	output, err := shells.ExecuteBashCommand("az resource list -g"+resourceGroup, shells.BashCommandConfiguration{EnvironmentVariables: map[string]string{}, InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
-
-	if err != nil {
-		logging.GlobalLogger.Error("Failed to list deployments", err)
-	}
-
-	matches := azResourceURI.FindAllStringSubmatch(output.StdOut, -1)
-	results := []string{}
-	for _, match := range matches {
-		results = append(results, match[1])
-	}
-	return results
-}
-
 // Executes the steps from a scenario and renders the output to the terminal.
-func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
+func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) error {
 
 	var resourceGroupName string
-	var ocdStatus = ocd.NewOneClickDeploymentStatus()
+	var azureStatus = environments.NewAzureDeploymentStatus()
 
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
 
 	for stepNumber, step := range stepsToExecute {
-		ocdStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name))
+		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name))
 	}
 
-	reportOCDStatus(ocdStatus, e.Configuration.Environment)
+	environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
 	for stepNumber, step := range stepsToExecute {
 		stepTitle := fmt.Sprintf("%d. %s\n", stepNumber+1, step.Name)
-		fmt.Println(stepTitleStyle.Render(stepTitle))
-		ocdStatus.CurrentStep = stepNumber + 1
+		fmt.Println(ui.StepTitleStyle.Render(stepTitle))
+		azureStatus.CurrentStep = stepNumber + 1
 
 		for _, block := range step.CodeBlocks {
 			// Render the codeblock.
-			indentedBlock := indentMultiLineCommand(block.Content, 4)
-			fmt.Print("    " + indentedBlock)
+			escapedCommand := strings.ReplaceAll(block.Content, "\\\n", "\\\\\n")
+			renderedCommand, err := shells.ExecuteBashCommand(
+				"echo -e \""+escapedCommand+"\"",
+				shells.BashCommandConfiguration{
+					EnvironmentVariables: map[string]string{},
+					InteractiveCommand:   false,
+					WriteToHistory:       false,
+					InheritEnvironment:   true,
+				},
+			)
+			if err != nil {
+				logging.GlobalLogger.Errorf("Failed to render command: %s", err.Error())
+				return err
+			}
+			finalCommandOutput := indentMultiLineCommand(renderedCommand.StdOut, 4)
+
+			fmt.Print("    " + finalCommandOutput)
 
 			// execute the command as a goroutine to allow for the spinner to be
 			// rendered while the command is executing.
@@ -159,11 +97,12 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 			// If the command is an SSH command, we need to forward the input and
 			// output
 			interactiveCommand := false
-			if sshCommand.MatchString(block.Content) {
+			if patterns.SshCommand.MatchString(block.Content) {
 				interactiveCommand = true
 			}
 
-			logging.GlobalLogger.WithField("isInteractive", interactiveCommand).Infof("Executing command: %s", block.Content)
+			logging.GlobalLogger.WithField("isInteractive", interactiveCommand).
+				Infof("Executing command: %s", block.Content)
 
 			var commandErr error
 			var frame int = 0
@@ -172,15 +111,24 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 			if !interactiveCommand {
 				// Grab the number of lines it contains & set the cursor to the
 				// beginning of the block.
-				lines := strings.Count(block.Content, "\n")
-				moveCursorPositionUp(lines)
+
+				lines := strings.Count(finalCommandOutput, "\n")
+				terminal.MoveCursorPositionUp(lines)
 
 				// Render the spinner and hide the cursor.
-				fmt.Print(spinnerStyle.Render("  "+string(spinnerFrames[0])) + " ")
-				hideCursor()
+				fmt.Print(ui.SpinnerStyle.Render("  "+string(spinnerFrames[0])) + " ")
+				terminal.HideCursor()
 
 				go func(block parsers.CodeBlock) {
-					output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+					output, err := shells.ExecuteBashCommand(
+						block.Content,
+						shells.BashCommandConfiguration{
+							EnvironmentVariables: lib.CopyMap(env),
+							InheritEnvironment:   true,
+							InteractiveCommand:   false,
+							WriteToHistory:       true,
+						},
+					)
 					logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
 					logging.GlobalLogger.Infof("Command output to stderr:\n %s", output.StdErr)
 					commandOutput = output
@@ -193,7 +141,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 					case commandErr = <-done:
 						// Show the cursor, check the result of the command, and display the
 						// final status.
-						showCursor()
+						terminal.ShowCursor()
 
 						if commandErr == nil {
 
@@ -202,30 +150,30 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 							expectedSimilarity := block.ExpectedOutput.ExpectedSimilarity
 							expectedOutputLanguage := block.ExpectedOutput.Language
 
-							err := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedOutputLanguage)
+							outputComparisonError := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedOutputLanguage)
 
-							if err != nil {
-								logging.GlobalLogger.Errorf("Error comparing command outputs: %s", err.Error())
-								fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-								moveCursorPositionDown(lines)
-								fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
+							if outputComparisonError != nil {
+								logging.GlobalLogger.Errorf("Error comparing command outputs: %s", outputComparisonError.Error())
+								fmt.Printf("\r  %s \n", ui.ErrorStyle.Render("✗"))
+								terminal.MoveCursorPositionDown(lines)
+								fmt.Printf("  %s\n", ui.ErrorMessageStyle.Render(outputComparisonError.Error()))
 								fmt.Printf("	%s\n", lib.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
 
-								ocdStatus.SetError(err)
-								reportOCDStatus(ocdStatus, e.Configuration.Environment)
+								azureStatus.SetError(outputComparisonError)
+								environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
-								os.Exit(1)
+								return outputComparisonError
 							}
 
-							fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
-							moveCursorPositionDown(lines)
+							fmt.Printf("\r  %s \n", ui.CheckStyle.Render("✔"))
+							terminal.MoveCursorPositionDown(lines)
 
-							fmt.Printf("  %s\n", verboseStyle.Render(commandOutput.StdOut))
+							fmt.Printf("  %s\n", ui.VerboseStyle.Render(commandOutput.StdOut))
 
 							// Extract the resource group name from the command output if
 							// it's not already set.
-							if resourceGroupName == "" && azCommand.MatchString(block.Content) {
-								tmpResourceGroup := findResourceGroupName(commandOutput.StdOut)
+							if resourceGroupName == "" && patterns.AzCommand.MatchString(block.Content) {
+								tmpResourceGroup := az.FindResourceGroupName(commandOutput.StdOut)
 								if tmpResourceGroup != "" {
 									logging.GlobalLogger.WithField("resourceGroup", tmpResourceGroup).Info("Found resource group")
 									resourceGroupName = tmpResourceGroup
@@ -233,27 +181,27 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 							}
 
 							if stepNumber != len(stepsToExecute)-1 {
-								reportOCDStatus(ocdStatus, e.Configuration.Environment)
+								environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 							}
 
 						} else {
-							showCursor()
-							fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-							moveCursorPositionDown(lines)
-							fmt.Printf("  %s\n", errorMessageStyle.Render(commandErr.Error()))
+							terminal.ShowCursor()
+							fmt.Printf("\r  %s \n", ui.ErrorStyle.Render("✗"))
+							terminal.MoveCursorPositionDown(lines)
+							fmt.Printf("  %s\n", ui.ErrorMessageStyle.Render(commandErr.Error()))
 
 							logging.GlobalLogger.Errorf("Error executing command: %s", commandErr.Error())
 
-							ocdStatus.SetError(commandErr)
-							reportOCDStatus(ocdStatus, e.Configuration.Environment)
+							azureStatus.SetError(commandErr)
+							environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
-							os.Exit(1)
+							return commandErr
 						}
 
 						break renderingLoop
 					default:
 						frame = (frame + 1) % len(spinnerFrames)
-						fmt.Printf("\r  %s", spinnerStyle.Render(string(spinnerFrames[frame])))
+						fmt.Printf("\r  %s", ui.SpinnerStyle.Render(string(spinnerFrames[frame])))
 						time.Sleep(spinnerRefresh)
 					}
 				}
@@ -263,44 +211,63 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) {
 				// If we're on the last step and the command is an SSH command, we need
 				// to report the status before executing the command. This is needed for
 				// one click deployments and does not affect the normal execution flow.
-				if stepNumber == len(stepsToExecute)-1 && sshCommand.MatchString(block.Content) {
-					ocdStatus.Status = "Succeeded"
-					attachResourceURIsToOCDStatus(&ocdStatus, resourceGroupName, e.Configuration.Environment)
-					reportOCDStatus(ocdStatus, e.Configuration.Environment)
+				if stepNumber == len(stepsToExecute)-1 && patterns.SshCommand.MatchString(block.Content) {
+					azureStatus.Status = "Succeeded"
+					environments.AttachResourceURIsToAzureStatus(&azureStatus, resourceGroupName, e.Configuration.Environment)
+					environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 				}
 
-				output, err := shells.ExecuteBashCommand(block.Content, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: true, WriteToHistory: false})
+				output, commandExecutionError := shells.ExecuteBashCommand(
+					block.Content,
+					shells.BashCommandConfiguration{
+						EnvironmentVariables: lib.CopyMap(env),
+						InheritEnvironment:   true,
+						InteractiveCommand:   true,
+						WriteToHistory:       false,
+					},
+				)
 
-				if err == nil {
-					showCursor()
-					fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
-					moveCursorPositionDown(lines)
+				terminal.ShowCursor()
 
-					fmt.Printf("  %s\n", verboseStyle.Render(output.StdOut))
+				if commandExecutionError == nil {
+					fmt.Printf("\r  %s \n", ui.CheckStyle.Render("✔"))
+					terminal.MoveCursorPositionDown(lines)
+
+					fmt.Printf("  %s\n", ui.VerboseStyle.Render(output.StdOut))
 
 					if stepNumber != len(stepsToExecute)-1 {
-						reportOCDStatus(ocdStatus, e.Configuration.Environment)
+						environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 					}
 				} else {
-					showCursor()
-					fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-					moveCursorPositionDown(lines)
-					fmt.Printf("  %s\n", errorMessageStyle.Render(err.Error()))
+					fmt.Printf("\r  %s \n", ui.ErrorStyle.Render("✗"))
+					terminal.MoveCursorPositionDown(lines)
+					fmt.Printf("  %s\n", ui.ErrorMessageStyle.Render(commandExecutionError.Error()))
 
-					ocdStatus.SetError(err)
-					reportOCDStatus(ocdStatus, e.Configuration.Environment)
-					os.Exit(1)
+					azureStatus.SetError(commandExecutionError)
+					environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
+					return commandExecutionError
 				}
 			}
 		}
 	}
 
 	// Report the final status of the deployment (Only applies to one click deployments).
-	ocdStatus.Status = "Succeeded"
-	attachResourceURIsToOCDStatus(&ocdStatus, resourceGroupName, e.Configuration.Environment)
-	reportOCDStatus(ocdStatus, e.Configuration.Environment)
+	azureStatus.Status = "Succeeded"
+	environments.AttachResourceURIsToAzureStatus(
+		&azureStatus,
+		resourceGroupName,
+		e.Configuration.Environment,
+	)
+	environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
-	if e.Configuration.Environment != "ocd" {
+	switch e.Configuration.Environment {
+	case environments.EnvironmentsAzure, environments.EnvironmentsOCD:
+		logging.GlobalLogger.Info(
+			"Not resetting environment variable state to retain for cloudshell.",
+		)
+	default:
 		shells.ResetStoredEnvironmentVariables()
 	}
+
+	return nil
 }

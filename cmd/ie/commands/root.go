@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Azure/InnovationEngine/internal/engine"
+	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ var rootCommand = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if !engine.IsValidEnvironment(environment) {
+		if !environments.IsValidEnvironment(environment) {
 			fmt.Printf("Invalid environment: %s", environment)
 			logging.GlobalLogger.Errorf("Invalid environment: %s", err)
 			os.Exit(1)
@@ -40,8 +40,10 @@ var rootCommand = &cobra.Command{
 
 // Entrypoint into the Innovation Engine CLI.
 func ExecuteCLI() {
-	rootCommand.PersistentFlags().String("log-level", string(logging.Debug), "Configure the log level")
-	rootCommand.PersistentFlags().String("environment", engine.EnvironmentsLocal, "The environment that the CLI is running in. (local, ci, ocd)")
+	rootCommand.PersistentFlags().
+		String("log-level", string(logging.Debug), "Configure the log level")
+	rootCommand.PersistentFlags().
+		String("environment", environments.EnvironmentsLocal, "The environment that the CLI is running in. (local, ci, ocd)")
 
 	if err := rootCommand.Execute(); err != nil {
 		fmt.Println(err)

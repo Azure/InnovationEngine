@@ -26,5 +26,5 @@ func GetHomeDirectory() (string, error) {
 		return homeDrive + homePath, nil
 	}
 
-	return "", fmt.Errorf("Home directory cannot be determined")
+	return "", fmt.Errorf("home directory cannot be determined")
 }

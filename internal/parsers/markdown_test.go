@@ -67,7 +67,11 @@ func TestParsingMarkdownCodeBlocks(t *testing.T) {
 		}
 
 		if codeBlocks[0].Content != "echo Hello\n" {
-			t.Errorf("Code block code is wrong. Expected: %s, Got %s", "echo Hello\\n", codeBlocks[0].Content)
+			t.Errorf(
+				"Code block code is wrong. Expected: %s, Got %s",
+				"echo Hello\\n",
+				codeBlocks[0].Content,
+			)
 		}
 	})
 
