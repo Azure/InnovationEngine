@@ -447,7 +447,7 @@ write_files:
         }
 
 runcmd:
-  - sed -i "s/;cgi.fix_pathinfo.*/cgi.fix_pathinfo = 1/" /etc/php/8.1/fpm/php.ini
+  - sed -i 's/;cgi.fix_pathinfo.*/cgi.fix_pathinfo = 1/' /etc/php/8.1/fpm/php.ini
   - sed -i 's/^max_execution_time \= .*/max_execution_time \= 300/g' /etc/php/8.1/fpm/php.ini
   - sed -i 's/^upload_max_filesize \= .*/upload_max_filesize \= 64M/g' /etc/php/8.1/fpm/php.ini
   - sed -i 's/^post_max_size \= .*/post_max_size \= 64M/g' /etc/php/8.1/fpm/php.ini
