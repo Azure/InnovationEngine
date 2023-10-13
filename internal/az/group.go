@@ -9,7 +9,7 @@ import (
 // Find all the deployed resources in a resource group.
 func FindAllDeployedResourceURIs(resourceGroup string) []string {
 	output, err := shells.ExecuteBashCommand(
-		"az resource list -g"+resourceGroup,
+		"az resource list -g "+resourceGroup,
 		shells.BashCommandConfiguration{
 			EnvironmentVariables: map[string]string{},
 			InheritEnvironment:   true,
@@ -32,7 +32,7 @@ func FindAllDeployedResourceURIs(resourceGroup string) []string {
 
 // Find the resource group name from the output of an az command.
 func FindResourceGroupName(commandOutput string) string {
-	matches := patterns.AzResourceURI.FindStringSubmatch(commandOutput)
+	matches := patterns.AzResourceGroupName.FindStringSubmatch(commandOutput)
 	if len(matches) > 1 {
 		return matches[1]
 	}
