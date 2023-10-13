@@ -83,6 +83,8 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 			)
 			if err != nil {
 				logging.GlobalLogger.Errorf("Failed to render command: %s", err.Error())
+				azureStatus.SetError(err)
+				environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 				return err
 			}
 			finalCommandOutput := indentMultiLineCommand(renderedCommand.StdOut, 4)
