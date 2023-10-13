@@ -10,7 +10,7 @@ The First step in this tutorial is to define environment variables.
 export SSL_EMAIL_ADDRESS="$(az account show --query user.name --output tsv)"
 export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
 export RANDOM_ID="$(openssl rand -hex 3)"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
+export MY_RESOURCE_GROUP_NAME="myAKSResourceGroup$RANDOM_ID"
 export REGION="eastus"
 export MY_AKS_CLUSTER_NAME="myAKSCluster$RANDOM_ID"
 export MY_PUBLIC_IP_NAME="myPublicIP$RANDOM_ID"
@@ -117,7 +117,9 @@ This will take a few minutes
 
 ```bash
 export MY_SN_ID=$(az network vnet subnet list --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name $MY_VNET_NAME --query "[0].id" --output tsv)
+```
 
+```bash
 az aks create \
   --resource-group $MY_RESOURCE_GROUP_NAME \
   --name $MY_AKS_CLUSTER_NAME \
@@ -143,7 +145,7 @@ To manage a Kubernetes cluster, use the Kubernetes command-line client, kubectl.
 1. Install az aks CLI locally using the az aks install-cli command
 
    ```bash
-   if ! [ -x "$(command -v kubectl)" ]; then az aks install-cli; fi
+   if ! [ -x '$(command -v kubectl)' ]; then az aks install-cli; fi
    ```
 
 2. Configure kubectl to connect to your Kubernetes cluster using the az aks get-credentials command. The following command:
@@ -168,7 +170,13 @@ To manage a Kubernetes cluster, use the Kubernetes command-line client, kubectl.
 
 ```bash
 export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${REGION} --location ${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
+```
 
+```bash
+echo $MY_STATIC_IP
+```
+
+```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
@@ -210,8 +218,23 @@ Validate that the application is running by either visiting the public ip or the
 > It often takes 2-3 minutes for the PODs to be created and the site to be reachable via http
 
 ```bash
-runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get pods -l app=azure-vote-front -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'); echo $STATUS; if [ "$STATUS" = 'True' ]; then break; else sleep 10; fi; done
+runtime="5 minute";
+```
 
+```bash
+endtime=$(date -ud "$runtime" +%s);
+```
+
+```bash
+while [[ $(date -u +%s) -le $endtime ]]; do
+   STATUS=$(kubectl get pods -l app=azure-vote-front -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'); echo $STATUS;
+   if [ "$STATUS" = 'True' ]; then break;
+   else sleep 10;
+   fi;
+done
+```
+
+```bash
 curl "http://$FQDN"
 ```
 
@@ -355,8 +378,20 @@ Run the following command to get the HTTPS endpoint for your application:
 > It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via https.
 
 ```bash
-runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); echo $STATUS; if [ "$STATUS" = "$MY_STATIC_IP" ]; then break; else sleep 10; fi; done
+endtime=$(date -ud "$runtime" +%s);
+```
 
+```bash
+while [[ $(date -u +%s) -le $endtime ]]; do
+   STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}');
+   echo $STATUS;
+   if [ "$STATUS" = "$MY_STATIC_IP" ]; then break;
+   else sleep 10;
+   fi;
+done
+```
+
+```bash
 echo "You can now visit your web server at https://$FQDN"
 ```
 
