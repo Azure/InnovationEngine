@@ -175,7 +175,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							// Extract the resource group name from the command output if
 							// it's not already set.
 							if resourceGroupName == "" && patterns.AzCommand.MatchString(block.Content) {
-                logging.GlobalLogger.Info("Attempting to extract resource group name from command output")
+								logging.GlobalLogger.Info("Attempting to extract resource group name from command output")
 								tmpResourceGroup := az.FindResourceGroupName(commandOutput.StdOut)
 								if tmpResourceGroup != "" {
 									logging.GlobalLogger.WithField("resourceGroup", tmpResourceGroup).Info("Found resource group")
