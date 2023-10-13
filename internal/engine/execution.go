@@ -53,7 +53,7 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 // Executes the steps from a scenario and renders the output to the terminal.
 func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) error {
 
-	var resourceGroupName string
+	var resourceGroupName string = ""
 	var azureStatus = environments.NewAzureDeploymentStatus()
 
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
@@ -175,6 +175,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							// Extract the resource group name from the command output if
 							// it's not already set.
 							if resourceGroupName == "" && patterns.AzCommand.MatchString(block.Content) {
+                logging.GlobalLogger.Info("Attempting to extract resource group name from command output")
 								tmpResourceGroup := az.FindResourceGroupName(commandOutput.StdOut)
 								if tmpResourceGroup != "" {
 									logging.GlobalLogger.WithField("resourceGroup", tmpResourceGroup).Info("Found resource group")

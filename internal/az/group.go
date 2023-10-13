@@ -32,7 +32,7 @@ func FindAllDeployedResourceURIs(resourceGroup string) []string {
 
 // Find the resource group name from the output of an az command.
 func FindResourceGroupName(commandOutput string) string {
-	matches := patterns.AzCommand.FindStringSubmatch(commandOutput)
+	matches := patterns.AzResourceURI.FindStringSubmatch(commandOutput)
 	if len(matches) > 1 {
 		return matches[1]
 	}
