@@ -1,25 +1,31 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/Azure/InnovationEngine/internal/az"
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
+	"github.com/Azure/InnovationEngine/internal/patterns"
 	"github.com/Azure/InnovationEngine/internal/shells"
+	"github.com/Azure/InnovationEngine/internal/terminal"
+	"github.com/Azure/InnovationEngine/internal/ui"
 )
 
-func (e *Engine) TestSteps(steps []Step, env map[string]string) {
+func (e *Engine) TestSteps(steps []Step, env map[string]string) error {
 	var resourceGroupName string
 	stepsToExecute := filterDeletionCommands(steps, true)
 
+	var testRunnerError error = nil
 testRunner:
 	for stepNumber, step := range stepsToExecute {
 		stepTitle := fmt.Sprintf("  %d. %s\n", stepNumber+1, step.Name)
-		fmt.Println(stepTitleStyle.Render(stepTitle))
-		moveCursorPositionUp(1)
-		hideCursor()
+		fmt.Println(ui.StepTitleStyle.Render(stepTitle))
+		terminal.MoveCursorPositionUp(1)
+		terminal.HideCursor()
 
 		for _, block := range step.CodeBlocks {
 			// execute the command as a goroutine to allow for the spinner to be
@@ -43,7 +49,7 @@ testRunner:
 			for {
 				select {
 				case err = <-done:
-					showCursor()
+					terminal.ShowCursor()
 
 					if err == nil {
 						actualOutput := commandOutput.StdOut
@@ -55,36 +61,37 @@ testRunner:
 
 						if err != nil {
 							logging.GlobalLogger.Errorf("Error comparing command outputs: %s", err.Error())
-							fmt.Print(errorStyle.Render("Error when comparing the command outputs: %s\n", err.Error()))
+							fmt.Print(ui.ErrorStyle.Render("Error when comparing the command outputs: %s\n", err.Error()))
 						}
 
 						// Extract the resource group name from the command output if
 						// it's not already set.
-						if resourceGroupName == "" && azCommand.MatchString(block.Content) {
-							tmpResourceGroup := findResourceGroupName(commandOutput.StdOut)
+						if resourceGroupName == "" && patterns.AzCommand.MatchString(block.Content) {
+							tmpResourceGroup := az.FindResourceGroupName(commandOutput.StdOut)
 							if tmpResourceGroup != "" {
 								logging.GlobalLogger.Infof("Found resource group: %s", tmpResourceGroup)
 								resourceGroupName = tmpResourceGroup
 							}
 						}
 
-						fmt.Printf("\r  %s \n", checkStyle.Render("✔"))
-						moveCursorPositionDown(1)
+						fmt.Printf("\r  %s \n", ui.CheckStyle.Render("✔"))
+						terminal.MoveCursorPositionDown(1)
 					} else {
 
-						fmt.Printf("\r  %s \n", errorStyle.Render("✗"))
-						moveCursorPositionDown(1)
-						fmt.Printf(" %s\n", errorStyle.Render("Error executing command: %s\n", err.Error()))
+						fmt.Printf("\r  %s \n", ui.ErrorStyle.Render("✗"))
+						terminal.MoveCursorPositionDown(1)
+						fmt.Printf(" %s\n", ui.ErrorStyle.Render("Error executing command: %s\n", err.Error()))
 
 						logging.GlobalLogger.Errorf("Error executing command: %s", err.Error())
 
+						testRunnerError = err
 						break testRunner
 					}
 
 					break loop
 				default:
 					frame = (frame + 1) % len(spinnerFrames)
-					fmt.Printf("\r  %s", spinnerStyle.Render(string(spinnerFrames[frame])))
+					fmt.Printf("\r  %s", ui.SpinnerStyle.Render(string(spinnerFrames[frame])))
 					time.Sleep(spinnerRefresh)
 				}
 			}
@@ -96,14 +103,25 @@ testRunner:
 		fmt.Printf("\n")
 		fmt.Printf("Deleting resource group: %s\n", resourceGroupName)
 		command := fmt.Sprintf("az group delete --name %s --yes", resourceGroupName)
-		output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{EnvironmentVariables: lib.CopyMap(env), InheritEnvironment: true, InteractiveCommand: false, WriteToHistory: true})
+		output, err := shells.ExecuteBashCommand(
+			command,
+			shells.BashCommandConfiguration{
+				EnvironmentVariables: lib.CopyMap(env),
+				InheritEnvironment:   true,
+				InteractiveCommand:   false,
+				WriteToHistory:       true,
+			},
+		)
+
 		if err != nil {
-			fmt.Print(errorStyle.Render("Error deleting resource group: %s\n", err.Error()))
+			fmt.Print(ui.ErrorStyle.Render("Error deleting resource group: %s\n", err.Error()))
 			logging.GlobalLogger.Errorf("Error deleting resource group: %s", err.Error())
-		} else {
-			fmt.Print(output.StdOut)
+			testRunnerError = errors.Join(testRunnerError, err)
 		}
+
+		fmt.Print(output.StdOut)
 	}
 
 	shells.ResetStoredEnvironmentVariables()
+	return testRunnerError
 }

@@ -77,7 +77,11 @@ var expectedSimilarityRegex = regexp.MustCompile(`<!--\s*expected_similarity=\s*
 
 // Extracts the code blocks from a provided markdown AST that match the
 // languagesToExtract.
-func ExtractCodeBlocksFromAst(node ast.Node, source []byte, languagesToExtract []string) []CodeBlock {
+func ExtractCodeBlocksFromAst(
+	node ast.Node,
+	source []byte,
+	languagesToExtract []string,
+) []CodeBlock {
 	var lastHeader string
 	var commands []CodeBlock
 	var nextBlockIsExpectedOutput bool

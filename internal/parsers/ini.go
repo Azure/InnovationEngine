@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"fmt"
+
 	"gopkg.in/ini.v1"
 )
 
@@ -13,7 +14,7 @@ func ParseINIFile(filePath string) (map[string]string, error) {
 	iniFile, err := ini.Load(filePath)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read the INI file %s because %v", filePath, err)
+		return nil, fmt.Errorf("failed to read the INI file %s because %v", filePath, err)
 	}
 
 	data := make(map[string]string)
