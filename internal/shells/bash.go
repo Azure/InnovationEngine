@@ -101,7 +101,7 @@ func CleanEnvironmentStateFile() error {
 
 	writer := bufio.NewWriter(file)
 	for k, v := range env {
-		_, err := fmt.Fprintf(writer, "%s=%s\n", k, v)
+		_, err := fmt.Fprintf(writer, "%s=\"%s\"\n", k, v)
 		if err != nil {
 			return err
 		}
