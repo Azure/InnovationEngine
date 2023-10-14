@@ -266,8 +266,15 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 	switch e.Configuration.Environment {
 	case environments.EnvironmentsAzure, environments.EnvironmentsOCD:
 		logging.GlobalLogger.Info(
-			"Not resetting environment variable state to retain for cloudshell.",
+			"Cleaning environment variable file located at /tmp/env-vars",
 		)
+		err := shells.CleanEnvironmentStateFile()
+
+		if err != nil {
+			logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
+			return err
+		}
+
 	default:
 		shells.ResetStoredEnvironmentVariables()
 	}
