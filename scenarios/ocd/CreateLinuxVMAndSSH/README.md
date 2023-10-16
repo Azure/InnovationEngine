@@ -5,10 +5,13 @@
 The First step in this tutorial is to define environment variables 
 
 ```bash
-export UNIQUE_POSTFIX="$(date +%M%S)$$"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$UNIQUE_POSTFIX"
+export RANDOM_ID="$(openssl rand -hex 3)"
+```
+
+```bash
+export MY_RESOURCE_GROUP_NAME="myVMResourceGroup$RANDOM_ID"
 export REGION=EastUS
-export MY_VM_NAME="myVM$UNIQUE_POSTFIX"
+export MY_VM_NAME="myVM$RANDOM_ID"
 export MY_USERNAME=azureuser
 export MY_VM_IMAGE="Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest"
 ```
@@ -94,10 +97,11 @@ run the following command to get the IP Address of the VM and store it as an env
 ```bash
 export IP_ADDRESS=$(az vm show --show-details --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_VM_NAME --query publicIps --output tsv)
 ```
+
 # SSH Into VM
 
 ## Export the SSH configuration for use with SSH clients that support OpenSSH & SSH into the VM.
-Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. The following example exports the configuration for all IP addresses assigned to the VM:
+Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. <!--The following example exports the configuration for all IP addresses assigned to the VM:
 
 <!--
 ```bash
