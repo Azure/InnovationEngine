@@ -17,9 +17,6 @@ First we will define a few variables that will help with the configuration of th
 ```bash
 export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
 export RANDOM_ID="$(openssl rand -hex 3)"
-```
-
-```bash
 export MY_RESOURCE_GROUP_NAME="myLEMPResourceGroup$RANDOM_ID"
 export REGION="eastus"
 export MY_VM_NAME="myVM$RANDOM_ID"
@@ -42,9 +39,6 @@ export MY_MYSQL_SN_NAME="myMySQLSN$RANDOM_ID"
 export MY_WP_ADMIN_PW="$(openssl rand -base64 32)"
 export MY_WP_ADMIN_USER="wpcliadmin"
 export MY_AZURE_USER=$(az account show --query user.name --output tsv)
-```
-
-```bash
 export FQDN="${MY_DNS_LABEL}.${REGION}.cloudapp.azure.com"
 ```
 
@@ -577,13 +571,7 @@ It takes a few minutes to create the Azure Database for MySQL - Flexible Server 
 
 ```bash
 runtime="10 minute";
-```
-
-```bash
 endtime=$(date -ud "$runtime" +%s);
-```
-
-```bash
 while [[ $(date -u +%s) -le $endtime ]]; do
   STATUS=$(az mysql flexible-server show -g $MY_RESOURCE_GROUP_NAME -n $MY_MYSQL_DB_NAME --query state -o tsv);
   echo $STATUS;
@@ -690,10 +678,8 @@ Results:
 It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
 
 ```bash
+runtime="10 minute";
 endtime=$(date -ud "$runtime" +%s);
-```
-
-```bash
 while [[ $(date -u +%s) -le $endtime ]]; do 
     STATUS=$(ssh -o StrictHostKeyChecking=no $MY_VM_USERNAME@$FQDN "cloud-init status"); 
     echo $STATUS; 

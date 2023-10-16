@@ -9,9 +9,6 @@ The First step in this tutorial is to define environment variables.
 ```bash
 export RANDOM_ID="$(openssl rand -hex 3)"
 export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
-```
-
-```bash
 export SSL_EMAIL_ADDRESS="$(az account show --query user.name --output tsv)"
 export MY_RESOURCE_GROUP_NAME="myAKSResourceGroup$RANDOM_ID"
 export REGION="eastus"
@@ -116,7 +113,7 @@ az provider register --namespace Microsoft.OperationalInsights
 
 Create an AKS cluster using the az aks create command with the --enable-addons monitoring parameter to enable Container insights. The following example creates an autoscaling, availability zone enabled cluster named myAKSCluster:
 
-This will take a few minutes
+This will take a few minutes.
 
 ```bash
 export MY_SN_ID=$(az network vnet subnet list --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name $MY_VNET_NAME --query "[0].id" --output tsv)
@@ -218,13 +215,7 @@ Validate that the application is running by either visiting the public ip or the
 
 ```bash
 runtime="5 minute";
-```
-
-```bash
 endtime=$(date -ud "$runtime" +%s);
-```
-
-```bash
 while [[ $(date -u +%s) -le $endtime ]]; do
    STATUS=$(kubectl get pods -l app=azure-vote-front -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'); echo $STATUS;
    if [ "$STATUS" = 'True' ]; then
@@ -277,7 +268,7 @@ Results:
 
 ## Add HTTPS termination to custom domain
 
-At this point in the tutorial you have an AKS web app with NGINX as the Ingress controller and a custom domain you can use to access your application. The next step is to add an SSL certificate to the domain so that users can reach your application securely via https.
+At this point in the tutorial you have an AKS web app with NGINX as the Ingress controller and a custom domain you can use to access your application. The next step is to add an SSL certificate to the domain so that users can reach your application securely via HTTPS.
 
 ## Set Up Cert Manager
 
@@ -377,13 +368,11 @@ True
 Run the following command to get the HTTPS endpoint for your application:
 
 > [!Note]
-> It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via https.
+> It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via HTTPS.
 
 ```bash
+runtime="5 minute";
 endtime=$(date -ud "$runtime" +%s);
-```
-
-```bash
 while [[ $(date -u +%s) -le $endtime ]]; do
    STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}');
    echo $STATUS;

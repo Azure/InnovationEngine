@@ -6,9 +6,6 @@ The First step in this tutorial is to define environment variables
 
 ```bash
 export RANDOM_ID="$(openssl rand -hex 3)"
-```
-
-```bash
 export MY_RESOURCE_GROUP_NAME="myVMResourceGroup$RANDOM_ID"
 export REGION=EastUS
 export MY_VM_NAME="myVM$RANDOM_ID"
@@ -100,8 +97,8 @@ export IP_ADDRESS=$(az vm show --show-details --resource-group $MY_RESOURCE_GROU
 
 # SSH Into VM
 
-## Export the SSH configuration for use with SSH clients that support OpenSSH & SSH into the VM.
-Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. <!--The following example exports the configuration for all IP addresses assigned to the VM:-->
+<!--## Export the SSH configuration for use with SSH clients that support OpenSSH & SSH into the VM.
+Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. The following example exports the configuration for all IP addresses assigned to the VM:-->
 
 <!--
 ```bash
