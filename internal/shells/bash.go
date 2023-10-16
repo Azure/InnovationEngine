@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"golang.org/x/sys/unix"
@@ -70,6 +71,42 @@ func appendToBashHistory(command string, filePath string) error {
 // Resets the stored environment variables file.
 func ResetStoredEnvironmentVariables() error {
 	return os.Remove(environmentStateFile)
+}
+
+var environmentVariableName = regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+func filterInvalidKeys(envMap map[string]string) map[string]string {
+	validEnvMap := make(map[string]string)
+	for key, value := range envMap {
+		if environmentVariableName.MatchString(key) {
+			validEnvMap[key] = value
+		}
+	}
+	return validEnvMap
+}
+
+func CleanEnvironmentStateFile() error {
+	env, err := loadEnvFile(environmentStateFile)
+
+	if err != nil {
+		return err
+	}
+
+	env = filterInvalidKeys(env)
+
+	file, err := os.Create(environmentStateFile)
+	if err != nil {
+		return err
+	}
+
+	writer := bufio.NewWriter(file)
+	for k, v := range env {
+		_, err := fmt.Fprintf(writer, "%s=\"%s\"\n", k, v)
+		if err != nil {
+			return err
+		}
+	}
+	return writer.Flush()
 }
 
 type CommandOutput struct {
