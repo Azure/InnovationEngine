@@ -71,7 +71,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 
 		for _, block := range step.CodeBlocks {
 			// Render the codeblock.
-			escapedCommand := strings.ReplaceAll(block.Content, "\\\n", "\\\\\n")
+			escapedCommand := strings.ReplaceAll(block.Content, "\\\n", "\\\\\\\n")
 			renderedCommand, err := shells.ExecuteBashCommand(
 				"echo -e \""+escapedCommand+"\"",
 				shells.BashCommandConfiguration{
