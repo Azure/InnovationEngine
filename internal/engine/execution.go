@@ -50,6 +50,20 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 	return filteredSteps
 }
 
+func renderCommand(blockContent string) (shells.CommandOutput, error) {
+	escapedCommand := strings.ReplaceAll(blockContent, "\\\n", "\\\\\\\n")
+	renderedCommand, err := shells.ExecuteBashCommand(
+		"echo -e \""+escapedCommand+"\"",
+		shells.BashCommandConfiguration{
+			EnvironmentVariables: map[string]string{},
+			InteractiveCommand:   false,
+			WriteToHistory:       false,
+			InheritEnvironment:   true,
+		},
+	)
+	return renderedCommand, err
+}
+
 // Executes the steps from a scenario and renders the output to the terminal.
 func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) error {
 
@@ -71,16 +85,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 
 		for _, block := range step.CodeBlocks {
 			// Render the codeblock.
-			escapedCommand := strings.ReplaceAll(block.Content, "\\\n", "\\\\\\\n")
-			renderedCommand, err := shells.ExecuteBashCommand(
-				"echo -e \""+escapedCommand+"\"",
-				shells.BashCommandConfiguration{
-					EnvironmentVariables: map[string]string{},
-					InteractiveCommand:   false,
-					WriteToHistory:       false,
-					InheritEnvironment:   true,
-				},
-			)
+			renderedCommand, err := renderCommand(block.Content)
 			if err != nil {
 				logging.GlobalLogger.Errorf("Failed to render command: %s", err.Error())
 				azureStatus.SetError(err)
