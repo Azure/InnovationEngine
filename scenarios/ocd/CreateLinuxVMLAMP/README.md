@@ -584,7 +584,15 @@ endtime=$(date -ud "$runtime" +%s);
 ```
 
 ```bash
-while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(az mysql flexible-server show -g $MY_RESOURCE_GROUP_NAME -n $MY_MYSQL_DB_NAME --query state -o tsv); echo $STATUS; if [ "$STATUS" = 'Ready' ]; then break; else sleep 10; fi; done
+while [[ $(date -u +%s) -le $endtime ]]; do
+  STATUS=$(az mysql flexible-server show -g $MY_RESOURCE_GROUP_NAME -n $MY_MYSQL_DB_NAME --query state -o tsv);
+  echo $STATUS;
+  if [ "$STATUS" = 'Ready' ]; then
+    break;
+  else
+    sleep 10;
+  fi;
+done
 ```
 
 ## Configure server parameters in Azure Database for MySQL - Flexible Server
