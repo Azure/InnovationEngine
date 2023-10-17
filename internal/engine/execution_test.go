@@ -12,6 +12,7 @@ func TestExecuteBlock(t *testing.T) {
 		"echo hello \\\nworld",
 		"echo \"hello world\"",
 		"echo hello world",
+		"ls \\\n-a",
 	}
 	for _, blockCommand := range blocks {
 		t.Run("render command", func(t *testing.T) {
