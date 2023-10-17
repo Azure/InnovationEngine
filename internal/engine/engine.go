@@ -18,6 +18,7 @@ type EngineConfiguration struct {
 	Subscription     string
 	Environment      string
 	WorkingDirectory string
+	RenderValues     bool
 }
 
 type Engine struct {
