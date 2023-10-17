@@ -87,15 +87,20 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 		azureStatus.CurrentStep = stepNumber + 1
 
 		for _, block := range step.CodeBlocks {
-			// Render the codeblock.
-			renderedCommand, err := renderCommand(block.Content)
-			if err != nil {
-				logging.GlobalLogger.Errorf("Failed to render command: %s", err.Error())
-				azureStatus.SetError(err)
-				environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
-				return err
+			var finalCommandOutput string
+			if e.Configuration.RenderValues {
+				// Render the codeblock.
+				renderedCommand, err := renderCommand(block.Content)
+				if err != nil {
+					logging.GlobalLogger.Errorf("Failed to render command: %s", err.Error())
+					azureStatus.SetError(err)
+					environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
+					return err
+				}
+				finalCommandOutput = indentMultiLineCommand(renderedCommand.StdOut, 4)
+			} else {
+				finalCommandOutput = indentMultiLineCommand(block.Content, 4)
 			}
-			finalCommandOutput := indentMultiLineCommand(renderedCommand.StdOut, 4)
 
 			fmt.Print("    " + finalCommandOutput)
 

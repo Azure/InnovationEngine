@@ -6,7 +6,11 @@
 Innovation engine can execute bash commands. For example
 
 ```bash
-echo "Hello World"
+export VAR="Hello World"
+```
+
+```bash
+echo $VAR
 ```
 
 # Test Code block with expected output

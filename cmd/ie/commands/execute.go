@@ -54,6 +54,10 @@ var executeCommand = &cobra.Command{
 		workingDirectory, _ := cmd.Flags().GetString("working-directory")
 
 		environmentVariables, _ := cmd.Flags().GetStringArray("var")
+		features, _ := cmd.Flags().GetStringArray("feature")
+
+		// Known features
+		renderValues := false
 
 		// Parse the environment variables from the command line into a map
 		cliEnvironmentVariables := make(map[string]string)
@@ -70,6 +74,21 @@ var executeCommand = &cobra.Command{
 			}
 
 			cliEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
+		}
+
+		for _, feature := range features {
+			switch feature {
+			case "render-values":
+				renderValues = true
+			default:
+				logging.GlobalLogger.Errorf(
+					"Error: Invalid feature: %s",
+					feature,
+				)
+				fmt.Printf("Error: Invalid feature: %s\n", feature)
+				cmd.Help()
+				os.Exit(1)
+			}
 		}
 
 		// Parse the markdown file and create a scenario
@@ -91,6 +110,7 @@ var executeCommand = &cobra.Command{
 			CorrelationId:    correlationId,
 			Environment:      environment,
 			WorkingDirectory: workingDirectory,
+			RenderValues:     renderValues,
 		})
 
 		if err != nil {
