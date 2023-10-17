@@ -51,7 +51,10 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 }
 
 func renderCommand(blockContent string) (shells.CommandOutput, error) {
-	escapedCommand := strings.ReplaceAll(blockContent, "\\\n", "\\\\\\\n")
+	escapedCommand := blockContent
+	if !patterns.MultilineQuotedStringCommand.MatchString(blockContent) {
+		escapedCommand = strings.ReplaceAll(blockContent, "\\\n", "\\\\\n")
+	}
 	renderedCommand, err := shells.ExecuteBashCommand(
 		"echo -e \""+escapedCommand+"\"",
 		shells.BashCommandConfiguration{
