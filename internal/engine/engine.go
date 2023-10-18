@@ -6,7 +6,6 @@ import (
 	"github.com/Azure/InnovationEngine/internal/az"
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/lib/fs"
-	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/ui"
 )
 
@@ -26,12 +25,6 @@ type Engine struct {
 
 // / Create a new engine instance.
 func NewEngine(configuration EngineConfiguration) (*Engine, error) {
-	err := az.SetSubscription(configuration.Subscription)
-	if err != nil {
-		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
-		return nil, err
-	}
-
 	return &Engine{
 		Configuration: configuration,
 	}, nil

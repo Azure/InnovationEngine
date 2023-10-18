@@ -18,6 +18,12 @@ import (
 func (e *Engine) TestSteps(steps []Step, env map[string]string) error {
 	var resourceGroupName string
 	stepsToExecute := filterDeletionCommands(steps, true)
+	err := az.SetSubscription(e.Configuration.Subscription)
+
+	if err != nil {
+		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
+		return err
+	}
 
 	var testRunnerError error = nil
 testRunner:
