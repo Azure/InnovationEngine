@@ -22,6 +22,18 @@ It also can test the output to make sure everything ran as planned.
 Hello world
 ```
 
+# Test Code block matches expected regex
+
+```bash
+echo "Foo Bar"
+```
+
+It also can test the output to make sure everything ran as planned.
+<!--expected_similarity="Foo \w+"-->
+```
+Foo Bar
+```
+
 # Executable vs non-executable code blocks
 Innovation engine supports code blocks which are both executable and non-executable. A code block is executable if the label/tag after the bash scripts is one of the supported executable tags. Those tags are: bash, terraform, azurecli-interactive, and azurecli.
 
