@@ -1,4 +1,4 @@
-# Install a LAMP stack on Azure
+# Install a LEMP stack on Azure
 
 This article walks you through how to deploy an NGINX web server, Azure MySQL Flexible Server, and PHP (the LEMP stack) on an Ubuntu Linux VM in Azure. To see the LEMP server in action, you can optionally install and configure a WordPress site. In this tutorial you learn how to:
 
@@ -10,29 +10,24 @@ This article walks you through how to deploy an NGINX web server, Azure MySQL Fl
 > * Verify installation and configuration
 > * Install WordPress
 
-## Create RG
-
-Create a resource group with the [az group create](https://learn.microsoft.com/cli/azure/group#az-group-create) command. An Azure resource group is a logical container into which Azure resources are deployed and managed.
-The following example creates a resource group named `$MY_RESOURCE_GROUP_NAME` in the `eastus` location.
-
 ## Variable declaration
 
-First we will define a few variables that will help with the configuration of the LAMP workload.
+First we will define a few variables that will help with the configuration of the LEMP workload.
 
 ```bash
 export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
 export RANDOM_ID="$(openssl rand -hex 3)"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
+export MY_RESOURCE_GROUP_NAME="myLEMPResourceGroup$RANDOM_ID"
 export REGION="eastus"
-export MY_VM_NAME="myVMName$RANDOM_ID"
+export MY_VM_NAME="myVM$RANDOM_ID"
 export MY_VM_USERNAME="azureadmin"
 export MY_VM_SIZE='Standard_DS2_v2'
 export MY_VM_IMAGE='Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest'
 export MY_PUBLIC_IP_NAME="myPublicIP$RANDOM_ID"
 export MY_DNS_LABEL="mydnslabel$RANDOM_ID"
-export MY_NSG_NAME="myNSGName$RANDOM_ID"
+export MY_NSG_NAME="myNSG$RANDOM_ID"
 export MY_NSG_SSH_RULE="Allow-Access$RANDOM_ID"
-export MY_VM_NIC_NAME="myVMNicName$RANDOM_ID"
+export MY_VM_NIC_NAME="myVMNic$RANDOM_ID"
 export MY_VNET_NAME="myVNet$RANDOM_ID"
 export MY_VNET_PREFIX="10.$NETWORK_PREFIX.0.0/22"
 export MY_SN_NAME="mySN$RANDOM_ID"
@@ -44,9 +39,17 @@ export MY_MYSQL_SN_NAME="myMySQLSN$RANDOM_ID"
 export MY_WP_ADMIN_PW="$(openssl rand -base64 32)"
 export MY_WP_ADMIN_USER="wpcliadmin"
 export MY_AZURE_USER=$(az account show --query user.name --output tsv)
-export MY_AZURE_USER_ID=$(az ad user list --filter "mail eq '$MY_AZURE_USER'" --query "[0].id" -o tsv)
 export FQDN="${MY_DNS_LABEL}.${REGION}.cloudapp.azure.com"
 ```
+
+<!--```bash
+export MY_AZURE_USER_ID=$(az ad user list --filter "mail eq '$MY_AZURE_USER'" --query "[0].id" -o tsv)
+```-->
+
+## Create RG
+
+Create a resource group with the [az group create](https://learn.microsoft.com/cli/azure/group#az-group-create) command. An Azure resource group is a logical container into which Azure resources are deployed and managed.
+The following example creates a resource group named `$MY_RESOURCE_GROUP_NAME` in the `eastus` location.
 
 ```bash
 az group create \
@@ -71,7 +74,7 @@ Results:
 }
 ```
 
-## Setup LAMP networking
+## Setup LEMP networking
 
 ## Create an Azure Virtual Network
 
@@ -351,7 +354,7 @@ We are working with our partners to get cloud-init included and working in the i
 
 ### Create cloud-init config file
 
-To see cloud-init in action, create a VM that installs a LAMP stack and runs a simple Wordpress app secured with an SSL certificate. The following cloud-init configuration installs the required packages, creates the Wordpress website, then initialize and starts the website.
+To see cloud-init in action, create a VM that installs a LEMP stack and runs a simple Wordpress app secured with an SSL certificate. The following cloud-init configuration installs the required packages, creates the Wordpress website, then initialize and starts the website.
 
 ```bash
 cat << EOF > cloud-init.txt
@@ -475,7 +478,7 @@ EOF
 
 ## Create an Azure Private DNS Zone for Azure MySQL Flexible Server
 
-Azure Private DNS Zone integration allows you to resolve the private DNS within the current VNET or any in-region peered VNET where the private DNS Zone is linked. You'll use [az network private-dns zone create](https://learn.microsoft.com/cli/azure/network/private-dns/zone#az-network-private-dns-zone-create) to create the private dns zone.
+Azure Private DNS Zone integration allows you to resolve the private DNS within the current VNET or any in-region peered VNET where the private DNS Zone is linked. You'll use [az network private-dns zone create](https://learn.microsoft.com/cli/azure/network/private-dns/zone#az-network-private-dns-zone-create) to create the private DNS zone.
 
 ```bash
 az network private-dns zone create \
@@ -567,7 +570,17 @@ If you'd like to change any defaults, please refer to the Azure CLI [reference d
 It takes a few minutes to create the Azure Database for MySQL - Flexible Server and supporting resources.
 
 ```bash
-runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(az mysql flexible-server show -g $MY_RESOURCE_GROUP_NAME -n $MY_MYSQL_DB_NAME --query state -o tsv); echo $STATUS; if [ "$STATUS" = 'Ready' ]; then break; else sleep 10; fi; done
+runtime="10 minute";
+endtime=$(date -ud "$runtime" +%s);
+while [[ $(date -u +%s) -le $endtime ]]; do
+  STATUS=$(az mysql flexible-server show -g $MY_RESOURCE_GROUP_NAME -n $MY_MYSQL_DB_NAME --query state -o tsv);
+  echo $STATUS;
+  if [ "$STATUS" = 'Ready' ]; then
+    break;
+  else
+    sleep 10;
+  fi;
+done
 ```
 
 ## Configure server parameters in Azure Database for MySQL - Flexible Server
@@ -667,9 +680,8 @@ It takes a few minutes to create the VM and supporting resources. The provisioni
 ```bash
 runtime="10 minute";
 endtime=$(date -ud "$runtime" +%s);
-
 while [[ $(date -u +%s) -le $endtime ]]; do 
-    STATUS=$(ssh -o StrictHostKeyChecking=no $FQDN "cloud-init status"); 
+    STATUS=$(ssh -o StrictHostKeyChecking=no $MY_VM_USERNAME@$FQDN "cloud-init status"); 
     echo $STATUS; 
     if [ "$STATUS" = 'status: done' ]; then 
         break; 
@@ -681,7 +693,7 @@ done
 
 ## Enable Azure AD login for a Linux Virtual Machine in Azure
 
-The following example deploys a VM and then installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
+The following installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
 
 ```bash
 az vm extension set \
@@ -730,7 +742,7 @@ az role assignment create \
     --assignee $MY_AZURE_USER_ID \
     --scope $MY_RESOURCE_GROUP_ID -o JSON
 ```
--->
+
 
 Results:
 <!-- expected_similarity=0.3
@@ -791,4 +803,8 @@ Results:
 <title>Azure hosted blog</title>
 <link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Feed" href="https://mydnslabel6ad2bc.eastus.cloudapp.azure.com/?feed=rss2" />
 <link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Comments Feed" href="https://mydnslabel6ad2bc.eastus.cloudapp.azure.com/?feed=comments-rss2" />
+```
+
+```bash
+echo "You can now visit your web server at https://$FQDN"
 ```
