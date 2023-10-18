@@ -7,10 +7,10 @@ Welcome to this tutorial where we will take you step by step in creating an Azur
 The First step in this tutorial is to define environment variables.
 
 ```bash
-export SSL_EMAIL_ADDRESS="$(az account show --query user.name --output tsv)"
-export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
 export RANDOM_ID="$(openssl rand -hex 3)"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
+export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
+export SSL_EMAIL_ADDRESS="$(az account show --query user.name --output tsv)"
+export MY_RESOURCE_GROUP_NAME="myAKSResourceGroup$RANDOM_ID"
 export REGION="eastus"
 export MY_AKS_CLUSTER_NAME="myAKSCluster$RANDOM_ID"
 export MY_PUBLIC_IP_NAME="myPublicIP$RANDOM_ID"
@@ -113,11 +113,13 @@ az provider register --namespace Microsoft.OperationalInsights
 
 Create an AKS cluster using the az aks create command with the --enable-addons monitoring parameter to enable Container insights. The following example creates an autoscaling, availability zone enabled cluster named myAKSCluster:
 
-This will take a few minutes
+This will take a few minutes.
 
 ```bash
 export MY_SN_ID=$(az network vnet subnet list --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name $MY_VNET_NAME --query "[0].id" --output tsv)
+```
 
+```bash
 az aks create \
   --resource-group $MY_RESOURCE_GROUP_NAME \
   --name $MY_AKS_CLUSTER_NAME \
@@ -167,8 +169,10 @@ To manage a Kubernetes cluster, use the Kubernetes command-line client, kubectl.
 ## Install NGINX Ingress Controller
 
 ```bash
-export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${REGION} --location ${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
+export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${REGION} --location ${REGION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
+```
 
+```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
@@ -210,8 +214,19 @@ Validate that the application is running by either visiting the public ip or the
 > It often takes 2-3 minutes for the PODs to be created and the site to be reachable via http
 
 ```bash
-runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get pods -l app=azure-vote-front -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'); echo $STATUS; if [ "$STATUS" = 'True' ]; then break; else sleep 10; fi; done
+runtime="5 minute";
+endtime=$(date -ud "$runtime" +%s);
+while [[ $(date -u +%s) -le $endtime ]]; do
+   STATUS=$(kubectl get pods -l app=azure-vote-front -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'); echo $STATUS;
+   if [ "$STATUS" = 'True' ]; then
+      break;
+   else
+      sleep 10;
+   fi;
+done
+```
 
+```bash
 curl "http://$FQDN"
 ```
 
@@ -253,7 +268,7 @@ Results:
 
 ## Add HTTPS termination to custom domain
 
-At this point in the tutorial you have an AKS web app with NGINX as the Ingress controller and a custom domain you can use to access your application. The next step is to add an SSL certificate to the domain so that users can reach your application securely via https.
+At this point in the tutorial you have an AKS web app with NGINX as the Ingress controller and a custom domain you can use to access your application. The next step is to add an SSL certificate to the domain so that users can reach your application securely via HTTPS.
 
 ## Set Up Cert Manager
 
@@ -322,41 +337,54 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
    echo "${azure_vote_nginx_ssl_variables//\$FQDN/$FQDN}" | kubectl apply -f -
    ```
 
-## Validate application is working
+<!--## Validate application is working
 
 Wait for the SSL certificate to issue. The following command will query the 
 status of the SSL certificate for 3 minutes. In rare occasions it may take up to 
 15 minutes for Lets Encrypt to issue a successful challenge and 
 the ready state to be 'True'
 
-<!-- ```bash
+```bash
 runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get certificate --output jsonpath={..status.conditions[0].status}); echo $STATUS; if [ "$STATUS" = 'True' ]; then break; else sleep 10; fi; done
-``` -->
+```
 
 Validate SSL certificate is True by running the follow command:
 
-<!-- ```bash
+```bash
 kubectl get certificate --output jsonpath={..status.conditions[0].status}
-``` -->
+```
 
 Results:
 
 <!-- expected_similarity=0.3 -->
-
+<!--
 ```ASCII
 True
 ```
+-->
 
 ## Browse your AKS Deployment Secured via HTTPS
 
 Run the following command to get the HTTPS endpoint for your application:
 
 > [!Note]
-> It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via https.
+> It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via HTTPS.
 
 ```bash
-runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); echo $STATUS; if [ "$STATUS" = "$MY_STATIC_IP" ]; then break; else sleep 10; fi; done
+runtime="5 minute";
+endtime=$(date -ud "$runtime" +%s);
+while [[ $(date -u +%s) -le $endtime ]]; do
+   STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}');
+   echo $STATUS;
+   if [ "$STATUS" = "$MY_STATIC_IP" ]; then
+      break;
+   else
+      sleep 10;
+   fi;
+done
+```
 
+```bash
 echo "You can now visit your web server at https://$FQDN"
 ```
 
