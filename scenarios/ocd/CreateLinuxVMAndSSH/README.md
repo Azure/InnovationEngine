@@ -2,7 +2,7 @@
 
 ## Define Environment Variables
 
-The First step in this tutorial is to define environment variables 
+The First step in this tutorial is to define environment variables.
 
 ```bash
 export RANDOM_ID="$(openssl rand -hex 3)"

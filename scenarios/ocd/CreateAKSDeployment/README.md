@@ -4,7 +4,7 @@ Welcome to this tutorial where we will take you step by step in creating an Azur
 
 ## Define Environment Variables
 
-The First step in this tutorial is to define environment variables.
+The first step in this tutorial is to define environment variables.
 
 ```bash
 export RANDOM_ID="$(openssl rand -hex 3)"
@@ -111,7 +111,7 @@ az provider register --namespace Microsoft.OperationalInsights
 
 ## Create AKS Cluster
 
-Create an AKS cluster using the az aks create command with the --enable-addons monitoring parameter to enable Container insights. The following example creates an autoscaling, availability zone enabled cluster named myAKSCluster:
+Create an AKS cluster using the az aks create command with the --enable-addons monitoring parameter to enable Container insights. The following example creates an autoscaling, availability zone enabled cluster.
 
 This will take a few minutes.
 
@@ -205,7 +205,7 @@ kubectl apply -f azure-vote-start.yml
 Validate that the application is running by either visiting the public ip or the application url. The application url can be found by running the following command:
 
 > [!Note]
-> It often takes 2-3 minutes for the PODs to be created and the site to be reachable via http
+> It often takes 2-3 minutes for the PODs to be created and the site to be reachable via HTTP
 
 ```bash
 runtime="5 minute";

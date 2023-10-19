@@ -675,10 +675,10 @@ Results:
 It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
 
 ```bash
-runtime="10 minute";
+runtime="5 minute";
 endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do 
-    STATUS=$(ssh -o StrictHostKeyChecking=no $MY_VM_USERNAME@$FQDN "cloud-init status"); 
+    STATUS=$(ssh -o StrictHostKeyChecking=no $MY_VM_USERNAME@$FQDN "cloud-init status --wait"); 
     echo $STATUS; 
     if [ "$STATUS" = 'status: done' ]; then 
         break; 
@@ -784,7 +784,7 @@ This WordPress setup is only for proof of concept. To install the latest WordPre
 Validate that the application is running by visiting the application url:
 
 ```bash
-curl --max-time 120 -S "https://$FQDN" 2> /dev/null | head -n9
+curl --max-time 120 -s "https://$FQDN" 2> /dev/null | head -n9
 ```
 
 Results:
