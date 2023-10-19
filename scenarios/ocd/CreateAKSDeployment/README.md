@@ -212,7 +212,7 @@ runtime="5 minute";
 endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do
    STATUS=$(kubectl get pods -l app=azure-vote-front -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'); echo $STATUS;
-   if [ "$STATUS" = 'True' ]; then
+   if [ "$STATUS" == 'True' ]; then
       break;
    else
       sleep 10;
@@ -370,7 +370,7 @@ endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do
    STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}');
    echo $STATUS;
-   if [ "$STATUS" = "$MY_STATIC_IP" ]; then
+   if [ "$STATUS" == "$MY_STATIC_IP" ]; then
       break;
    else
       sleep 10;

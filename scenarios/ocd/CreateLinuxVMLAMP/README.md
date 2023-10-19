@@ -572,7 +572,7 @@ endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do
   STATUS=$(az mysql flexible-server show -g $MY_RESOURCE_GROUP_NAME -n $MY_MYSQL_DB_NAME --query state -o tsv);
   echo $STATUS;
-  if [ "$STATUS" = 'Ready' ]; then
+  if [ "$STATUS" == 'Ready' ]; then
     break;
   else
     sleep 10;
@@ -680,10 +680,10 @@ endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do 
     STATUS=$(ssh -o StrictHostKeyChecking=no $MY_VM_USERNAME@$FQDN "cloud-init status --wait"); 
     echo $STATUS; 
-    if [ "$STATUS" = 'status: done' ]; then 
+    if [[ "$STATUS" == *'status: done'* ]]; then 
         break; 
     else 
-        sleep 10; 
+        sleep 10;
     fi;
 done
 ```
