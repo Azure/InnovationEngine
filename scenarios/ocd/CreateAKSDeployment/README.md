@@ -36,7 +36,7 @@ Results:
 
 ```JSON
 {
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup210",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myAKSResourceGroupxxxxxx",
   "location": "eastus",
   "managedBy": null,
   "name": "testResourceGroup",
@@ -71,25 +71,25 @@ Results:
   "newVNet": {
     "addressSpace": {
       "addressPrefixes": [
-        "10.210.0.0/16"
+        "10.xxx.0.0/16"
       ]
     },
     "enableDdosProtection": false,
-    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210",
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myAKSResourceGroupxxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxx",
     "location": "eastus",
-    "name": "myVNet210",
+    "name": "myVNetxxx",
     "provisioningState": "Succeeded",
-    "resourceGroup": "myResourceGroup210",
+    "resourceGroup": "myAKSResourceGroupxxxxxx",
     "subnets": [
       {
-        "addressPrefix": "10.210.0.0/22",
+        "addressPrefix": "10.xxx.0.0/22",
         "delegations": [],
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210/subnets/mySN210",
-        "name": "mySN210",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myAKSResourceGroupxxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxx/subnets/mySNxxx",
+        "name": "mySNxxx",
         "privateEndpointNetworkPolicies": "Disabled",
         "privateLinkServiceNetworkPolicies": "Enabled",
         "provisioningState": "Succeeded",
-        "resourceGroup": "myResourceGroup210",
+        "resourceGroup": "myAKSResourceGroupxxxxxx",
         "type": "Microsoft.Network/virtualNetworks/subnets"
       }
     ],
@@ -117,9 +117,6 @@ This will take a few minutes.
 
 ```bash
 export MY_SN_ID=$(az network vnet subnet list --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name $MY_VNET_NAME --query "[0].id" --output tsv)
-```
-
-```bash
 az aks create \
   --resource-group $MY_RESOURCE_GROUP_NAME \
   --name $MY_AKS_CLUSTER_NAME \
@@ -170,9 +167,6 @@ To manage a Kubernetes cluster, use the Kubernetes command-line client, kubectl.
 
 ```bash
 export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${REGION} --location ${REGION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
-```
-
-```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
