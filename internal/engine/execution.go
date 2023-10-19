@@ -50,6 +50,23 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 	return filteredSteps
 }
 
+func renderCommand(blockContent string) (shells.CommandOutput, error) {
+	escapedCommand := blockContent
+	if !patterns.MultilineQuotedStringCommand.MatchString(blockContent) {
+		escapedCommand = strings.ReplaceAll(blockContent, "\\\n", "\\\\\n")
+	}
+	renderedCommand, err := shells.ExecuteBashCommand(
+		"echo -e \""+escapedCommand+"\"",
+		shells.BashCommandConfiguration{
+			EnvironmentVariables: map[string]string{},
+			InteractiveCommand:   false,
+			WriteToHistory:       false,
+			InheritEnvironment:   true,
+		},
+	)
+	return renderedCommand, err
+}
+
 // Executes the steps from a scenario and renders the output to the terminal.
 func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) error {
 
@@ -70,24 +87,20 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 		azureStatus.CurrentStep = stepNumber + 1
 
 		for _, block := range step.CodeBlocks {
-			// Render the codeblock.
-			escapedCommand := strings.ReplaceAll(block.Content, "\\\n", "\\\\\n")
-			renderedCommand, err := shells.ExecuteBashCommand(
-				"echo -e \""+escapedCommand+"\"",
-				shells.BashCommandConfiguration{
-					EnvironmentVariables: map[string]string{},
-					InteractiveCommand:   false,
-					WriteToHistory:       false,
-					InheritEnvironment:   true,
-				},
-			)
-			if err != nil {
-				logging.GlobalLogger.Errorf("Failed to render command: %s", err.Error())
-				azureStatus.SetError(err)
-				environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
-				return err
+			var finalCommandOutput string
+			if e.Configuration.RenderValues {
+				// Render the codeblock.
+				renderedCommand, err := renderCommand(block.Content)
+				if err != nil {
+					logging.GlobalLogger.Errorf("Failed to render command: %s", err.Error())
+					azureStatus.SetError(err)
+					environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
+					return err
+				}
+				finalCommandOutput = indentMultiLineCommand(renderedCommand.StdOut, 4)
+			} else {
+				finalCommandOutput = indentMultiLineCommand(block.Content, 4)
 			}
-			finalCommandOutput := indentMultiLineCommand(renderedCommand.StdOut, 4)
 
 			fmt.Print("    " + finalCommandOutput)
 

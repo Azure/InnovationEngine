@@ -45,6 +45,9 @@ func ExecuteCLI() {
 	rootCommand.PersistentFlags().
 		String("environment", environments.EnvironmentsLocal, "The environment that the CLI is running in. (local, ci, ocd)")
 
+	rootCommand.PersistentFlags().
+		StringArray("feature", []string{}, "Enables the specified feature. Format: --feature <feature>")
+
 	if err := rootCommand.Execute(); err != nil {
 		fmt.Println(err)
 		logging.GlobalLogger.Errorf("Error executing command: %s", err)
