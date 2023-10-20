@@ -672,7 +672,7 @@ Results:
   "zones": ""
 }
 ```
-<!--
+
 ## Check the Azure Linux Virtual Machine status
 
 It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
@@ -689,7 +689,7 @@ while [[ $(date -u +%s) -le $endtime ]]; do
         sleep 10;
     fi;
 done
-```-->
+```
 
 <!--
 ## Assign Azure AD RBAC for Azure AD login for Linux Virtual Machine
@@ -740,42 +740,6 @@ az ssh config --file ~/.ssh/azure-config --name $MY_VM_NAME --resource-group $MY
 ```
 -->
 
-## Check that the website is live
-
-[WordPress](https://www.wordpress.org) is an open source content management system (CMS) used by over 40% of the web to create websites, blogs, and other applications. WordPress can be run on a few different Azure services: [AKS](https://learn.microsoft.com/azure/mysql/flexible-server/tutorial-deploy-wordpress-on-aks), Virtual Machines, and App Service. For a full list of WordPress options on Azure, see [WordPress on Azure Marketplace](https://azuremarketplace.microsoft.com/marketplace/apps?page=1&search=wordpress).
-
-This WordPress setup is only for proof of concept. To install the latest WordPress in production with recommended security settings, see the [WordPress documentation](https://codex.wordpress.org/Main_Page).
-
-Validate that the application is running by curling the application url:
-
-```bash
-runtime="5 minute";
-endtime=$(date -ud "$runtime" +%s); sleep 60;
-while [[ $(date -u +%s) -le $endtime ]]; do
-    if curl -I -s -f $FQDN > /dev/null ; then 
-        curl -L -s -f $FQDN 2> /dev/null | head -n 9
-        break
-    else 
-        sleep 10
-    fi;
-done
-```
-
-Results:
-
-<!-- expected_similarity=0.3 -->
-```HTML
-<!DOCTYPE html>
-<html lang="en-US">
-<head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name='robots' content='max-image-preview:large' />
-<title>Azure hosted blog</title>
-<link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Feed" href="https://mydnslabelxxxxxx.eastus.cloudapp.azure.com/?feed=rss2" />
-<link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Comments Feed" href="https://mydnslabelxxxxxx.eastus.cloudapp.azure.com/?feed=comments-rss2" />
-```
-
 ## Enable Azure AD login for a Linux Virtual Machine in Azure
 
 The following installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
@@ -813,7 +777,43 @@ Results:
   "typePropertiesType": "AADSSHLoginForLinux"
 }
 ```
-## Browse your WordPress website
+
+## Check and browse your WordPress website
+
+[WordPress](https://www.wordpress.org) is an open source content management system (CMS) used by over 40% of the web to create websites, blogs, and other applications. WordPress can be run on a few different Azure services: [AKS](https://learn.microsoft.com/azure/mysql/flexible-server/tutorial-deploy-wordpress-on-aks), Virtual Machines, and App Service. For a full list of WordPress options on Azure, see [WordPress on Azure Marketplace](https://azuremarketplace.microsoft.com/marketplace/apps?page=1&search=wordpress).
+
+This WordPress setup is only for proof of concept. To install the latest WordPress in production with recommended security settings, see the [WordPress documentation](https://codex.wordpress.org/Main_Page).
+
+Validate that the application is running by curling the application url:
+
+```bash
+runtime="5 minute";
+endtime=$(date -ud "$runtime" +%s);
+while [[ $(date -u +%s) -le $endtime ]]; do
+    if curl -I -s -f $FQDN > /dev/null ; then 
+        curl -L -s -f $FQDN 2> /dev/null | head -n 9
+        break
+    else 
+        sleep 10
+    fi;
+done
+```
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+```HTML
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name='robots' content='max-image-preview:large' />
+<title>Azure hosted blog</title>
+<link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Feed" href="https://mydnslabelxxxxxx.eastus.cloudapp.azure.com/?feed=rss2" />
+<link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Comments Feed" href="https://mydnslabelxxxxxx.eastus.cloudapp.azure.com/?feed=comments-rss2" />
+```
+
 ```bash
 echo "You can now visit your web server at https://$FQDN"
 ```
