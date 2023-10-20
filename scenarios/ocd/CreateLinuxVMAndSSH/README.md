@@ -2,7 +2,7 @@
 
 ## Define Environment Variables
 
-The First step in this tutorial is to define environment variables 
+The First step in this tutorial is to define environment variables.
 
 ```bash
 export RANDOM_ID="$(openssl rand -hex 3)"
@@ -30,10 +30,10 @@ Results:
 <!-- expected_similarity=0.3 -->
 ```json   
 {
-  "id": "/subscriptions/325e7c34-99fb-4190-aa87-1df746c67705/resourceGroups/myResourceGroup",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMResourceGroup",
   "location": "eastus",
   "managedBy": null,
-  "name": "myResourceGroup",
+  "name": "myVMResourceGroup",
   "properties": {
     "provisioningState": "Succeeded"
   },
@@ -65,13 +65,13 @@ Results:
 ```json
 {
   "fqdns": "",
-  "id": "/subscriptions/325e7c34-99fb-4190-aa87-1df746c67705/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM",
   "location": "eastus",
   "macAddress": "00-0D-3A-10-4F-70",
   "powerState": "VM running",
   "privateIpAddress": "10.0.0.4",
   "publicIpAddress": "52.147.208.85",
-  "resourceGroup": "myResourceGroup",
+  "resourceGroup": "myVMResourceGroup",
   "zones": ""
 }
 ```
