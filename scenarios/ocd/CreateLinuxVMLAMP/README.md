@@ -752,10 +752,11 @@ Validate that the application is running by curling the application url:
 runtime="5 minute";
 endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do 
-    if curl --max-time 120 -s -f "https://$FQDN" 2> /dev/null | head -n9; then 
-        break; 
+    if curl -I -s -f $FQDN > /dev/null ; then 
+        curl -s -f $FQDN | head -n 9
+        break
     else 
-        sleep 10;
+        sleep 10
     fi;
 done
 ```
