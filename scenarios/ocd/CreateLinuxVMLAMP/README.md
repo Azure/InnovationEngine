@@ -672,7 +672,7 @@ Results:
   "zones": ""
 }
 ```
-
+<!--
 ## Check the Azure Linux Virtual Machine status
 
 It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
@@ -689,7 +689,7 @@ while [[ $(date -u +%s) -le $endtime ]]; do
         sleep 10;
     fi;
 done
-```
+```-->
 
 ## Enable Azure AD login for a Linux Virtual Machine in Azure
 
@@ -787,7 +787,15 @@ This WordPress setup is only for proof of concept. To install the latest WordPre
 Validate that the application is running by visiting the application url:
 
 ```bash
-curl --max-time 120 -s "https://$FQDN" 2> /dev/null | head -n9
+runtime="5 minute";
+endtime=$(date -ud "$runtime" +%s);
+while [[ $(date -u +%s) -le $endtime ]]; do 
+    if curl --max-time 120 -s "https://$FQDN" 2> /dev/null | head -n9; then 
+        break; 
+    else 
+        sleep 10;
+    fi;
+done
 ```
 
 Results:
