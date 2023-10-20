@@ -691,44 +691,6 @@ while [[ $(date -u +%s) -le $endtime ]]; do
 done
 ```-->
 
-## Enable Azure AD login for a Linux Virtual Machine in Azure
-
-The following installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
-
-```bash
-az vm extension set \
-    --publisher Microsoft.Azure.ActiveDirectory \
-    --name AADSSHLoginForLinux \
-    --resource-group $MY_RESOURCE_GROUP_NAME \
-    --vm-name $MY_VM_NAME -o JSON
-```
-
-Results:
-
-<!-- expected_similarity=0.3 -->
-```JSON
-{
-  "autoUpgradeMinorVersion": true,
-  "enableAutomaticUpgrade": null,
-  "forceUpdateTag": null,
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachines/myVMNamexxxxxx/extensions/AADSSHLoginForLinux",
-  "instanceView": null,
-  "location": "eastus",
-  "name": "AADSSHLoginForLinux",
-  "protectedSettings": null,
-  "protectedSettingsFromKeyVault": null,
-  "provisioningState": "Succeeded",
-  "publisher": "Microsoft.Azure.ActiveDirectory",
-  "resourceGroup": "myLEMPResourceGroupxxxxxx",
-  "settings": null,
-  "suppressFailures": null,
-  "tags": null,
-  "type": "Microsoft.Compute/virtualMachines/extensions",
-  "typeHandlerVersion": "1.0",
-  "typePropertiesType": "AADSSHLoginForLinux"
-}
-```
-
 <!--
 ## Assign Azure AD RBAC for Azure AD login for Linux Virtual Machine
 
@@ -778,19 +740,19 @@ az ssh config --file ~/.ssh/azure-config --name $MY_VM_NAME --resource-group $MY
 ```
 -->
 
-## Browse your WordPress website
+## Check that the website is live
 
 [WordPress](https://www.wordpress.org) is an open source content management system (CMS) used by over 40% of the web to create websites, blogs, and other applications. WordPress can be run on a few different Azure services: [AKS](https://learn.microsoft.com/azure/mysql/flexible-server/tutorial-deploy-wordpress-on-aks), Virtual Machines, and App Service. For a full list of WordPress options on Azure, see [WordPress on Azure Marketplace](https://azuremarketplace.microsoft.com/marketplace/apps?page=1&search=wordpress).
 
 This WordPress setup is only for proof of concept. To install the latest WordPress in production with recommended security settings, see the [WordPress documentation](https://codex.wordpress.org/Main_Page).
 
-Validate that the application is running by visiting the application url:
+Validate that the application is running by curling the application url:
 
 ```bash
 runtime="5 minute";
 endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do 
-    if curl --max-time 120 -s "https://$FQDN" 2> /dev/null | head -n9; then 
+    if curl --max-time 120 -s -f "https://$FQDN" 2> /dev/null | head -n9; then 
         break; 
     else 
         sleep 10;
@@ -813,6 +775,44 @@ Results:
 <link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Comments Feed" href="https://mydnslabelxxxxxx.eastus.cloudapp.azure.com/?feed=comments-rss2" />
 ```
 
+## Enable Azure AD login for a Linux Virtual Machine in Azure
+
+The following installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
+
+```bash
+az vm extension set \
+    --publisher Microsoft.Azure.ActiveDirectory \
+    --name AADSSHLoginForLinux \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --vm-name $MY_VM_NAME -o JSON
+```
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+```JSON
+{
+  "autoUpgradeMinorVersion": true,
+  "enableAutomaticUpgrade": null,
+  "forceUpdateTag": null,
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachines/myVMNamexxxxxx/extensions/AADSSHLoginForLinux",
+  "instanceView": null,
+  "location": "eastus",
+  "name": "AADSSHLoginForLinux",
+  "protectedSettings": null,
+  "protectedSettingsFromKeyVault": null,
+  "provisioningState": "Succeeded",
+  "publisher": "Microsoft.Azure.ActiveDirectory",
+  "resourceGroup": "myLEMPResourceGroupxxxxxx",
+  "settings": null,
+  "suppressFailures": null,
+  "tags": null,
+  "type": "Microsoft.Compute/virtualMachines/extensions",
+  "typeHandlerVersion": "1.0",
+  "typePropertiesType": "AADSSHLoginForLinux"
+}
+```
+## Browse your WordPress website
 ```bash
 echo "You can now visit your web server at https://$FQDN"
 ```
