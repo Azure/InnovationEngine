@@ -750,10 +750,10 @@ Validate that the application is running by curling the application url:
 
 ```bash
 runtime="5 minute";
-endtime=$(date -ud "$runtime" +%s);
-while [[ $(date -u +%s) -le $endtime ]]; do 
+endtime=$(date -ud "$runtime" +%s); sleep 60;
+while [[ $(date -u +%s) -le $endtime ]]; do
     if curl -I -s -f $FQDN > /dev/null ; then 
-        curl -s -f $FQDN | head -n 9
+        curl -L -s -f $FQDN 2> /dev/null | head -n 9
         break
     else 
         sleep 10
