@@ -62,10 +62,10 @@ Results:
 <!-- expected_similarity=0.3 -->
 ```JSON
 {
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx",
   "location": "eastus",
   "managedBy": null,
-  "name": "myResourceGroup6ad2bc",
+  "name": "myLEMPResourceGroupxxxxxx",
   "properties": {
     "provisioningState": "Succeeded"
   },
@@ -103,21 +103,21 @@ Results:
       ]
     },
     "enableDdosProtection": false,
-    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/virtualNetworks/myVNet6ad2bc",
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxxxxx",
     "location": "eastus",
-    "name": "myVNet6ad2bc",
+    "name": "myVNetxxxxxx",
     "provisioningState": "Succeeded",
-    "resourceGroup": "myResourceGroup6ad2bc",
+    "resourceGroup": "myLEMPResourceGroupxxxxxx",
     "subnets": [
       {
         "addressPrefix": "10.19.0.0/24",
         "delegations": [],
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/virtualNetworks/myVNet6ad2bc/subnets/mySN6ad2bc",
-        "name": "mySN6ad2bc",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxxxxx/subnets/mySNxxxxxx",
+        "name": "mySNxxxxxx",
         "privateEndpointNetworkPolicies": "Disabled",
         "privateLinkServiceNetworkPolicies": "Enabled",
         "provisioningState": "Succeeded",
-        "resourceGroup": "myResourceGroup6ad2bc",
+        "resourceGroup": "myLEMPResourceGroupxxxxxx",
         "type": "Microsoft.Network/virtualNetworks/subnets"
       }
     ],
@@ -156,18 +156,18 @@ Results:
       "protectionMode": "VirtualNetworkInherited"
     },
     "dnsSettings": {
-      "domainNameLabel": "mydnslabel6ad2bc",
-      "fqdn": "mydnslabel6ad2bc.eastus.cloudapp.azure.com"
+      "domainNameLabel": "mydnslabelxxxxxx",
+      "fqdn": "mydnslabelxxxxxx.eastus.cloudapp.azure.com"
     },
-    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/publicIPAddresses/myPublicIP6ad2bc",
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/publicIPAddresses/myPublicIPxxxxxx",
     "idleTimeoutInMinutes": 4,
     "ipTags": [],
     "location": "eastus",
-    "name": "myPublicIP6ad2bc",
+    "name": "myPublicIPxxxxxx",
     "provisioningState": "Succeeded",
     "publicIPAddressVersion": "IPv4",
     "publicIPAllocationMethod": "Static",
-    "resourceGroup": "myResourceGroup6ad2bc",
+    "resourceGroup": "myLEMPResourceGroupxxxxxx",
     "sku": {
       "name": "Standard",
       "tier": "Regional"
@@ -208,23 +208,23 @@ Results:
         "destinationPortRange": "*",
         "destinationPortRanges": [],
         "direction": "Inbound",
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup104/providers/Microsoft.Network/networkSecurityGroups/protect-vms/defaultSecurityRules/AllowVnetInBound",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroup104/providers/Microsoft.Network/networkSecurityGroups/protect-vms/defaultSecurityRules/AllowVnetInBound",
         "name": "AllowVnetInBound",
         "priority": 65000,
         "protocol": "*",
         "provisioningState": "Succeeded",
-        "resourceGroup": "myResourceGroup104",
+        "resourceGroup": "myLEMPResourceGroup104",
         "sourceAddressPrefix": "VirtualNetwork",
         "sourceAddressPrefixes": [],
         "sourcePortRange": "*",
         "sourcePortRanges": [],
         "type": "Microsoft.Network/networkSecurityGroups/defaultSecurityRules"
       },
-    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup104/providers/Microsoft.Network/networkSecurityGroups/protect-vms",
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroup104/providers/Microsoft.Network/networkSecurityGroups/protect-vms",
     "location": "eastus",
     "name": "protect-vms",
     "provisioningState": "Succeeded",
-    "resourceGroup": "myResourceGroup104",
+    "resourceGroup": "myLEMPResourceGroup104",
     "securityRules": [],
     "type": "Microsoft.Network/networkSecurityGroups"
   }
@@ -264,12 +264,12 @@ Results:
     "443"
   ],
   "direction": "Inbound",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/networkSecurityGroups/myNSGName6ad2bc/securityRules/Allow-Access6ad2bc",
-  "name": "Allow-Access6ad2bc",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/networkSecurityGroups/myNSGNamexxxxxx/securityRules/Allow-Accessxxxxxx",
+  "name": "Allow-Accessxxxxxx",
   "priority": 100,
   "protocol": "Tcp",
   "provisioningState": "Succeeded",
-  "resourceGroup": "myResourceGroup6ad2bc",
+  "resourceGroup": "myLEMPResourceGroupxxxxxx",
   "sourceAddressPrefix": "*",
   "sourceAddressPrefixes": [],
   "sourcePortRange": "*",
@@ -310,33 +310,33 @@ Results:
     "enableAcceleratedNetworking": false,
     "enableIPForwarding": false,
     "hostedWorkloads": [],
-    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/networkInterfaces/myVMNicName6ad2bc",
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/networkInterfaces/myVMNicNamexxxxxx",
     "ipConfigurations": [
       {
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/networkInterfaces/myVMNicName6ad2bc/ipConfigurations/ipconfig1",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/networkInterfaces/myVMNicNamexxxxxx/ipConfigurations/ipconfig1",
         "name": "ipconfig1",
         "primary": true,
         "privateIPAddress": "10.19.0.4",
         "privateIPAddressVersion": "IPv4",
         "privateIPAllocationMethod": "Dynamic",
         "provisioningState": "Succeeded",
-        "resourceGroup": "myResourceGroup6ad2bc",
+        "resourceGroup": "myLEMPResourceGroupxxxxxx",
         "subnet": {
-          "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/virtualNetworks/myVNet6ad2bc/subnets/mySN6ad2bc",
-          "resourceGroup": "myResourceGroup6ad2bc"
+          "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxxxxx/subnets/mySNxxxxxx",
+          "resourceGroup": "myLEMPResourceGroupxxxxxx"
         },
         "type": "Microsoft.Network/networkInterfaces/ipConfigurations"
       }
     ],
     "location": "eastus",
-    "name": "myVMNicName6ad2bc",
+    "name": "myVMNicNamexxxxxx",
     "networkSecurityGroup": {
-      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/networkSecurityGroups/myNSGName6ad2bc",
-      "resourceGroup": "myResourceGroup6ad2bc"
+      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/networkSecurityGroups/myNSGNamexxxxxx",
+      "resourceGroup": "myLEMPResourceGroupxxxxxx"
     },
     "nicType": "Standard",
     "provisioningState": "Succeeded",
-    "resourceGroup": "myResourceGroup6ad2bc",
+    "resourceGroup": "myLEMPResourceGroupxxxxxx",
     "tapConfigurations": [],
     "type": "Microsoft.Network/networkInterfaces",
     "vnetEncryptionSupported": false
@@ -491,17 +491,17 @@ Results:
 <!-- expected_similarity=0.3 -->
 ```JSON
 {
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myresourcegroup6ad2bc/providers/Microsoft.Network/privateDnsZones/mydnslabel6ad2bc.private.mysql.database.azure.com",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/privateDnsZones/mydnslabelxxxxxx.private.mysql.database.azure.com",
   "location": "global",
   "maxNumberOfRecordSets": 25000,
   "maxNumberOfVirtualNetworkLinks": 1000,
   "maxNumberOfVirtualNetworkLinksWithRegistration": 100,
-  "name": "mydnslabel6ad2bc.private.mysql.database.azure.com",
+  "name": "mydnslabelxxxxxx.private.mysql.database.azure.com",
   "numberOfRecordSets": 1,
   "numberOfVirtualNetworkLinks": 0,
   "numberOfVirtualNetworkLinksWithRegistration": 0,
   "provisioningState": "Succeeded",
-  "resourceGroup": "myresourcegroup6ad2bc",
+  "resourceGroup": "myLEMPResourceGroupxxxxxx",
   "tags": null,
   "type": "Microsoft.Network/privateDnsZones"
 }
@@ -510,10 +510,6 @@ Results:
 ## Create an Azure Database for MySQL - Flexible Server
 
 Azure Database for MySQL - Flexible Server is a managed service that you can use to run, manage, and scale highly available MySQL servers in the cloud. Create a flexible server with the [az mysql flexible-server create](https://learn.microsoft.com/cli/azure/mysql/flexible-server#az-mysql-flexible-server-create) command. A server can contain multiple databases. The following command creates a server using service defaults and variable values from your Azure CLI's local environment:
-
-```bash
-echo "Your MySQL user $MY_MYSQL_ADMIN_USERNAME password is: $MY_WP_ADMIN_PW" 
-```
 
 ```bash
 az mysql flexible-server create \
@@ -543,15 +539,19 @@ Results:
 ```JSON
 {
   "databaseName": "wp001",
-  "host": "mydb6ad2bc.mysql.database.azure.com",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.DBforMySQL/flexibleServers/mydb6ad2bc",
+  "host": "mydbxxxxxx.mysql.database.azure.com",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.DBforMySQL/flexibleServers/mydbxxxxxx",
   "location": "East US",
-  "resourceGroup": "myResourceGroup6ad2bc",
+  "resourceGroup": "myLEMPResourceGroupxxxxxx",
   "skuname": "Standard_B2s",
-  "subnetId": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/virtualNetworks/myVNet6ad2bc/subnets/myMySQLSN6ad2bc",
-  "username": "dbadmin6ad2bc",
+  "subnetId": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxxxxx/subnets/myMySQLSNxxxxxx",
+  "username": "dbadminxxxxxx",
   "version": "8.0.21"
 }
+```
+
+```bash
+echo "Your MySQL user $MY_MYSQL_ADMIN_USERNAME password is: $MY_WP_ADMIN_PW"
 ```
 
 The server created has the below attributes:
@@ -575,7 +575,7 @@ endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do
   STATUS=$(az mysql flexible-server show -g $MY_RESOURCE_GROUP_NAME -n $MY_MYSQL_DB_NAME --query state -o tsv);
   echo $STATUS;
-  if [ "$STATUS" = 'Ready' ]; then
+  if [ "$STATUS" == 'Ready' ]; then
     break;
   else
     sleep 10;
@@ -611,12 +611,12 @@ Results:
   "currentValue": "OFF",
   "dataType": "Enumeration",
   "defaultValue": "ON",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.DBforMySQL/flexibleServers/mydb6ad2bc/configurations/require_secure_transport",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.DBforMySQL/flexibleServers/mydbxxxxxx/configurations/require_secure_transport",
   "isConfigPendingRestart": "False",
   "isDynamicConfig": "True",
   "isReadOnly": "False",
   "name": "require_secure_transport",
-  "resourceGroup": "myResourceGroup6ad2bc",
+  "resourceGroup": "myLEMPResourceGroupxxxxxx",
   "source": "user-override",
   "systemData": null,
   "type": "Microsoft.DBforMySQL/flexibleServers/configurations",
@@ -656,8 +656,8 @@ Results:
 <!-- expected_similarity=0.3 -->
 ```JSON
 {
-  "fqdns": "mydnslabel6ad2bc.eastus.cloudapp.azure.com",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Compute/virtualMachines/myVMName6ad2bc",
+  "fqdns": "mydnslabelxxxxxx.eastus.cloudapp.azure.com",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachines/myVMNamexxxxxx",
   "identity": {
     "principalId": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
     "tenantId": "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
@@ -668,7 +668,7 @@ Results:
   "macAddress": "60-45-BD-D8-1D-84",
   "powerState": "VM running",
   "privateIpAddress": "10.19.0.4",
-  "resourceGroup": "myResourceGroup6ad2bc",
+  "resourceGroup": "myLEMPResourceGroupxxxxxx",
   "zones": ""
 }
 ```
@@ -678,55 +678,17 @@ Results:
 It takes a few minutes to create the VM and supporting resources. The provisioningState value of Succeeded appears when the extension is successfully installed on the VM. The VM must have a running [VM agent](https://learn.microsoft.com/azure/virtual-machines/extensions/agent-linux) to install the extension.
 
 ```bash
-runtime="10 minute";
+runtime="5 minute";
 endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do 
-    STATUS=$(ssh -o StrictHostKeyChecking=no $MY_VM_USERNAME@$FQDN "cloud-init status"); 
+    STATUS=$(ssh -o StrictHostKeyChecking=no $MY_VM_USERNAME@$FQDN "cloud-init status --wait"); 
     echo $STATUS; 
-    if [ "$STATUS" = 'status: done' ]; then 
+    if [[ "$STATUS" == *'status: done'* ]]; then 
         break; 
     else 
-        sleep 10; 
+        sleep 10;
     fi;
 done
-```
-
-## Enable Azure AD login for a Linux Virtual Machine in Azure
-
-The following installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
-
-```bash
-az vm extension set \
-    --publisher Microsoft.Azure.ActiveDirectory \
-    --name AADSSHLoginForLinux \
-    --resource-group $MY_RESOURCE_GROUP_NAME \
-    --vm-name $MY_VM_NAME -o JSON
-```
-
-Results:
-
-<!-- expected_similarity=0.3 -->
-```JSON
-{
-  "autoUpgradeMinorVersion": true,
-  "enableAutomaticUpgrade": null,
-  "forceUpdateTag": null,
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroupfa636b/providers/Microsoft.Compute/virtualMachines/myVMNamefa636b/extensions/AADSSHLoginForLinux",
-  "instanceView": null,
-  "location": "eastus",
-  "name": "AADSSHLoginForLinux",
-  "protectedSettings": null,
-  "protectedSettingsFromKeyVault": null,
-  "provisioningState": "Succeeded",
-  "publisher": "Microsoft.Azure.ActiveDirectory",
-  "resourceGroup": "myResourceGroupfa636b",
-  "settings": null,
-  "suppressFailures": null,
-  "tags": null,
-  "type": "Microsoft.Compute/virtualMachines/extensions",
-  "typeHandlerVersion": "1.0",
-  "typePropertiesType": "AADSSHLoginForLinux"
-}
 ```
 
 <!--
@@ -754,13 +716,13 @@ Results:
   "createdOn": "2023-09-04T09:29:16.895907+00:00",
   "delegatedManagedIdentityResourceId": null,
   "description": null,
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroupfa636b/providers/Microsoft.Authorization/roleAssignments/yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Authorization/roleAssignments/yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
   "name": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
   "principalId": "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
   "principalType": "User",
-  "resourceGroup": "myResourceGroupfa636b",
+  "resourceGroup": "myLEMPResourceGroupxxxxxx",
   "roleDefinitionId": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
-  "scope": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroupfa636b",
+  "scope": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx",
   "type": "Microsoft.Authorization/roleAssignments",
   "updatedBy": "wwwwwwww-wwww-wwww-wwww-wwwwwwwwwwww",
   "updatedOn": "2023-09-04T09:29:17.237445+00:00"
@@ -778,16 +740,63 @@ az ssh config --file ~/.ssh/azure-config --name $MY_VM_NAME --resource-group $MY
 ```
 -->
 
-## Browse your WordPress website
+## Enable Azure AD login for a Linux Virtual Machine in Azure
+
+The following installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
+
+```bash
+az vm extension set \
+    --publisher Microsoft.Azure.ActiveDirectory \
+    --name AADSSHLoginForLinux \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --vm-name $MY_VM_NAME -o JSON
+```
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+```JSON
+{
+  "autoUpgradeMinorVersion": true,
+  "enableAutomaticUpgrade": null,
+  "forceUpdateTag": null,
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLEMPResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachines/myVMNamexxxxxx/extensions/AADSSHLoginForLinux",
+  "instanceView": null,
+  "location": "eastus",
+  "name": "AADSSHLoginForLinux",
+  "protectedSettings": null,
+  "protectedSettingsFromKeyVault": null,
+  "provisioningState": "Succeeded",
+  "publisher": "Microsoft.Azure.ActiveDirectory",
+  "resourceGroup": "myLEMPResourceGroupxxxxxx",
+  "settings": null,
+  "suppressFailures": null,
+  "tags": null,
+  "type": "Microsoft.Compute/virtualMachines/extensions",
+  "typeHandlerVersion": "1.0",
+  "typePropertiesType": "AADSSHLoginForLinux"
+}
+```
+
+## Check and browse your WordPress website
 
 [WordPress](https://www.wordpress.org) is an open source content management system (CMS) used by over 40% of the web to create websites, blogs, and other applications. WordPress can be run on a few different Azure services: [AKS](https://learn.microsoft.com/azure/mysql/flexible-server/tutorial-deploy-wordpress-on-aks), Virtual Machines, and App Service. For a full list of WordPress options on Azure, see [WordPress on Azure Marketplace](https://azuremarketplace.microsoft.com/marketplace/apps?page=1&search=wordpress).
 
 This WordPress setup is only for proof of concept. To install the latest WordPress in production with recommended security settings, see the [WordPress documentation](https://codex.wordpress.org/Main_Page).
 
-Validate that the application is running by visiting the application url:
+Validate that the application is running by curling the application url:
 
 ```bash
-curl --max-time 120 "https://$FQDN"
+runtime="5 minute";
+endtime=$(date -ud "$runtime" +%s);
+while [[ $(date -u +%s) -le $endtime ]]; do
+    if curl -I -s -f $FQDN > /dev/null ; then 
+        curl -L -s -f $FQDN 2> /dev/null | head -n 9
+        break
+    else 
+        sleep 10
+    fi;
+done
 ```
 
 Results:
@@ -801,8 +810,8 @@ Results:
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name='robots' content='max-image-preview:large' />
 <title>Azure hosted blog</title>
-<link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Feed" href="https://mydnslabel6ad2bc.eastus.cloudapp.azure.com/?feed=rss2" />
-<link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Comments Feed" href="https://mydnslabel6ad2bc.eastus.cloudapp.azure.com/?feed=comments-rss2" />
+<link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Feed" href="https://mydnslabelxxxxxx.eastus.cloudapp.azure.com/?feed=rss2" />
+<link rel="alternate" type="application/rss+xml" title="Azure hosted blog &raquo; Comments Feed" href="https://mydnslabelxxxxxx.eastus.cloudapp.azure.com/?feed=comments-rss2" />
 ```
 
 ```bash
