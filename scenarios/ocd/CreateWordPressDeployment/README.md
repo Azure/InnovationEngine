@@ -23,6 +23,7 @@ export MY_MYSQL_DB_NAME="mydb$RANDOM_ID"
 export MY_MYSQL_ADMIN_USERNAME="dbadmin$RANDOM_ID"
 export MY_MYSQL_ADMIN_PW="$(openssl rand -base64 32)"
 export MY_MYSQL_SN_NAME="myMySQLSN$RANDOM_ID"
+export MY_MYSQL_HOSTNAME="$MY_MYSQL_DB_NAME.mysql.database.azure.com"
 export MY_WP_ADMIN_PW="$(openssl rand -base64 32)"
 export MY_WP_ADMIN_USER="wpcliadmin"
 export FQDN="${MY_DNS_LABEL}.${REGION}.cloudapp.azure.com"
@@ -33,7 +34,9 @@ export FQDN="${MY_DNS_LABEL}.${REGION}.cloudapp.azure.com"
 A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $REGION parameters.
 
 ```bash
-az group create --name $MY_RESOURCE_GROUP_NAME --location $REGION
+az group create \
+    --name $MY_RESOURCE_GROUP_NAME \
+    --location $REGION
 ```
 
 Results:
@@ -122,7 +125,7 @@ az mysql flexible-server create \
     --iops 500 \
     --location $REGION \
     --name $MY_MYSQL_DB_NAME \
-    --database-name wp001 \
+    --database-name wordpress \
     --resource-group $MY_RESOURCE_GROUP_NAME \
     --sku-name Standard_B2s \
     --storage-auto-grow Disabled \
@@ -178,10 +181,9 @@ You can manage Azure Database for MySQL - Flexible Server configuration using se
 Show server parameter details
 To show details about a particular parameter for a server, run the [az mysql flexible-server parameter show](https://learn.microsoft.com/cli/azure/mysql/flexible-server/parameter) command.
 
-### Disable Azure Database for MySQL - Flexible Server SSL connection parameter for Wordpress integration
+### Disable Azure Database for MySQL - Flexible Server SSL connection parameter for WordPress integration
 
-Modify a server parameter value
-You can also modify the value of a certain server parameter, which updates the underlying configuration value for the MySQL server engine. To update the server parameter, use the [az mysql flexible-server parameter set](https://learn.microsoft.com/cli/azure/mysql/flexible-server/parameter#az-mysql-flexible-server-parameter-set) command.
+You can also modify the value of certain server parameters, which updates the underlying configuration values for the MySQL server engine. To update the server parameter, use the [az mysql flexible-server parameter set](https://learn.microsoft.com/cli/azure/mysql/flexible-server/parameter#az-mysql-flexible-server-parameter-set) command.
 
 ```bash
 az mysql flexible-server parameter set \
@@ -222,21 +224,23 @@ This will take a few minutes
 export MY_SN_ID=$(az network vnet subnet list --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name $MY_VNET_NAME --query "[0].id" --output tsv)
 
 az aks create \
-  --resource-group $MY_RESOURCE_GROUP_NAME \
-  --name $MY_AKS_CLUSTER_NAME \
-  --auto-upgrade-channel stable \
-  --enable-cluster-autoscaler \
-  --enable-addons monitoring \
-  --location $REGION \
-  --node-count 1 \
-  --min-count 1 \
-  --max-count 3 \
-  --network-plugin azure \
-  --network-policy azure \
-  --vnet-subnet-id $MY_SN_ID \
-  --no-ssh-key \
-  --node-vm-size Standard_DS2_v2 \
-  --zones 1 2 3
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --name $MY_AKS_CLUSTER_NAME \
+    --auto-upgrade-channel stable \
+    --enable-cluster-autoscaler \
+    --enable-addons monitoring \
+    --location $REGION \
+    --node-count 1 \
+    --min-count 1 \
+    --max-count 3 \
+    --network-plugin azure \
+    --network-policy azure \
+    --vnet-subnet-id $MY_SN_ID \
+    --no-ssh-key \
+    --service-cidr 10.240.0.0/24 \
+    --dns-service-ip 10.240.0.10 \
+    --node-vm-size Standard_DS2_v2 \
+    --zones 1 2 3
 ```
 
 ## Connect to the cluster
@@ -245,43 +249,43 @@ To manage a Kubernetes cluster, use the Kubernetes command-line client, kubectl.
 
 1. Install az aks CLI locally using the az aks install-cli command
 
-   ```bash
-   if ! [ -x "$(command -v kubectl)" ]; then az aks install-cli; fi
-   ```
+    ```bash
+    if ! [ -x "$(command -v kubectl)" ]; then az aks install-cli; fi
+    ```
 
 2. Configure kubectl to connect to your Kubernetes cluster using the az aks get-credentials command. The following command:
 
-   - Downloads credentials and configures the Kubernetes CLI to use them.
-   - Uses ~/.kube/config, the default location for the Kubernetes configuration file. Specify a different location for your Kubernetes configuration file using --file argument.
+    - Downloads credentials and configures the Kubernetes CLI to use them.
+    - Uses ~/.kube/config, the default location for the Kubernetes configuration file. Specify a different location for your Kubernetes configuration file using --file argument.
 
-   > [!WARNING]
-   > This will overwrite any existing credentials with the same entry
+    > [!WARNING]
+    > This will overwrite any existing credentials with the same entry
 
-   ```bash
-   az aks get-credentials --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AKS_CLUSTER_NAME --overwrite-existing
-   ```
+    ```bash
+    az aks get-credentials --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AKS_CLUSTER_NAME --overwrite-existing
+    ```
 
 3. Verify the connection to your cluster using the kubectl get command. This command returns a list of the cluster nodes.
 
-   ```bash
-   kubectl get nodes
-   ```
+    ```bash
+    kubectl get nodes
+    ```
 
 ## Install NGINX Ingress Controller
 
 ```bash
-export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${REGION} --location ${MY_LOCATION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
+export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${REGION} --location ${REGION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
 
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 
 helm upgrade --install --cleanup-on-fail --atomic ingress-nginx ingress-nginx/ingress-nginx \
-  --namespace ingress-nginx \
-  --create-namespace \
-  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"=$MY_DNS_LABEL \
-  --set controller.service.loadBalancerIP=$MY_STATIC_IP \
-  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
-  --wait --timeout 10m0s
+    --namespace ingress-nginx \
+    --create-namespace \
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"=$MY_DNS_LABEL \
+    --set controller.service.loadBalancerIP=$MY_STATIC_IP \
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+    --wait --timeout 10m0s
 ```
 
 ## Add HTTPS termination to custom domain
@@ -294,21 +298,21 @@ In order to add HTTPS we are going to use Cert Manager. Cert Manager is an open 
 
 1. In order to install cert-manager, we must first create a namespace to run it in. This tutorial will install cert-manager into the cert-manager namespace. It is possible to run cert-manager in a different namespace, although you will need to make modifications to the deployment manifests.
 
-   ```bash
-   kubectl create namespace cert-manager
-   ```
+    ```bash
+    kubectl create namespace cert-manager
+    ```
 
 2. We can now install cert-manager. All resources are included in a single YAML manifest file. This can be installed by running the following:
 
-   ```bash
-   kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.0/cert-manager.crds.yaml
-   ```
+    ```bash
+    kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.0/cert-manager.crds.yaml
+    ```
 
 3. Add the certmanager.k8s.io/disable-validation: "true" label to the cert-manager namespace by running the following. This will allow the system resources that cert-manager requires to bootstrap TLS to be created in its own namespace.
 
-   ```bash
-   kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
-   ```
+    ```bash
+    kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
+    ```
 
 ## Obtain certificate via Helm Charts
 
@@ -318,82 +322,102 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
 
 1. Add the Jetstack Helm repository
 
-   This repository is the only supported source of cert-manager charts. There are some other mirrors and copies across the internet, but those are entirely unofficial and could present a security risk.
+    This repository is the only supported source of cert-manager charts. There are some other mirrors and copies across the internet, but those are entirely unofficial and could present a security risk.
 
-   ```bash
-   helm repo add jetstack https://charts.jetstack.io
-   ```
+    ```bash
+    helm repo add jetstack https://charts.jetstack.io
+    ```
 
 2. Update local Helm Chart repository cache
 
-   ```bash
-   helm repo update
-   ```
+    ```bash
+    helm repo update
+    ```
 
 3. Install Cert-Manager addon via helm by running the following:
 
-   ```bash
-   helm upgrade --install --cleanup-on-fail --atomic \
-        cert-manager jetstack/cert-manager \
+    ```bash
+    helm upgrade --install --cleanup-on-fail --atomic \
         --namespace cert-manager \
         --version v1.7.0 \
-        --wait --timeout 10m0s
-   ```
+        --wait --timeout 10m0s \
+        cert-manager jetstack/cert-manager
+    ```
 
 4. Apply Certificate Issuer YAML File
 
-   ClusterIssuers are Kubernetes resources that represent certificate authorities (CAs) that are able to generate signed certificates by honoring certificate signing requests. All cert-manager certificates require a referenced issuer that is in a ready condition to attempt to honor the request.
-   The issuer we are using can be found in the `cluster-issuer-prod.yml file`
+    ClusterIssuers are Kubernetes resources that represent certificate authorities (CAs) that are able to generate signed certificates by honoring certificate signing requests. All cert-manager certificates require a referenced issuer that is in a ready condition to attempt to honor the request.
+    The issuer we are using can be found in the `cluster-issuer-prod.yml file`
 
-   ```bash
-   cluster_issuer_variables=$(<cluster-issuer-prod.yml)
-   echo "${cluster_issuer_variables//\$SSL_EMAIL_ADDRESS/$SSL_EMAIL_ADDRESS}" | kubectl apply -f -
-   ```
+    ```bash
+    cluster_issuer_variables=$(<cluster-issuer-prod.yaml)
+    echo "${cluster_issuer_variables//\$SSL_EMAIL_ADDRESS/$SSL_EMAIL_ADDRESS}" | kubectl apply -f -
+    ```
 
 ## Create storageclass
 
 ```bash
-kubectl apply -f - <<EOF
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-    name: wp-azurefile-sc
-provisioner: file.csi.azure.com
-parameters:
-    skuName: Premium_LRS
-reclaimPolicy: Delete
-mountOptions:
-    - dir_mode=0755
-    - file_mode=0755
-    - forceuid
-    - forcegid
-    - uid=1001
-    - gid=1001
-    - mfsymlinks
-    - cache=strict
-    - nosharesock
-    - actimeo=30
-    - vers=3.1.1
-    - nobrl
-    - noatime
-    - multichannel
-    - max_channels=4
-allowVolumeExpansion: true
-volumeBindingMode: WaitForFirstConsumer
-EOF
+kubectl apply -f wp-azurefiles-sc.yaml
 ```
 
 ## Deploy WordPress on AKS
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
-helm search repo bitnami
+helm repo update
 
 helm upgrade --install --cleanup-on-fail \
+    --wait --timeout 10m0s \
     --namespace wordpress \
     --create-namespace \
+    --set wordpressUsername="$MY_WP_ADMIN_USER" \
+    --set wordpressPassword="$MY_WP_ADMIN_PW" \
+    --set wordpressEmail="$SSL_EMAIL_ADDRESS" \
+    --set externalDatabase.host="$MY_MYSQL_HOSTNAME" \
+    --set externalDatabase.user="$MY_MYSQL_ADMIN_USERNAME" \
+    --set externalDatabase.password="$MY_MYSQL_ADMIN_PW" \
+    --set ingress.hostname="$FQDN" \
     --values helm-wp-aks-values.yaml \
     wordpress bitnami/wordpress
+```
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+
+```ASCII
+Release "wordpress" does not exist. Installing it now.
+NAME: wordpress
+LAST DEPLOYED: Tue Oct 24 16:19:35 2023
+NAMESPACE: wordpress
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+CHART NAME: wordpress
+CHART VERSION: 18.0.8
+APP VERSION: 6.3.2
+
+** Please be patient while the chart is being deployed **
+
+Your WordPress site can be accessed through the following DNS name from within your cluster:
+
+    wordpress.wordpress.svc.cluster.local (port 80)
+
+To access your WordPress site from outside the cluster follow the steps below:
+
+1. Get the WordPress URL and associate WordPress hostname to your cluster external IP:
+
+   export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
+   echo "WordPress URL: https://mydnslabel1f2c0c.eastus.cloudapp.azure.com/"
+   echo "$CLUSTER_IP  mydnslabel1f2c0c.eastus.cloudapp.azure.com" | sudo tee -a /etc/hosts
+
+2. Open a browser and access WordPress using the obtained URL.
+
+3. Login with the following credentials below to see your blog:
+
+  echo Username: wpcliadmin
+  echo Password: $(kubectl get secret --namespace wordpress wordpress -o jsonpath="{.data.wordpress-password}" | base64 -d)
 ```
 
 ## Browse your AKS Deployment Secured via HTTPS

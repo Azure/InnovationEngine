@@ -1,30 +1,30 @@
 ---
-wordpressUsername: 'admin'
-wordpressPassword: ''
+#wordpressUsername: 'MY_WP_ADMIN_USER'
+#wordpressPassword: 'MY_WP_ADMIN_PW'
 wordpressFirstName: 'admin'
 wordpressLastName: 'admin'
 wordpressBlogName: 'WordPress on AKS'
-wordpressEmail: 'ajoian@gmail.com'
+#wordpressEmail: 'SSL_EMAIL_ADDRESS'
 allowEmptyPassword: false
 allowOverrideNone: true
-replicaCount: 3
+replicaCount: 1
 pdb:
   create: true
   minAvailable: 1
 autoscaling:
   enabled: true
   minReplicas: 1
-  maxReplicas: 20
-  targetCPUUtilizationPercentage: 80
-  targetMemoryUtilizationPercentage: 80
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 90
+  targetMemoryUtilizationPercentage: 90
 mariadb:
   enabled: false
 externalDatabase:
   type: mysql
-  host: server001.mysql.database.azure.com
-  user: wpuser
-  password: ''
-  database: wpdb
+#  host: 'MY_MYSQL_HOSTNAME'
+#  user: 'MY_MYSQL_ADMIN_USERNAME'
+#  password: 'MY_MYSQL_ADMIN_PW'
+  database: 'wp001'
   port: 3306
   TableNamePrefix: wp0_
 persistence:
@@ -43,24 +43,24 @@ customPostInitScripts:
     echo "define('WP_CACHE', true);" >> /bitnami/wordpress/wp-config.php
     wp total-cache option set pgcache.engine memcached --type=string
     wp total-cache flush all
-    wp total-cache option set pgcache.memcached.servers aks-wp-memcached.default.svc.cluster.local:11211 --type=string
+    wp total-cache option set pgcache.memcached.servers wordpress-memcached.wordpress.svc.cluster.local:11211 --type=string
     wp total-cache option set pgcache.enabled true --type=boolean
     wp total-cache flush all
-    wp total-cache option set cdn.engine azure --type=string
-    wp total-cache option set cdn.azure.user sawpcdn002 --type=string
-    wp total-cache option set cdn.azure.key '' --type=string
-    wp total-cache option set cdn.azure.container containerwpcdn002 --type=string
-    wp total-cache option set cdn.azure.cname sawpcdn002.blob.core.windows.net --type=string
-    wp total-cache option set cdn.enabled true --type=boolean
-    wp total-cache flush all
-    chmod a-w /bitnami/wordpress/wp-config.php
+#     wp total-cache option set cdn.engine azure --type=string
+#     wp total-cache option set cdn.azure.user sawpcdn002 --type=string
+#     wp total-cache option set cdn.azure.key '' --type=string
+#     wp total-cache option set cdn.azure.container containerwpcdn002 --type=string
+#     wp total-cache option set cdn.azure.cname sawpcdn002.blob.core.windows.net --type=string
+#     wp total-cache option set cdn.enabled true --type=boolean
+#     wp total-cache flush all
+#     chmod a-w /bitnami/wordpress/wp-config.php
 service:
   type: ClusterIP
 ingress:
   enabled: true
   tls: true
   certManager: true
-  hostname: wordpress002.westus.cloudapp.azure.com
+#  hostname: 'FQDN'
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
