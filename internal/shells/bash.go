@@ -38,7 +38,12 @@ func loadEnvFile(path string) (map[string]string, error) {
 		line := scanner.Text()
 		if strings.Contains(line, "=") {
 			parts := strings.SplitN(line, "=", 2) // Split at the first "=" only
-			env[parts[0]] = parts[1]
+			v := parts[1]
+			if len(v) >= 2 && v[0] == '"' && v[len(v)-1] == '"' {
+				// Remove leading and trailing quotes
+				v = v[1 : len(v)-1]
+			}
+			env[parts[0]] = v
 		}
 	}
 	return env, nil
