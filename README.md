@@ -27,7 +27,7 @@ Now you can run the Innovation Engine tutorial with the following
 command:
 
 ```bash
-./bin/ie execute scenarios/demos/tutorial.md
+./bin/ie execute tutorial.md
 ```
 
 The general format to run an executable document is: 
