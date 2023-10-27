@@ -1,6 +1,10 @@
 package ui
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 // Styles used for rendering output to the terminal.
 var (
@@ -22,3 +26,21 @@ var (
 	ErrorMessageStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5733"))
 	OcdStatusUpdateStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000"))
 )
+
+func RemoveHorizontalAlign(s string) string {
+	return strings.Join(
+		mapSliceString(
+			strings.Split(s, "\n"),
+			func(s string) string { return strings.TrimRight(s, " ") },
+		),
+		"\n",
+	)
+}
+
+func mapSliceString(slice []string, apply func(string) string) []string {
+	var result []string
+	for _, s := range slice {
+		result = append(result, apply(s))
+	}
+	return result
+}
