@@ -191,7 +191,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							fmt.Printf("\r  %s \n", ui.CheckStyle.Render("✔"))
 							terminal.MoveCursorPositionDown(lines)
 
-							fmt.Printf("  %s\n", ui.RemoveHorizontalAlign(ui.VerboseStyle.Render(commandOutput.StdOut)))
+							fmt.Printf("%s\n", ui.RemoveHorizontalAlign(ui.VerboseStyle.Render(commandOutput.StdOut)))
 
 							// Extract the resource group name from the command output if
 							// it's not already set.
