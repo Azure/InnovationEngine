@@ -76,8 +76,8 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 	err := az.SetSubscription(e.Configuration.Subscription)
 	if err != nil {
 		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
-    azureStatus.SetError(err)
-    environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
+		azureStatus.SetError(err)
+		environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 		return err
 	}
 
@@ -191,7 +191,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							fmt.Printf("\r  %s \n", ui.CheckStyle.Render("✔"))
 							terminal.MoveCursorPositionDown(lines)
 
-							fmt.Printf("  %s\n", ui.VerboseStyle.Render(commandOutput.StdOut))
+							fmt.Printf("%s\n", ui.RemoveHorizontalAlign(ui.VerboseStyle.Render(commandOutput.StdOut)))
 
 							// Extract the resource group name from the command output if
 							// it's not already set.
