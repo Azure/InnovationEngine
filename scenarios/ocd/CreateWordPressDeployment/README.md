@@ -42,8 +42,7 @@ az group create \
 Results:
 
 <!-- expected_similarity=0.3 -->
-
-```JSON
+```json
 {
   "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup210",
   "location": "eastus",
@@ -74,8 +73,7 @@ az network vnet create \
 Results:
 
 <!-- expected_similarity=0.3 -->
-
-```JSON
+```json
 {
   "newVNet": {
     "addressSpace": {
@@ -141,7 +139,7 @@ az mysql flexible-server create \
 Results:
 
 <!-- expected_similarity=0.3 -->
-```JSON
+```json
 {
   "databaseName": "wp001",
   "host": "mydb6ad2bc.mysql.database.azure.com",
@@ -155,7 +153,7 @@ Results:
 }
 ```
 
-he server created has the below attributes:
+The server created has the below attributes:
 
 - The server name, admin username, admin password, resource group name, location are already specified in local context environment of the cloud shell, and will be created in the same location as your the resource group and the other Azure components.
 - Service defaults for remaining server configurations: compute tier (Burstable), compute size/SKU (Standard_B2s), backup retention period (7 days), and MySQL version (8.0.21)
@@ -195,7 +193,7 @@ az mysql flexible-server parameter set \
 Results:
 
 <!-- expected_similarity=0.3 -->
-```JSON
+```json
 {
   "allowedValues": "ON,OFF",
   "currentValue": "OFF",
@@ -237,8 +235,6 @@ az aks create \
     --network-policy azure \
     --vnet-subnet-id $MY_SN_ID \
     --no-ssh-key \
-    --service-cidr 10.240.0.0/24 \
-    --dns-service-ip 10.240.0.10 \
     --node-vm-size Standard_DS2_v2 \
     --zones 1 2 3
 ```
@@ -273,20 +269,39 @@ To manage a Kubernetes cluster, use the Kubernetes command-line client, kubectl.
 
 ## Install NGINX Ingress Controller
 
+You can configure your ingress controller with a static public IP address. The static public IP address remains if you delete your ingress controller. The IP address doesn't remain if you delete your AKS cluster.
+When you upgrade your ingress controller, you must pass a parameter to the Helm release to ensure the ingress controller service is made aware of the load balancer that will be allocated to it. For the HTTPS certificates to work correctly, you use a DNS label to configure an FQDN for the ingress controller IP address.
+Your FQDN should follow this form: $MY_DNS_LABEL.AZURE_REGION_NAME.cloudapp.azure.com.
+
 ```bash
 export MY_STATIC_IP=$(az network public-ip create --resource-group MC_${MY_RESOURCE_GROUP_NAME}_${MY_AKS_CLUSTER_NAME}_${REGION} --location ${REGION} --name ${MY_PUBLIC_IP_NAME} --dns-name ${MY_DNS_LABEL} --sku Standard --allocation-method static --version IPv4 --zone 1 2 3 --query publicIp.ipAddress -o tsv)
-
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-
-helm upgrade --install --cleanup-on-fail --atomic ingress-nginx ingress-nginx/ingress-nginx \
-    --namespace ingress-nginx \
-    --create-namespace \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"=$MY_DNS_LABEL \
-    --set controller.service.loadBalancerIP=$MY_STATIC_IP \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
-    --wait --timeout 10m0s
 ```
+
+Add the --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="<DNS_LABEL>" parameter. The DNS label can be set either when the ingress controller is first deployed, or it can be configured later. Add the --set controller.service.loadBalancerIP="<STATIC_IP>" parameter. Specify your own public IP address that was created in the previous step.
+
+1. Add the ingress-nginx Helm repository
+
+    ```bash
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    ```
+
+2. Update local Helm Chart repository cache
+
+    ```bash
+    helm repo update
+    ```
+
+3. Install ingress-nginx addon via Helm by running the following:
+
+  ```bash
+  helm upgrade --install --cleanup-on-fail --atomic ingress-nginx ingress-nginx/ingress-nginx \
+      --namespace ingress-nginx \
+      --create-namespace \
+      --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"=$MY_DNS_LABEL \
+      --set controller.service.loadBalancerIP=$MY_STATIC_IP \
+      --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+      --wait --timeout 10m0s
+  ```
 
 ## Add HTTPS termination to custom domain
 
@@ -334,7 +349,7 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
     helm repo update
     ```
 
-3. Install Cert-Manager addon via helm by running the following:
+3. Install Cert-Manager addon via Helm by running the following:
 
     ```bash
     helm upgrade --install --cleanup-on-fail --atomic \
@@ -354,38 +369,53 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
     echo "${cluster_issuer_variables//\$SSL_EMAIL_ADDRESS/$SSL_EMAIL_ADDRESS}" | kubectl apply -f -
     ```
 
-## Create storageclass
+## Create a custom storage class
+
+The default storage classes suit the most common scenarios, but not all. For some cases, you might want to have your own storage class customized with your own parameters. For example, use the following manifest to configure the mountOptions of the file share.
+The default value for fileMode and dirMode is 0755 for Kubernetes mounted file shares. You can specify the different mount options on the storage class object.
 
 ```bash
 kubectl apply -f wp-azurefiles-sc.yaml
 ```
 
-## Deploy WordPress on AKS
+## Deploy WordPress to AKS cluster
 
-```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo update
+For this document, we are using an existing Helm Chart for WordPress built by Bitnami. For example Bitnami Helm chart uses local MariaDB as the database and we need to override these values to use the app with Azure Database for MySQL. All of the override values You can override the values and the custom settings can be found in the file `helm-wp-aks-values.yaml`
 
-helm upgrade --install --cleanup-on-fail \
-    --wait --timeout 10m0s \
-    --namespace wordpress \
-    --create-namespace \
-    --set wordpressUsername="$MY_WP_ADMIN_USER" \
-    --set wordpressPassword="$MY_WP_ADMIN_PW" \
-    --set wordpressEmail="$SSL_EMAIL_ADDRESS" \
-    --set externalDatabase.host="$MY_MYSQL_HOSTNAME" \
-    --set externalDatabase.user="$MY_MYSQL_ADMIN_USERNAME" \
-    --set externalDatabase.password="$MY_MYSQL_ADMIN_PW" \
-    --set ingress.hostname="$FQDN" \
-    --values helm-wp-aks-values.yaml \
-    wordpress bitnami/wordpress
-```
+1. Add the Wordpress Bitnami Helm repository
+
+    ```bash
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    ```
+
+2. Update local Helm Chart repository cache
+
+    ```bash
+    helm repo update
+    ```
+
+3. Install Wordpress workload via Helm by running the following:
+
+    ```bash
+    helm upgrade --install --cleanup-on-fail \
+        --wait --timeout 10m0s \
+        --namespace wordpress \
+        --create-namespace \
+        --set wordpressUsername="$MY_WP_ADMIN_USER" \
+        --set wordpressPassword="$MY_WP_ADMIN_PW" \
+        --set wordpressEmail="$SSL_EMAIL_ADDRESS" \
+        --set externalDatabase.host="$MY_MYSQL_HOSTNAME" \
+        --set externalDatabase.user="$MY_MYSQL_ADMIN_USERNAME" \
+        --set externalDatabase.password="$MY_MYSQL_ADMIN_PW" \
+        --set ingress.hostname="$FQDN" \
+        --values helm-wp-aks-values.yaml \
+        wordpress bitnami/wordpress
+    ```
 
 Results:
 
 <!-- expected_similarity=0.3 -->
-
-```ASCII
+```text
 Release "wordpress" does not exist. Installing it now.
 NAME: wordpress
 LAST DEPLOYED: Tue Oct 24 16:19:35 2023
@@ -408,16 +438,16 @@ To access your WordPress site from outside the cluster follow the steps below:
 
 1. Get the WordPress URL and associate WordPress hostname to your cluster external IP:
 
-   export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
-   echo "WordPress URL: https://mydnslabel1f2c0c.eastus.cloudapp.azure.com/"
-   echo "$CLUSTER_IP  mydnslabel1f2c0c.eastus.cloudapp.azure.com" | sudo tee -a /etc/hosts
+    export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
+    echo "WordPress URL: https://mydnslabel1f2c0c.eastus.cloudapp.azure.com/"
+    echo "$CLUSTER_IP  mydnslabel1f2c0c.eastus.cloudapp.azure.com" | sudo tee -a /etc/hosts
 
 2. Open a browser and access WordPress using the obtained URL.
 
 3. Login with the following credentials below to see your blog:
 
-  echo Username: wpcliadmin
-  echo Password: $(kubectl get secret --namespace wordpress wordpress -o jsonpath="{.data.wordpress-password}" | base64 -d)
+    echo Username: wpcliadmin
+    echo Password: $(kubectl get secret --namespace wordpress wordpress -o jsonpath="{.data.wordpress-password}" | base64 -d)
 ```
 
 ## Browse your AKS Deployment Secured via HTTPS
