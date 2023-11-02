@@ -8,7 +8,7 @@ The First step in this tutorial is to define environment variables.
 
 ```bash
 export SSL_EMAIL_ADDRESS="$(az account show --query user.name --output tsv)"
-export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
+export NETWORK_PREFIX="$(($RANDOM % 253 + 1))"
 export RANDOM_ID="$(openssl rand -hex 3)"
 export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
 export REGION="eastus"
@@ -236,6 +236,8 @@ az aks create \
     --vnet-subnet-id $MY_SN_ID \
     --no-ssh-key \
     --node-vm-size Standard_DS2_v2 \
+    --service-cidr 10.255.0.0/24 \
+    --dns-service-ip 10.255.0.10 \
     --zones 1 2 3
 ```
 
