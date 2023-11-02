@@ -2,11 +2,16 @@
 
 Azure Static Web Apps publishes websites to production by building apps from a code repository. In this quickstart, you deploy a web application to Azure Static Web Apps using the Azure CLI.
 
-## Prerequisites
+## Define Environment Variables
 
-- Azure account. If you don't have an Azure subscription, you can create a free trial account.
-- Azure CLI installed (version 2.29.0 or higher)
-- A Git setup and a GitHub account (optional)
+The First step in this tutorial is to define environment variables.
+
+```bash
+export RANDOM_ID="$(openssl rand -hex 3)"
+export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
+export REGION=EastUS2
+export MY_STATIC_WEB_APP_NAME="myStaticWebApp$RANDOM_ID"
+```
 
 ## Create a Repository (optional)
 
@@ -27,8 +32,8 @@ You can deploy the app as a static web app from the Azure CLI.
 
    ```bash
    az group create \
-     --name my-swa-group \
-     --location "eastus2"
+     --name $MY_RESOURCE_GROUP_NAME \
+     --location $REGION
    ```
 
 Results:
@@ -52,55 +57,26 @@ Results:
 
    ```bash
    az staticwebapp create \
-       --name my-first-static-web-app \
-       --resource-group my-swa-group \
-       --location "eastus2" 
+       --name $MY_STATIC_WEB_APP_NAME \
+       --resource-group $MY_RESOURCE_GROUP_NAME \
+       --location $REGION 
    ```
 
 There are two aspects to deploying a static app. The first operation creates the underlying Azure resources that make up your app. The second is a workflow that builds and publishes your application.
 
 Before you can go to your new static site, the deployment build must first finish running.
 
-3. Return to your console window and run the following command to list the URLs associated with your app.
+3. Return to your console window and run the following command to list the website's URL.
 
    ```bash
    az staticwebapp show \
-     --name  my-first-static-web-app 
+       --name $MY_STATIC_WEB_APP_NAME \
+       --query "defaultHostname"
    ```
 
-Results:
-
-<!-- expected_similarity=0.3 -->
-```json
-{
-    "branch": "main",
-    "buildProperties": {
-        "appLocation": "/",
-        "apiLocation": null,
-        "outputLocation": "dist"
-    },
-    "customDomains": [],
-    "defaultHostname": "my-first-static-web-app.azurestaticapps.net",
-    "hostnameSslStates": [
-        {
-            "name": "my-first-static-web-app.azurestaticapps.net",
-            "sslState": "Disabled",
-            "thumbprint": null,
-            "toUpdate": null,
-            "ipBasedSslResult": null,
-            "hostType": "Standard"
-        }
-    ],
-    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/my-resource-group/providers/Microsoft.Web/staticSites/my-first-static-web-app",
-    "location": "centralus",
-    "name": "my-first-static-web-app",
-    "repositoryUrl": "https://github.com/my-account/my-repo",
-    "sku": "Free",
-    "tags": {},
-    "type": "Microsoft.Web/staticSites",
-    "updateDomain": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "userDomainVerificationError": null
-}
+```bash
+MY_STATIC_WEB_APP_URL=$(az staticwebapp show --name  $MY_STATIC_WEB_APP_NAME --query "defaultHostname" -o tsv)
+echo "You can now visit your web server at https://$MY_STATIC_WEB_APP_URL"
 ```
 
 ## Next Steps
@@ -126,11 +102,9 @@ Go to https://github.com/login/device and enter the user code 329B-3945 to activ
 3. Once the success icon appears, the workflow is complete and you can return back to your console window.
 4. Run the following command to query for your website's URL.
 
-   ```bash
    az staticwebapp show \
-     --name my-first-static-web-app \
+     --name $MY_STATIC_WEB_APP_NAME \
      --query "defaultHostname"
-   ```
 
 5. Copy the URL into your browser to go to your website.
 
@@ -139,5 +113,3 @@ Go to https://github.com/login/device and enter the user code 329B-3945 to activ
 We would love to hear your feedback on this quickstart. If you have any comments or suggestions, please let us know by opening an issue on the [GitHub repository](https://github.com/Azure/static-web-apps-docs/issues/new/choose). Thank you for your feedback!
 
 ---
-
-That's it! I hope this markdown document is helpful to you. Let me know if you have any other questions or if there's anything else I can help you with.
