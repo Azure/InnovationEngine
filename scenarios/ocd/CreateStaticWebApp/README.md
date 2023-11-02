@@ -68,12 +68,6 @@ Before you can go to your new static site, the deployment build must first finis
 
 3. Return to your console window and run the following command to list the website's URL.
 
-   ```bash
-   az staticwebapp show \
-       --name $MY_STATIC_WEB_APP_NAME \
-       --query "defaultHostname"
-   ```
-
 ```bash
 MY_STATIC_WEB_APP_URL=$(az staticwebapp show --name  $MY_STATIC_WEB_APP_NAME --query "defaultHostname" -o tsv)
 echo "You can now visit your web server at https://$MY_STATIC_WEB_APP_URL"
