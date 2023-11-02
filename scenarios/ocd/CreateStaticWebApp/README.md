@@ -8,7 +8,7 @@ The First step in this tutorial is to define environment variables.
 
 ```bash
 export RANDOM_ID="$(openssl rand -hex 3)"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
+export MY_RESOURCE_GROUP_NAME="myStaticWebAppResourceGroup$RANDOM_ID"
 export REGION=EastUS2
 export MY_STATIC_WEB_APP_NAME="myStaticWebApp$RANDOM_ID"
 ```
@@ -69,9 +69,12 @@ Before you can go to your new static site, the deployment build must first finis
 3. Return to your console window and run the following command to list the website's URL.
 
 ```bash
-MY_STATIC_WEB_APP_URL=$(az staticwebapp show --name  $MY_STATIC_WEB_APP_NAME --query "defaultHostname" -o tsv)
+MY_STATIC_WEB_APP_URL=$(az staticwebapp show --name  $MY_STATIC_WEB_APP_NAME --resource-group $MY_RESOURCE_GROUP_NAME --query "defaultHostname" -o tsv)
 echo "You can now visit your web server at https://$MY_STATIC_WEB_APP_URL"
 ```
+
+
+
 
 ## Next Steps
 
