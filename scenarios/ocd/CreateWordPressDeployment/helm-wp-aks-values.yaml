@@ -24,7 +24,7 @@ externalDatabase:
 #  host: 'MY_MYSQL_HOSTNAME'
 #  user: 'MY_MYSQL_ADMIN_USERNAME'
 #  password: 'MY_MYSQL_ADMIN_PW'
-  database: 'wp001'
+  database: 'wordpress'
   port: 3306
   TableNamePrefix: wp0_
 persistence:
