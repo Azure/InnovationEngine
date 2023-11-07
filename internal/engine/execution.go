@@ -183,6 +183,11 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 								fmt.Printf("	%s\n", lib.GetDifferenceBetweenStrings(block.ExpectedOutput.Content, commandOutput.StdOut))
 
 								azureStatus.SetError(outputComparisonError)
+								environments.AttachResourceURIsToAzureStatus(
+									&azureStatus,
+									resourceGroupName,
+									e.Configuration.Environment,
+								)
 								environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
 								return outputComparisonError
@@ -217,6 +222,11 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							logging.GlobalLogger.Errorf("Error executing command: %s", commandErr.Error())
 
 							azureStatus.SetError(commandErr)
+	environments.AttachResourceURIsToAzureStatus(
+		&azureStatus,
+		resourceGroupName,
+		e.Configuration.Environment,
+	)
 							environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
 							return commandErr
