@@ -5,6 +5,8 @@ metadata:
 provisioner: file.csi.azure.com
 parameters:
     skuName: Premium_LRS
+    enableMultichannel: "true"
+    useDataPlaneAPI: "true"
 reclaimPolicy: Delete
 mountOptions:
     - dir_mode=0755
