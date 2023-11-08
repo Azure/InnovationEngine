@@ -46,14 +46,7 @@ customPostInitScripts:
     wp total-cache option set pgcache.memcached.servers wordpress-memcached.wordpress.svc.cluster.local:11211 --type=string
     wp total-cache option set pgcache.enabled true --type=boolean
     wp total-cache flush all
-#     wp total-cache option set cdn.engine azure --type=string
-#     wp total-cache option set cdn.azure.user sawpcdn002 --type=string
-#     wp total-cache option set cdn.azure.key '' --type=string
-#     wp total-cache option set cdn.azure.container containerwpcdn002 --type=string
-#     wp total-cache option set cdn.azure.cname sawpcdn002.blob.core.windows.net --type=string
-#     wp total-cache option set cdn.enabled true --type=boolean
-#     wp total-cache flush all
-#     chmod a-w /bitnami/wordpress/wp-config.php
+    chmod a-w /bitnami/wordpress/wp-config.php
 service:
   type: ClusterIP
 ingress:
