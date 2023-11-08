@@ -4,13 +4,13 @@ Welcome to this tutorial where we will take you step by step in creating an Azur
 
 ## Define Environment Variables
 
-The First step in this tutorial is to define environment variables.
+The first step in this tutorial is to define environment variables.
 
 ```bash
 export SSL_EMAIL_ADDRESS="$(az account show --query user.name --output tsv)"
 export NETWORK_PREFIX="$(($RANDOM % 253 + 1))"
 export RANDOM_ID="$(openssl rand -hex 3)"
-export MY_RESOURCE_GROUP_NAME="myResourceGroup$RANDOM_ID"
+export MY_RESOURCE_GROUP_NAME="myWordPressAKSResourceGroup$RANDOM_ID"
 export REGION="eastus"
 export MY_AKS_CLUSTER_NAME="myAKSCluster$RANDOM_ID"
 export MY_PUBLIC_IP_NAME="myPublicIP$RANDOM_ID"
@@ -44,7 +44,7 @@ Results:
 <!-- expected_similarity=0.3 -->
 ```json
 {
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup210",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myWordPressAKSResourceGroupXXX",
   "location": "eastus",
   "managedBy": null,
   "name": "testResourceGroup",
@@ -82,21 +82,21 @@ Results:
       ]
     },
     "enableDdosProtection": false,
-    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210",
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myWordPressAKSResourceGroupXXX/providers/Microsoft.Network/virtualNetworks/myVNetXXX",
     "location": "eastus",
     "name": "myVNet210",
     "provisioningState": "Succeeded",
-    "resourceGroup": "myResourceGroup210",
+    "resourceGroup": "myWordPressAKSResourceGroupXXX",
     "subnets": [
       {
         "addressPrefix": "10.210.0.0/22",
         "delegations": [],
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myResourceGroup210/providers/Microsoft.Network/virtualNetworks/myVNet210/subnets/mySN210",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/myWordPressAKSResourceGroupXXX/providers/Microsoft.Network/virtualNetworks/myVNetXXX/subnets/mySNXXX",
         "name": "mySN210",
         "privateEndpointNetworkPolicies": "Disabled",
         "privateLinkServiceNetworkPolicies": "Enabled",
         "provisioningState": "Succeeded",
-        "resourceGroup": "myResourceGroup210",
+        "resourceGroup": "myWordPressAKSResourceGroupXXX",
         "type": "Microsoft.Network/virtualNetworks/subnets"
       }
     ],
@@ -141,14 +141,14 @@ Results:
 <!-- expected_similarity=0.3 -->
 ```json
 {
-  "databaseName": "wp001",
-  "host": "mydb6ad2bc.mysql.database.azure.com",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.DBforMySQL/flexibleServers/mydb6ad2bc",
+  "databaseName": "wordpress",
+  "host": "mydbxxx.mysql.database.azure.com",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myWordPressAKSResourceGroupXXX/providers/Microsoft.DBforMySQL/flexibleServers/mydbXXX",
   "location": "East US",
-  "resourceGroup": "myResourceGroup6ad2bc",
+  "resourceGroup": "myWordPressAKSResourceGroupXXX",
   "skuname": "Standard_B2s",
-  "subnetId": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.Network/virtualNetworks/myVNet6ad2bc/subnets/myMySQLSN6ad2bc",
-  "username": "dbadmin6ad2bc",
+  "subnetId": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myWordPressAKSResourceGroupXXX/providers/Microsoft.Network/virtualNetworks/myVNetXXX/subnets/myMySQLSNXXX",
+  "username": "dbadminxxx",
   "version": "8.0.21"
 }
 ```
@@ -199,12 +199,12 @@ Results:
   "currentValue": "OFF",
   "dataType": "Enumeration",
   "defaultValue": "ON",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup6ad2bc/providers/Microsoft.DBforMySQL/flexibleServers/mydb6ad2bc/configurations/require_secure_transport",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myWordPressAKSResourceGroupXXX/providers/Microsoft.DBforMySQL/flexibleServers/mydbXXX/configurations/require_secure_transport",
   "isConfigPendingRestart": "False",
   "isDynamicConfig": "True",
   "isReadOnly": "False",
   "name": "require_secure_transport",
-  "resourceGroup": "myResourceGroup6ad2bc",
+  "resourceGroup": "myWordPressAKSResourceGroupXXX",
   "source": "user-override",
   "systemData": null,
   "type": "Microsoft.DBforMySQL/flexibleServers/configurations",
@@ -295,15 +295,15 @@ Add the --set controller.service.annotations."service\.beta\.kubernetes\.io/azur
 
 3. Install ingress-nginx addon via Helm by running the following:
 
-  ```bash
-  helm upgrade --install --cleanup-on-fail --atomic ingress-nginx ingress-nginx/ingress-nginx \
-      --namespace ingress-nginx \
-      --create-namespace \
-      --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"=$MY_DNS_LABEL \
-      --set controller.service.loadBalancerIP=$MY_STATIC_IP \
-      --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
-      --wait --timeout 10m0s
-  ```
+    ```bash
+    helm upgrade --install --cleanup-on-fail --atomic ingress-nginx ingress-nginx/ingress-nginx \
+        --namespace ingress-nginx \
+        --create-namespace \
+        --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"=$MY_DNS_LABEL \
+        --set controller.service.loadBalancerIP=$MY_STATIC_IP \
+        --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+        --wait --timeout 10m0s
+    ```
 
 ## Add HTTPS termination to custom domain
 
@@ -440,9 +440,12 @@ To access your WordPress site from outside the cluster follow the steps below:
 
 1. Get the WordPress URL and associate WordPress hostname to your cluster external IP:
 
+   export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
+   echo "WordPress URL: https://mydnslabelxxx.eastus.cloudapp.azure.com/"
+   echo "$CLUSTER_IP  mydnslabelxxx.eastus.cloudapp.azure.com" | sudo tee -a /etc/hosts
     export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
-    echo "WordPress URL: https://mydnslabel1f2c0c.eastus.cloudapp.azure.com/"
-    echo "$CLUSTER_IP  mydnslabel1f2c0c.eastus.cloudapp.azure.com" | sudo tee -a /etc/hosts
+    echo "WordPress URL: https://mydnslabelxxx.eastus.cloudapp.azure.com/"
+    echo "$CLUSTER_IP  mydnslabelxxx.eastus.cloudapp.azure.com" | sudo tee -a /etc/hosts
 
 2. Open a browser and access WordPress using the obtained URL.
 
@@ -457,10 +460,51 @@ To access your WordPress site from outside the cluster follow the steps below:
 Run the following command to get the HTTPS endpoint for your application:
 
 > [!NOTE]
-> It often takes 2-3 minutes for the SSL certificate to propogate and the site to be reachable via https.
+> It often takes 2-3 minutes for the SSL certificate to propogate and about 5 minutes to have all WordPress POD replicas ready and the site to be fully reachable via https.
 
 ```bash
-runtime="5 minute"; endtime=$(date -ud "$runtime" +%s); while [[ $(date -u +%s) -le $endtime ]]; do STATUS=$(kubectl get svc --namespace=ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); echo $STATUS; if [ "$STATUS" = "$MY_STATIC_IP" ]; then break; else sleep 10; fi; done
+runtime="5 minute"
+endtime=$(date -ud "$runtime" +%s)
+while [[ $(date -u +%s) -le $endtime ]]; do
+    export DEPLOYMENT_REPLICAS=$(kubectl -n wordpress get deployment wordpress -o=jsonpath='{.status.availableReplicas}');
+    echo Current number of replicas "$DEPLOYMENT_REPLICAS/3";
+    if [ "$DEPLOYMENT_REPLICAS" = "3" ]; then
+        break;
+    else
+        sleep 10;
+    fi;
+done
+```
 
+Checking that WordPress content is being delivered correctly.
+
+```bash
+if curl -I -s -f https://$FQDN > /dev/null ; then 
+    curl -L -s -f https://$FQDN 2> /dev/null | head -n 9
+else 
+    exit 1
+fi;
+```
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+```HTML
+{
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name='robots' content='max-image-preview:large' />
+<title>WordPress on AKS</title>
+<link rel="alternate" type="application/rss+xml" title="WordPress on AKS &raquo; Feed" href="https://mydnslabelxxx.eastus.cloudapp.azure.com/feed/" />
+<link rel="alternate" type="application/rss+xml" title="WordPress on AKS &raquo; Comments Feed" href="https://mydnslabelxxx.eastus.cloudapp.azure.com/comments/feed/" />
+}
+```
+
+The website ca be visited by following the URL below:
+
+```bash
 echo "You can now visit your web server at https://$FQDN"
 ```
