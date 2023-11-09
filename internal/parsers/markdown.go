@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -39,6 +40,7 @@ type ExpectedOutputBlock struct {
 	Language           string
 	Content            string
 	ExpectedSimilarity float64
+	ExpectedRegex      *regexp.Regexp
 }
 
 // The representation of a code block in a markdown file.
@@ -73,7 +75,7 @@ func ExtractScenarioTitleFromAst(node ast.Node, source []byte) (string, error) {
 	return header, nil
 }
 
-var expectedSimilarityRegex = regexp.MustCompile(`<!--\s*expected_similarity=\s*(\d+\.?\d*)\s*-->`)
+var expectedSimilarityRegex = regexp.MustCompile(`<!--\s*expected_similarity=\s*(\d+\.?\d*)|"(.*)"\s*-->`)
 
 // Extracts the code blocks from a provided markdown AST that match the
 // languagesToExtract.
@@ -86,6 +88,7 @@ func ExtractCodeBlocksFromAst(
 	var commands []CodeBlock
 	var nextBlockIsExpectedOutput bool
 	var lastExpectedSimilarityScore float64
+	var lastExpectedRegex *regexp.Regexp
 
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering {
@@ -96,20 +99,37 @@ func ExtractCodeBlocksFromAst(
 			// Extract the code block if it matches the language.
 			case *ast.HTMLBlock:
 				content := extractTextFromMarkdown(&n.BaseBlock, source)
-				match := expectedSimilarityRegex.FindStringSubmatch(content)
+				matches := expectedSimilarityRegex.FindStringSubmatch(content)
 
-				// TODO(vmarcella): Add better error handling for when the
-				// score isn't parsable as a float.
-				if match != nil {
-					score, err := strconv.ParseFloat(match[1], 64)
+				if len(matches) < 3 {
+					break
+				}
+
+				match := matches[1]
+				if match != "" {
+					score, err := strconv.ParseFloat(match, 64)
 					logging.GlobalLogger.Debugf("Simalrity score of %f found", score)
 					if err != nil {
 						return ast.WalkStop, err
 					}
 					lastExpectedSimilarityScore = score
-					nextBlockIsExpectedOutput = true
+				} else {
+					match = matches[2]
+					logging.GlobalLogger.Debugf("Regex %q found", match)
+
+					if match == "" {
+						return ast.WalkStop, errors.New("No regex found!")
+					}
+
+					re, err := regexp.Compile(match)
+					if err != nil {
+						return ast.WalkStop, fmt.Errorf("Cannot compile the following regex: %q.", match)
+					}
+
+					lastExpectedRegex = re
 				}
 
+				nextBlockIsExpectedOutput = true
 			case *ast.FencedCodeBlock:
 				language := string(n.Language((source)))
 				for _, desiredLanguage := range languagesToExtract {
@@ -129,12 +149,14 @@ func ExtractCodeBlocksFromAst(
 								Language:           language,
 								Content:            extractTextFromMarkdown(&n.BaseBlock, source),
 								ExpectedSimilarity: lastExpectedSimilarityScore,
+								ExpectedRegex:      lastExpectedRegex,
 							}
 							commands[len(commands)-1].ExpectedOutput = expectedOutputBlock
 
 							// Reset the expected output state.
 							nextBlockIsExpectedOutput = false
 							lastExpectedSimilarityScore = 0
+							lastExpectedRegex = nil
 						}
 						break
 					}

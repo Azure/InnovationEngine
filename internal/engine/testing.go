@@ -61,9 +61,10 @@ testRunner:
 						actualOutput := commandOutput.StdOut
 						expectedOutput := block.ExpectedOutput.Content
 						expectedSimilarity := block.ExpectedOutput.ExpectedSimilarity
+						expectedRegex := block.ExpectedOutput.ExpectedRegex
 						expectedOutputLanguage := block.ExpectedOutput.Language
 
-						err := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedOutputLanguage)
+						err := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
 
 						if err != nil {
 							logging.GlobalLogger.Errorf("Error comparing command outputs: %s", err.Error())
