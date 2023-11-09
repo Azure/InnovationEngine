@@ -171,9 +171,10 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							actualOutput := commandOutput.StdOut
 							expectedOutput := block.ExpectedOutput.Content
 							expectedSimilarity := block.ExpectedOutput.ExpectedSimilarity
+							expectedRegex := block.ExpectedOutput.ExpectedRegex
 							expectedOutputLanguage := block.ExpectedOutput.Language
 
-							outputComparisonError := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedOutputLanguage)
+							outputComparisonError := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
 
 							if outputComparisonError != nil {
 								logging.GlobalLogger.Errorf("Error comparing command outputs: %s", outputComparisonError.Error())
