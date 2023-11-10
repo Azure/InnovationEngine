@@ -23,9 +23,11 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Run all one click deployment scenarios.
         uses: azure/CLI@v1
+        if: github.event_name != 'pull_request'
         with:
           inlineScript: |
             make test-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
       - name: Display ie.log file
+        if: github.event_name != 'pull_request'
         run: |
           cat ie.log
