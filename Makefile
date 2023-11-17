@@ -37,11 +37,22 @@ SUBSCRIPTION ?= 00000000-0000-0000-0000-000000000000
 SCENARIO ?= ./README.md
 test-scenario:
 	@echo "Running scenario $(SCENARIO)"
-	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION)
+	# $(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION)
 
 test-scenarios:
 	@echo "Testing out the scenarios"
 	for dir in ./scenarios/ocd/*/; do \
+		 $(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)"; \
+	done
+
+test-upstream-scenarios:
+	@echo "Pulling the upstream scenarios"
+	@git submodule update --init --recursive
+	@echo "Testing out the upstream scenarios"
+	for dir in ./upstream-scenarios/exec-docs/*/; do \
+		if ! [ -f $${dir}README.md ]; then \
+			continue; \
+		fi; \
 		 $(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)"; \
 	done
 

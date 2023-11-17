@@ -1,0 +1,3 @@
+[submodule "upstream-scenarios"]
+	path = upstream-scenarios
+	url = https://github.com/MicrosoftDocs/ExecutableDocs

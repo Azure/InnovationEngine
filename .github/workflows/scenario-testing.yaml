@@ -36,7 +36,7 @@ jobs:
         with:
           inlineScript: |
             apk add --no-cache make
-            make test-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
+            make test-upstream-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
       - name: Display ie.log file
         if: github.event_name != 'pull_request'
         run: |
