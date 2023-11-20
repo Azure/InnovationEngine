@@ -503,7 +503,7 @@ Results:
 }
 ```
 
-The website ca be visited by following the URL below:
+The website can be visited by following the URL below:
 
 ```bash
 echo "You can now visit your web server at https://$FQDN"
