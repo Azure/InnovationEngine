@@ -1,18 +1,30 @@
-# Create a Linux VM and SSH On Azure
+# Create a Virtual Machine Scale Set with Application Gateway with Linux image
 
 ## Define Environment Variables
 
 The First step in this tutorial is to define environment variables.
 
 ```bash
+
 export RANDOM_ID="$(openssl rand -hex 3)"
-export MY_RESOURCE_GROUP_NAME="myVMResourceGroup$RANDOM_ID"
+export MY_RESOURCE_GROUP_NAME="myVMSSResourceGroup$RANDOM_ID"
 export REGION=EastUS
-export MY_VM_NAME="myVM$RANDOM_ID"
+export MY_VMSS_NAME="myVMSS$RANDOM_ID"
 export MY_USERNAME=azureuser
 export MY_VM_IMAGE="Canonical:0001-com-ubuntu-minimal-jammy:minimal-22_04-lts-gen2:latest"
-```
 
+
+export MY_VNET_NAME="myVNet$RANDOM_ID"
+export NETWORK_PREFIX="$(($RANDOM % 254 + 1))"
+export MY_VNET_PREFIX="10.$NETWORK_PREFIX.0.0/16"
+export MY_VM_SN_NAME="myVMSN$RANDOM_ID"
+export MY_VM_SN_PREFIX="10.$NETWORK_PREFIX.0.0/24"
+export MY_APPGWSN_NAME="myAPPGWSN$RANDOM_ID"
+export MY_APPGWSN_PREFIX="10.$NETWORK_PREFIX.1.0/24"
+export MY_APPGW_NAME="myAPPGW$RANDOM_ID"
+export MY_APPGW_BACKENDPOOL_NAME="myAPPGWBackendpool$RANDOM_ID"
+
+```
 # Login to Azure using the CLI
 
 In order to run commands against Azure using the CLI you need to login. This is done, very simply, though the `az login` command:
