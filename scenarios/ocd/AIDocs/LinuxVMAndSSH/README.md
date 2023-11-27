@@ -22,6 +22,9 @@ In order to run commands against Azure using the CLI you need to login. This is 
 A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $REGION parameters.
 
 ```bash
+export MY_RESOURCE_GROUP_NAME="myVMResourceGroup$RANDOM_ID"
+```
+```bash
 az group create --name $MY_RESOURCE_GROUP_NAME --location $REGION
 ```
 

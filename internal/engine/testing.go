@@ -108,7 +108,7 @@ testRunner:
 	if resourceGroupName != "" {
 		fmt.Printf("\n")
 		fmt.Printf("Deleting resource group: %s\n", resourceGroupName)
-		command := fmt.Sprintf("az group delete --name %s --yes", resourceGroupName)
+		command := fmt.Sprintf("az group delete --name %s --yes --no-wait", resourceGroupName)
 		output, err := shells.ExecuteBashCommand(
 			command,
 			shells.BashCommandConfiguration{
