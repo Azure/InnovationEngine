@@ -276,7 +276,7 @@ def get_latest_error_log():
 
 def create_pr(filename):    
     branch_name = os.popen('git rev-parse --abbrev-ref HEAD').read().strip()
-    subprocess.run(f'git remote set-url aiexecdocs https://{github_access_token}@github.com/Azure/InnovationEngine.git', shell=True)
+    subprocess.run(f'git remote add aiexecdocs https://{github_access_token}@github.com/Azure/InnovationEngine.git', shell=True)
     subprocess.run(f'git add .', shell=True)
     subprocess.run(f'git commit -m "AI generated doc titled {filename}"', shell=True)
     subprocess.run(f'git push aiexecdocs {branch_name} -f', shell=True)
