@@ -15,7 +15,7 @@ import subprocess
 import io
 import pkg_resources
 
-REQUIRED_PACKAGES = ['PyGithub']
+REQUIRED_PACKAGES = ['PyGithub', 'gh']
 for package in REQUIRED_PACKAGES:
     try:
         dist = pkg_resources.get_distribution(package)
