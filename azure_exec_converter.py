@@ -267,7 +267,8 @@ def get_latest_error_log():
         last_log = f.read().decode()
     return last_log
 
-def create_pr(filename):    
+def create_pr(filename):  
+    os.environ['GITHUB_TOKEN'] = github_access_token
     branch_name = os.popen('git rev-parse --abbrev-ref HEAD').read().strip()
     subprocess.run(f'git remote add aiexecdocs https://{github_access_token}@github.com/Azure/InnovationEngine.git', shell=True)
     subprocess.run(f'git add .', shell=True)
