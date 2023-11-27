@@ -1,0 +1,21 @@
+
+    name: Create PR
+
+    on:
+    push:
+        branches:
+        - 'test-pr'
+
+    jobs:
+    create_pr:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout repository
+            uses: actions/checkout@v2
+
+        - name: Create PR
+            uses: peter-evans/create-pull-request@v3
+            with:
+            title: "[RFC] README.md"
+            branch: "test-pr"
+    
