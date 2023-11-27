@@ -70,6 +70,37 @@ Before you can go to your new static site, the deployment build must first finis
 
 ```bash
 MY_STATIC_WEB_APP_URL=$(az staticwebapp show --name  $MY_STATIC_WEB_APP_NAME --resource-group $MY_RESOURCE_GROUP_NAME --query "defaultHostname" -o tsv)
+```
+
+```bash
+runtime="5 minute";
+endtime=$(date -ud "$runtime" +%s);
+while [[ $(date -u +%s) -le $endtime ]]; do
+    if curl -I -s -f $MY_STATIC_WEB_APP_URL > /dev/null ; then 
+        curl -L -s -f $MY_STATIC_WEB_APP_URL 2> /dev/null | head -n 9
+        break
+    else 
+        sleep 10
+    fi;
+done
+```
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+```HTML
+<!DOCTYPE html>
+<html lang=en>
+<head>
+<meta charset=utf-8 />
+<meta name=viewport content="width=device-width, initial-scale=1.0" />
+<meta http-equiv=X-UA-Compatible content="IE=edge" />
+<title>Azure Static Web Apps - Welcome</title>
+<link rel="shortcut icon" href=https://appservice.azureedge.net/images/static-apps/v3/favicon.svg type=image/x-icon />
+<link rel=stylesheet href=https://ajax.aspnetcdn.com/ajax/bootstrap/4.1.1/css/bootstrap.min.css crossorigin=anonymous />
+```
+
+```bash
 echo "You can now visit your web server at https://$MY_STATIC_WEB_APP_URL"
 ```
 
