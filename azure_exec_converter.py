@@ -15,13 +15,6 @@ import subprocess
 import io
 import pkg_resources
 
-REQUIRED_PACKAGES = ['PyGithub', 'gh']
-for package in REQUIRED_PACKAGES:
-    try:
-        dist = pkg_resources.get_distribution(package)
-    except pkg_resources.DistributionNotFound:
-        subprocess.call(['pip', 'install', package])
-
 openai.api_type = "azure"
 openai.api_version = "2023-05-15" 
 openai.api_base = 'https://ai-experiments-cloud-native.openai.azure.com/' # os.getenv("OPENAI_API_BASE")  # Your Azure OpenAI resource's endpoint value.
