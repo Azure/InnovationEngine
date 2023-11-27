@@ -34,11 +34,11 @@ The general format to run an executable document is:
 `ie <MODE_OF_OPERATION> <MARKDOWN_FILE>`
 
 ### Modes of Operation
-Today, executable documentation can be run in 3 modes of operation:
+Today, executable documentation can be run in 2 modes of operation:
 
-Interactive: Displays the descriptive text of the tutorial and pauses at code 
+<!--Interactive: Displays the descriptive text of the tutorial and pauses at code 
 blocks and headings to allow user interaction 
-`ie interactive tutorial.md`
+`ie interactive tutorial.md`-->
 
 Test: Runs the commands and then verifies that the output is sufficiently 
 similar to the expected results (recorded in the markdown file) to be 
@@ -164,7 +164,7 @@ jobs:
 ```
 
 
-## Use Executable Documentation for Interactive Documentation 
+<!--## Use Executable Documentation for Interactive Documentation 
 
 Innovation Engine can also be used for interactive tutorials via a local or 
 remote shell environment. After cloning the project and running 
@@ -174,7 +174,7 @@ program. For example, `./bin/ie interactive tutorial.md`
 
 As it is written the code will pause and wait for input on any header or code 
 block. Any document written in standard markdown can be run as an interactive 
-document.
+document.-->
 
 ## Contributing
 
