@@ -87,6 +87,21 @@ OUTPUT IN DICT FORMAT: {a list of frequently asked questions, including the most
 
 TAKE A DEEP BREATH AND GO!"""
 
+<<<<<<< Updated upstream
+=======
+def extract_raw_azure_doc(url):
+    response = requests.get('https://learn.microsoft.com/en-us/azure/static-web-apps/get-started-cli?tabs=vanilla-javascript')
+    soup = BeautifulSoup(response.text, 'html.parser')
+    links = soup.find_all('a')
+    for link in links:
+        github_url = link.get('href') 
+        if github_url is not None and 'github' in github_url and 'md' in github_url:
+            github_url = github_url.replace('blob/', '').replace('github.com', 'raw.githubusercontent.com')
+            return(github_url)
+    # print([link.get('href') for link in links])
+    # print(soup.prettify())
+    
+>>>>>>> Stashed changes
 def get_ai_generated_exec_doc(text=None):
     response = openai.ChatCompletion.create(
         engine="gpt-35-turbo-16k",
@@ -271,6 +286,7 @@ def get_latest_error_log():
 
 # for azure_doc_url in relevant_azure_docs:
 #     if azure_doc_url is not None:
+#         azure_doc_url = extract_raw_azure_doc(azure_doc_url)
 #         azure_doc_text = get_azure_doc_text(azure_doc_url)
 #         match = re.search(r'title: (.*)', azure_doc_text)
 #         if match:
