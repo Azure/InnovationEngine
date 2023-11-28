@@ -20,7 +20,7 @@ openai.api_base = os.getenv("OPENAI_API_BASE")  # Your Azure OpenAI resource's e
 openai.api_key = os.getenv("OPENAI_API_KEY") # Create a Github instance using an access token or username and password
 github_access_token = os.getenv("GitHub_Token")
 g = Github(login_or_token=github_access_token)
-relevant_azure_docs = ['https://raw.githubusercontent.com/MicrosoftDocs/azure-docs/main/articles/virtual-machines/linux/quick-create-cli.md']
+relevant_azure_docs = ['https://learn.microsoft.com/en-us/azure/virtual-machines/linux/quick-create-cli']
 ### END OF USER INPUT ###
 
 allowed_commands_list = ['azurecli','bash', 'terraform', 'azure-cli-interactive', 'console', 'yaml']
@@ -299,7 +299,8 @@ for azure_doc_url in relevant_azure_docs:
         azure_doc_text = get_azure_doc_text(azure_doc_url)
         match = re.search(r'title: (.*)', azure_doc_text)
         if match:
-            azure_doc_name = match.group(1).replace(' ', '').replace("'", "").replace('"', '').replace(':', '').title()
+            azure_doc_name = match.group(1).replace("'", "").replace('"', '').replace(':', '')
+            azure_doc_name = ''.join(word.capitalize() for word in azure_doc_name.split())
             if not os.path.exists(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''))):
                 os.makedirs(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', '')))
 
