@@ -390,7 +390,10 @@ for dirpath, dirnames, filenames in os.walk('scenarios/ocd/AIDocs'):
             if '.md' in filename and 'start' in dirpath:
                 file_path = os.path.join(dirpath, filename)
                 ie_test_command = f'./bin/ie test {file_path}'
-                subprocess.run(ie_test_command, shell=True)
-                create_pr(f"{dirpath.split('/')[-1]}-{filename}")
+                ie_test_result = subprocess.run(ie_test_command, shell=True)
+                if ie_test_result.returncode == 0:
+                    create_pr(f"{dirpath.split('/')[-1]}-{filename}")
+                else:
+                    print(f"Error: {get_latest_error_log()}")
     except:
         print(f"Error: {get_latest_error_log()}")
