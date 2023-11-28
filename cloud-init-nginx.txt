@@ -1,0 +1,53 @@
+#cloud-config
+
+# Install, update, and upgrade packages
+package_upgrade: true
+package_update: true
+package_reboot_if_require: true
+
+# Install packages
+packages:
+  - nginx
+
+write_files:
+  - owner: www-data:www-data
+  - path: /etc/nginx/sites-available/secure-server
+    content: |
+      server {
+        server_name mydnslabel695cfa.eastus.cloudapp.azure.com;
+        listen 443 ssl http2;
+        ssl_certificate /etc/nginx/ssl/nginxcert695cfa.crt;
+        ssl_certificate_key /etc/nginx/ssl/nginxcert695cfa.key;
+      }
+      server {
+            listen 80;
+            server_name mydnslabel695cfa.eastus.cloudapp.azure.com;
+            return 301 https://mydnslabel695cfa.eastus.cloudapp.azure.com$request_uri;
+      }
+
+  - owner: root:root
+    path: /root/convert_akv_cert.sh
+    permissions: "0750"
+    content: |
+        #!/bin/bash
+        runtime="10 minute"; endtime=$(date -ud "$runtime" +%s); 
+        while [[ $(date -u +%s) -le $endtime ]]; do
+          if [[ ! -f /etc/nginx/ssl/mykeyvault695cfa.nginxcert695cfa ]]
+            then
+                sleep 5;
+            else
+                break;
+          fi;
+        done
+        # Split the file in two (cert and key)
+        echo "Creating .key file with private key..."
+        openssl rsa -outform pem -in /etc/nginx/ssl/mykeyvault695cfa.nginxcert695cfa -out /etc/nginx/ssl/nginxcert695cfa.key
+        echo "Creating .crt file with certificate..."
+        openssl x509 -outform pem -in /etc/nginx/ssl/mykeyvault695cfa.nginxcert695cfa -out /etc/nginx/ssl/nginxcert695cfa.crt
+runcmd:
+  - mkdir /etc/nginx/ssl
+  - ln -s /etc/nginx/sites-available/secure-server /etc/nginx/sites-enabled/
+  - rm /etc/nginx/sites-enabled/default
+  - bash /root/convert_akv_cert.sh
+  - (crontab -l 2>/dev/null; echo "0 * * * * /root/convert_akv_cert.sh && service nginx reload") | crontab -
+  - service nginx restart
