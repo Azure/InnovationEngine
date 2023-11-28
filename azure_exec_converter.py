@@ -382,7 +382,7 @@ def create_pr(dirname):
 #             azure_doc_text = modify_header_permissions_ie_tag(azure_doc_text, all_permissions)
 #             azure_doc_text = remove_clean_up_resources_section(azure_doc_text)
 
-#             with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), f'exec-doc-{azure_doc_name}'), 'w') as f:
+#             with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), f'README.md'), 'w') as f:
 #                 f.write(azure_doc_text)
 
 for dirpath, dirnames, filenames in os.walk('scenarios/ocd/AIDocs'):
