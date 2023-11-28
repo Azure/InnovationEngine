@@ -392,6 +392,7 @@ for dirpath, dirnames, filenames in os.walk('scenarios/ocd/AIDocs'):
                 file_path = os.path.join(dirpath, filename)
                 ie_test_command = f'./bin/ie test {file_path}'
                 ie_test_result = subprocess.run(ie_test_command, shell=True)
+                print(ie_test_result.returncode)
                 if ie_test_result.returncode == 0:
                     create_pr(f"{dirpath.split('/')[-1]}-{filename}")
                 else:
