@@ -12,6 +12,7 @@ from github import Github
 import time
 import yaml
 import subprocess
+import sys
 
 ### USER INPUT NEEDED ###
 openai.api_type = "azure"
@@ -394,6 +395,6 @@ for dirpath, dirnames, filenames in os.walk('scenarios/ocd/AIDocs'):
                 if ie_test_result.returncode == 0:
                     create_pr(f"{dirpath.split('/')[-1]}-{filename}")
                 else:
-                    print(f"Error: {get_latest_error_log()}")
+                    sys.exit()# print(f"Error: {get_latest_error_log()}")
     except:
         print(f"Error: {get_latest_error_log()}")
