@@ -386,12 +386,13 @@ def create_pr(dirname):
 #                 f.write(azure_doc_text)
 
 for dirpath, dirnames, filenames in os.walk('scenarios/ocd/AIDocs'):
-    try:
+    try:        
         for filename in filenames:
             if '.md' in filename:
                 file_path = os.path.join(dirpath, filename)
+                print('hello world' +dirpath.split('/')[-1])
                 ie_test_command = f'./bin/ie test {file_path}'
                 subprocess.run(ie_test_command, shell=True)
-                create_pr('-'.join(dirnames))
+                create_pr(f"{dirpath.split('/')[-1]}-{filename}")
     except:
         print(f"Error: {get_latest_error_log()}")
