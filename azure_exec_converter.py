@@ -293,100 +293,101 @@ def create_pr(dirname):
 
 # relevant_azure_docs = get_azure_docs_by_keyword('cli')
 
-for azure_doc_url in relevant_azure_docs:
-    if azure_doc_url is not None:
-        azure_doc_url = extract_raw_azure_doc_url(azure_doc_url)
-        azure_doc_text = get_azure_doc_text(azure_doc_url)
-        match = re.search(r'title: (.*)', azure_doc_text)
-        if match:
-            azure_doc_name = match.group(1).replace("'", "").replace('"', '').replace(':', '')
-            azure_doc_name = ''.join(word.capitalize() for word in azure_doc_name.split())
-            if not os.path.exists(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''))):
-                os.makedirs(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', '')))
+# for azure_doc_url in relevant_azure_docs:
+#     if azure_doc_url is not None:
+#         azure_doc_url = extract_raw_azure_doc_url(azure_doc_url)
+#         azure_doc_text = get_azure_doc_text(azure_doc_url)
+#         match = re.search(r'title: (.*)', azure_doc_text)
+#         if match:
+#             azure_doc_name = match.group(1).replace("'", "").replace('"', '').replace(':', '')
+#             azure_doc_name = ''.join(word.capitalize() for word in azure_doc_name.split())
+#             if not os.path.exists(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''))):
+#                 os.makedirs(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', '')))
 
-        if '```' in azure_doc_text:
-            # with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), f'original-{azure_doc_name}'), 'w') as f:
-            #     f.write(azure_doc_text)
+#         if '```' in azure_doc_text:
+#             # with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), f'original-{azure_doc_name}'), 'w') as f:
+#             #     f.write(azure_doc_text)
 
-            env_var_dict = {}
-            if 'Define Environment Variables' not in azure_doc_text:
-                env_var_dict = get_environment_vars(azure_doc_text)
+#             env_var_dict = {}
+#             if 'Define Environment Variables' not in azure_doc_text:
+#                 env_var_dict = get_environment_vars(azure_doc_text)
             
-            commands = re.findall(r'```[\w\W]*?```', azure_doc_text)
-            for raw_command in commands:
-                command_type = [element for element in allowed_commands_list if element in raw_command]
-                if len(command_type) > 0:    
-                    command_type = command_type[0]
-                    if '```yaml' in raw_command:
-                        command = raw_command.replace(command_type,'').replace('`', '')
-                        lines = command.split('\n')
-                        if lines[0].strip() == '':
-                            lines = lines[1:]
-                        command = '\n'.join(lines)
+#             commands = re.findall(r'```[\w\W]*?```', azure_doc_text)
+#             for index, raw_command in enumerate(commands):
+#                 command_type = [element for element in allowed_commands_list if element in raw_command]
+#                 if len(command_type) > 0:    
+#                     command_type = command_type[0]
+#                     if '```yaml' in raw_command:
+#                         command = raw_command.replace(command_type,'').replace('`', '')
+#                         lines = command.split('\n')
+#                         if lines[0].strip() == '':
+#                             lines = lines[1:]
+#                         command = '\n'.join(lines)
 
-                        pattern = r'[^\s]*\.yaml\b'
-                        target = '```yaml'
-                        matches = [match for match in re.finditer(pattern, azure_doc_text[0:azure_doc_text.find(command)+len(command)])]
-                        target_position = azure_doc_text[0:azure_doc_text.find(command)+len(command)].find(target)
-                        closest_match = max(matches, key=lambda match: abs(match.start() - target_position))
-                        yaml_filename = str(azure_doc_text[0:azure_doc_text.find(command)+len(command)][closest_match.start():closest_match.end()]).replace('`', '').replace('"', '').replace('*', '')
-                        with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), yaml_filename), 'w') as file:
-                            file.write(command)
-                    else:
-                        command = ' '.join(raw_command.replace(command_type,'').replace('\n', '').replace('`', '').split())
-                        old_raw_command = raw_command
-                        if len(env_var_dict) > 0:
-                            for key in env_var_dict:
-                                pattern = r'\b' + re.escape(env_var_dict[key]) + r'\b'
-                                if len(env_var_dict) > 0 and re.search(pattern, raw_command):# env_var_dict[key] in raw_command:
-                                    raw_command = re.sub(pattern, f'${key}', raw_command)# raw_command.replace(env_var_dict[key], f'${key}')
-                        expected_result = get_expected_result(command)
-                        if expected_result is not None:
-                            azure_doc_text = azure_doc_text.replace(old_raw_command, f"{raw_command}\n\n{expected_result}")
+#                         pattern = r'[^\s]*\.yaml\b'
+#                         target = '```yaml'
+#                         matches = [match for match in re.finditer(pattern, azure_doc_text[0:azure_doc_text.find(command)+len(command)])]
+#                         target_position = azure_doc_text[0:azure_doc_text.find(command)+len(command)].find(target)
+#                         closest_match = max(matches, key=lambda match: abs(match.start() - target_position))
+#                         yaml_filename = str(azure_doc_text[0:azure_doc_text.find(command)+len(command)][closest_match.start():closest_match.end()]).replace('`', '').replace('"', '').replace('*', '')
+#                         with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), yaml_filename), 'w') as file:
+#                             file.write(command)
+#                     else:
+#                         command = ' '.join(raw_command.replace(command_type,'').replace('\n', '').replace('`', '').split())
+#                         old_raw_command = raw_command
+#                         if len(env_var_dict) > 0:
+#                             for key in env_var_dict:
+#                                 pattern = r'\b' + re.escape(env_var_dict[key]) + r'\b'
+#                                 if len(env_var_dict) > 0 and re.search(pattern, raw_command):# env_var_dict[key] in raw_command:
+#                                     raw_command = re.sub(pattern, f'${key}', raw_command)# raw_command.replace(env_var_dict[key], f'${key}')
+#                         if index + 1 < len(commands) and 'json' not in commands[index + 1] and 'output' not in commands[index + 1]:
+#                             expected_result = get_expected_result(command)
+#                             if expected_result is not None:
+#                                 azure_doc_text = azure_doc_text.replace(old_raw_command, f"{raw_command}\n\n{expected_result}")
 
-            permissions_dict = get_permissions(azure_doc_text)
-            formatted_permissions_dict_str = ''
-            for command, permissions in permissions_dict.items():
-                if len(permissions) > 0:
-                    command = " ".join(command.replace('\n', ' ').split())
-                    formatted_permissions_dict_str += f"\n  - {command}\n"
-                    for permission in permissions:
-                        formatted_permissions_dict_str += f"\n      - {permission}"
+#             permissions_dict = get_permissions(azure_doc_text)
+#             formatted_permissions_dict_str = ''
+#             for command, permissions in permissions_dict.items():
+#                 if len(permissions) > 0:
+#                     command = " ".join(command.replace('\n', ' ').split())
+#                     formatted_permissions_dict_str += f"\n  - {command}\n"
+#                     for permission in permissions:
+#                         formatted_permissions_dict_str += f"\n      - {permission}"
             
-            faq_dict = eval(get_faq(azure_doc_text))
+#             faq_dict = eval(get_faq(azure_doc_text))
             
-            azure_doc_text += f"""\n<details>\n<summary><h2>FAQs</h2></summary>\n\n#### Q. What is the command-specific breakdown of permissions needed to implement this doc? \n\nA. _Format: Commands as they appears in the doc | list of unique permissions needed to run each of those commands_\n\n{formatted_permissions_dict_str}"""
+#             azure_doc_text += f"""\n<details>\n<summary><h2>FAQs</h2></summary>\n\n#### Q. What is the command-specific breakdown of permissions needed to implement this doc? \n\nA. _Format: Commands as they appears in the doc | list of unique permissions needed to run each of those commands_\n\n{formatted_permissions_dict_str}"""
 
-            if len(faq_dict) > 0:
-                for question, answer in faq_dict.items():
-                    azure_doc_text += f"""\n\n#### Q. {question} \n\nA. {answer}\n"""
-                azure_doc_text += f"""\n</details>"""
-            else:
-                azure_doc_text += f"""\n</details>"""
+#             if len(faq_dict) > 0:
+#                 for question, answer in faq_dict.items():
+#                     azure_doc_text += f"""\n\n#### Q. {question} \n\nA. {answer}\n"""
+#                 azure_doc_text += f"""\n</details>"""
+#             else:
+#                 azure_doc_text += f"""\n</details>"""
 
-            if len(env_var_dict) > 0:
-                for key in env_var_dict:
-                    if 'name' in key.lower() or 'resourcegroup' in key.lower():
-                        env_var_dict[key] += '$RANDOM_ID'
-                azure_doc_text = insert_env_var_section(azure_doc_text, env_var_dict)
+#             if len(env_var_dict) > 0:
+#                 for key in env_var_dict:
+#                     if 'name' in key.lower() or 'resourcegroup' in key.lower():
+#                         env_var_dict[key] += '$RANDOM_ID'
+#                 azure_doc_text = insert_env_var_section(azure_doc_text, env_var_dict)
 
-            all_permissions = []
-            for value in permissions_dict.values():
-                if isinstance(value, list):
-                    all_permissions.extend(value)
-            all_permissions = list(set(all_permissions))
-            all_permissions = ', '.join(all_permissions)
+#             all_permissions = []
+#             for value in permissions_dict.values():
+#                 if isinstance(value, list):
+#                     all_permissions.extend(value)
+#             all_permissions = list(set(all_permissions))
+#             all_permissions = ', '.join(all_permissions)
 
-            azure_doc_text = modify_header_permissions_ie_tag(azure_doc_text, all_permissions)
-            azure_doc_text = remove_clean_up_resources_section(azure_doc_text)
+#             azure_doc_text = modify_header_permissions_ie_tag(azure_doc_text, all_permissions)
+#             azure_doc_text = remove_clean_up_resources_section(azure_doc_text)
 
-            with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), f'README.md'), 'w') as f:
-                f.write(azure_doc_text)
+#             with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), f'README.md'), 'w') as f:
+#                 f.write(azure_doc_text)
 
 for dirpath, dirnames, filenames in os.walk('scenarios/ocd/AIDocs'):
     try:        
         for filename in filenames:
-            if '.md' in filename:
+            if '.md' in filename and 'start' in dirpath:
                 file_path = os.path.join(dirpath, filename)
                 ie_test_command = f'./bin/ie test {file_path}'
                 subprocess.run(ie_test_command, shell=True)
