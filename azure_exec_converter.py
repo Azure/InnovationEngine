@@ -12,6 +12,7 @@ from github import Github
 import time
 import yaml
 import subprocess
+import sys
 
 ### USER INPUT NEEDED ###
 openai.api_type = "azure"
@@ -20,7 +21,7 @@ openai.api_base = os.getenv("OPENAI_API_BASE")  # Your Azure OpenAI resource's e
 openai.api_key = os.getenv("OPENAI_API_KEY") # Create a Github instance using an access token or username and password
 github_access_token = os.getenv("GitHub_Token")
 g = Github(login_or_token=github_access_token)
-relevant_azure_docs = ['https://raw.githubusercontent.com/MicrosoftDocs/azure-docs/main/articles/virtual-machines/linux/quick-create-cli.md']
+relevant_azure_docs = ['https://learn.microsoft.com/en-us/azure/virtual-machines/linux/quick-create-cli', 'https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-secure-web-server']
 ### END OF USER INPUT ###
 
 allowed_commands_list = ['azurecli','bash', 'terraform', 'azure-cli-interactive', 'console', 'yaml']
@@ -270,13 +271,29 @@ def get_azure_doc_text(url):
     response = requests.get(url) 
     return(response.text) 
 
+# def get_latest_error_log():
+#     with open('ie.log', 'rb') as f:
+#         f.seek(-5, os.SEEK_END)
+#         while f.read(5) != b'level=error':
+#             f.seek(-6, os.SEEK_CUR)
+#         last_log = f.read().decode()
+#     return last_log
+
 def get_latest_error_log():
-    with open('ie.log', 'rb') as f:
-        f.seek(-5, os.SEEK_END)
-        while f.read(5) != b'time=':
-            f.seek(-6, os.SEEK_CUR)
-        last_log = f.read().decode()
-    return last_log
+    error_line_num = 0
+    log_file = 'ie.log'
+    with open(log_file, 'r') as file:
+        for i, line in enumerate(file, 1):
+            if re.search(r'level=error', line):
+                error_line_num = i
+
+    lines_from_error = []
+    with open(log_file, 'r') as file:
+        for i, line in enumerate(file, 1):
+            if i >= error_line_num:
+                lines_from_error.append(line)
+
+    return ' '.join(lines_from_error)
 
 def create_pr(dirname):  
     os.environ['GITHUB_TOKEN'] = github_access_token
@@ -299,7 +316,8 @@ for azure_doc_url in relevant_azure_docs:
         azure_doc_text = get_azure_doc_text(azure_doc_url)
         match = re.search(r'title: (.*)', azure_doc_text)
         if match:
-            azure_doc_name = match.group(1).replace(' ', '').replace("'", "").replace('"', '').replace(':', '').title()
+            azure_doc_name = match.group(1).replace("'", "").replace('"', '').replace(':', '')
+            azure_doc_name = ''.join(word.capitalize() for word in azure_doc_name.split())
             if not os.path.exists(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''))):
                 os.makedirs(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', '')))
 
@@ -312,7 +330,7 @@ for azure_doc_url in relevant_azure_docs:
                 env_var_dict = get_environment_vars(azure_doc_text)
             
             commands = re.findall(r'```[\w\W]*?```', azure_doc_text)
-            for raw_command in commands:
+            for index, raw_command in enumerate(commands):
                 command_type = [element for element in allowed_commands_list if element in raw_command]
                 if len(command_type) > 0:    
                     command_type = command_type[0]
@@ -339,9 +357,10 @@ for azure_doc_url in relevant_azure_docs:
                                 pattern = r'\b' + re.escape(env_var_dict[key]) + r'\b'
                                 if len(env_var_dict) > 0 and re.search(pattern, raw_command):# env_var_dict[key] in raw_command:
                                     raw_command = re.sub(pattern, f'${key}', raw_command)# raw_command.replace(env_var_dict[key], f'${key}')
-                        expected_result = get_expected_result(command)
-                        if expected_result is not None:
-                            azure_doc_text = azure_doc_text.replace(old_raw_command, f"{raw_command}\n\n{expected_result}")
+                        if index + 1 < len(commands) and 'json' not in commands[index + 1] and 'output' not in commands[index + 1]:
+                            expected_result = get_expected_result(command)
+                            if expected_result is not None:
+                                azure_doc_text = azure_doc_text.replace(old_raw_command, f"{raw_command}\n\n{expected_result}")
 
             permissions_dict = get_permissions(azure_doc_text)
             formatted_permissions_dict_str = ''
@@ -385,10 +404,13 @@ for azure_doc_url in relevant_azure_docs:
 for dirpath, dirnames, filenames in os.walk('scenarios/ocd/AIDocs'):
     try:        
         for filename in filenames:
-            if '.md' in filename:
+            if '.md' in filename and 'start' in dirpath:
                 file_path = os.path.join(dirpath, filename)
                 ie_test_command = f'./bin/ie test {file_path}'
-                subprocess.run(ie_test_command, shell=True)
-                create_pr(f"{dirpath.split('/')[-1]}-{filename}")
+                ie_test_result = subprocess.run(ie_test_command, shell=True)
+                if 'Error' in ie_test_result.stdout.decode() or ie_test_result.returncode != 0:
+                    print(f"IE Log:\n{get_latest_error_log()}")
+                else:
+                    create_pr(f"{dirpath.split('/')[-1]}-{filename}")
     except:
-        print(f"Error: {get_latest_error_log()}")
+        print(f"IE Log:\n{get_latest_error_log()}")
