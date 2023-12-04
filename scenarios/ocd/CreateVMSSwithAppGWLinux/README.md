@@ -86,15 +86,15 @@ Results:
     "resourceGuid": "f00034be-612e-4462-a711-93d0bb263e46",
     "subnets": [
       {
-        "addressPrefix": "10.66.0.0/24",
+        "addressPrefix": "10.X.0.0/24",
         "delegations": [],
-        "etag": "W/\"578bda48-b14b-4246-ab8e-0db6e1238695\"",
-        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/virtualNetworks/myVNet3a43e4/subnets/myVMSN3a43e4", 
-        "name": "myVMSN3a43e4",
+        "etag": "W/\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"",
+        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxxxxx/subnets/myVMSNxxxxxx", 
+        "name": "myVMSNxxxxxx",
         "privateEndpointNetworkPolicies": "Disabled",
         "privateLinkServiceNetworkPolicies": "Enabled",
         "provisioningState": "Succeeded",
-        "resourceGroup": "myVMSSResourceGroup3a43e4",
+        "resourceGroup": "myVMSSResourceGroupxxxxxx",
         "type": "Microsoft.Network/virtualNetworks/subnets"
       }
     ],
