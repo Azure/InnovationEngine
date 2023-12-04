@@ -42,10 +42,10 @@ Results:
 <!-- expected_similarity=0.3 -->
 ```json   
 {
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMResourceGroup",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx",
   "location": "eastus",
   "managedBy": null,
-  "name": "myVMResourceGroup",
+  "name": "myVMSSResourceGroupxxxxxx",
   "properties": {
     "provisioningState": "Succeeded"
   },
@@ -54,39 +54,57 @@ Results:
 }
 ```
 
-## Create the Virtual Machine
+## Create Network Resources 
 
-To create a VM in this resource group we need to run a simple command, here we have provided the `--generate-ssh-keys` flag, this will cause the CLI to look for an avialable ssh key in `~/.ssh`, if one is found it will be used, otherwise one will be generated and stored in `~/.ssh`. We also provide the `--public-ip-sku Standard` flag to ensure that the machine is accessible via a public IP. Finally, we are deploying the latest `Ubuntu 22.04` image. 
+You need to create network resources before you proceed the VMSS steps. In this step you're going to create a VNET, 2 subnets 1 for Application Gateway and 1 for VMs. You also need to have a public IP to attach your Application Gateway to be able to reach your web application from internet. 
 
-All other values are configured using environment variables.
+
+# Create network resources 
 
 ```bash
-az vm create \
-    --resource-group $MY_RESOURCE_GROUP_NAME \
-    --name $MY_VM_NAME \
-    --image $MY_VM_IMAGE \
-    --admin-username $MY_USERNAME \
-    --assign-identity \
-    --generate-ssh-keys \
-    --public-ip-sku Standard
+az network vnet create  --name $MY_VNET_NAME  --resource-group $MY_RESOURCE_GROUP_NAME --location $REGION  --address-prefix $MY_VNET_PREFIX  --subnet-name $MY_VM_SN_NAME --subnet-prefix $MY_VM_SN_PREFIX 
 ```
 
 Results:
 
 <!-- expected_similarity=0.3 -->
-```json
+```json   
 {
-  "fqdns": "",
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM",
-  "location": "eastus",
-  "macAddress": "00-0D-3A-10-4F-70",
-  "powerState": "VM running",
-  "privateIpAddress": "10.0.0.4",
-  "publicIpAddress": "52.147.208.85",
-  "resourceGroup": "myVMResourceGroup",
-  "zones": ""
+  "newVNet": {
+    "addressSpace": {
+      "addressPrefixes": [
+        "10.X.0.0/16"
+      ]
+    },
+    "enableDdosProtection": false,
+    "etag": "W/\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"",
+    "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxxxxx",
+    "location": "eastus",
+    "name": "myVNetxxxxxx",
+    "provisioningState": "Succeeded",
+    "resourceGroup": "myVMSSResourceGroupxxxxxx",
+    "resourceGuid": "f00034be-612e-4462-a711-93d0bb263e46",
+    "subnets": [
+      {
+        "addressPrefix": "10.66.0.0/24",
+        "delegations": [],
+        "etag": "W/\"578bda48-b14b-4246-ab8e-0db6e1238695\"",
+        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/virtualNetworks/myVNet3a43e4/subnets/myVMSN3a43e4", 
+        "name": "myVMSN3a43e4",
+        "privateEndpointNetworkPolicies": "Disabled",
+        "privateLinkServiceNetworkPolicies": "Enabled",
+        "provisioningState": "Succeeded",
+        "resourceGroup": "myVMSSResourceGroup3a43e4",
+        "type": "Microsoft.Network/virtualNetworks/subnets"
+      }
+    ],
+    "type": "Microsoft.Network/virtualNetworks",
+    "virtualNetworkPeerings": []
+  }
 }
 ```
+
+
 
 ### Enable Azure AD login for a Linux Virtual Machine in Azure
 
