@@ -54,12 +54,12 @@ Results:
 }
 ```
 
-## Create Network Resources 
+# Create Network Resources 
 
 You need to create network resources before you proceed the VMSS steps. In this step you're going to create a VNET, 2 subnets 1 for Application Gateway and 1 for VMs. You also need to have a public IP to attach your Application Gateway to be able to reach your web application from internet. 
 
 
-# Create network resources 
+#### Create Virtual Network (VNET)
 
 ```bash
 az network vnet create  --name $MY_VNET_NAME  --resource-group $MY_RESOURCE_GROUP_NAME --location $REGION  --address-prefix $MY_VNET_PREFIX  --subnet-name $MY_VM_SN_NAME --subnet-prefix $MY_VM_SN_PREFIX 
