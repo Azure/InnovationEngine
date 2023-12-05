@@ -104,6 +104,9 @@ Results:
 
 ### Create Application Gateway Resources
 
+Azure Application Gateway requires a dedicated subnet within your virtual network. The below command creates a subnet named $MY_APPGW_SN_NAME with specified address prefix named $MY_APPGW_SN_PREFIX in your VNET $MY_VNET_NAME 
+
+
 ```bash
 az network vnet subnet create  --name $MY_APPGW_SN_NAME  --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name  $MY_VNET_NAME --address-prefix  $MY_APPGW_SN_PREFIX -o JSON
 ```
@@ -125,7 +128,7 @@ Results:
   "type": "Microsoft.Network/virtualNetworks/subnets"
 }
 ```
-
+The below command creates a standard, zone redundant, static, public IPv4 in your resource group.  
 
 ```bash
 az network public-ip create  --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_APPGW_PUBLIC_IP_NAME --sku Standard   --location $REGION  --allocation-method static --version IPv4 --zone 1 2 3 -o JSON
@@ -166,8 +169,10 @@ Results:
 }
 ```
 
+In this step you create an Application Gateway that you're going to integrate with your Virtual Machine Scale Set. In this example we create a zone redundant Application Gateway with Standard_v2 SKU and enable Http communication for the Application Gateway. The public IP $MY_APPGW_PUBLIC_IP_NAME that we created in previous step attached to the Application Gateway. 
+
 ```bash
-az network application-gateway create   --name $MY_APPGW_NAME --location $REGION --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name $MY_VNET_NAME --subnet $MY_APPGW_SN_NAME --capacity 2   --sku Standard_v2   --http-settings-cookie-based-affinity Disabled   --frontend-port 80 --http-settings-port 80   --http-settings-protocol Http --public-ip-address $MY_APPGW_PUBLIC_IP_NAME --priority 1001 -o JSON
+az network application-gateway create   --name $MY_APPGW_NAME --location $REGION --resource-group $MY_RESOURCE_GROUP_NAME --vnet-name $MY_VNET_NAME --subnet $MY_APPGW_SN_NAME --capacity 2  --zones 1 2 3 --sku Standard_v2   --http-settings-cookie-based-affinity Disabled   --frontend-port 80 --http-settings-port 80   --http-settings-protocol Http --public-ip-address $MY_APPGW_PUBLIC_IP_NAME --priority 1001 -o JSON
  ```
 
 <!-- expected_similarity=0.3 -->
@@ -361,10 +366,12 @@ az network application-gateway create   --name $MY_APPGW_NAME --location $REGION
  ```
 
 
+# Create Virtual Machine Scale Set 
 
+The below command creates a zone redundant Virtual Machine Scale Set (VMSS) within your resource group $MY_RESOURCE_GROUP_NAME. We integrate the Application Gateway that we created previous step. This command creates 2 Standard_DS2_v2 SKU Virtual Machines in subnet $MY_VM_SN_NAME. 
 
 ```bash
- az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --generate-ssh-keys --instance-count 2 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
+ az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --generate-ssh-keys --instance-count 2 --zones 1 2 3 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
  ```
 
 Results:
@@ -409,13 +416,13 @@ Results:
                   "properties": {
                     "applicationGatewayBackendAddressPools": [
                       {
-                        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/applicationGateways/myAPPGW3a43e4/backendAddressPools/appGatewayBackendPool",
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/applicationGateways/myAPPGW3a43e4/backendAddressPools/appGatewayBackendPool",
                         "resourceGroup": "myVMSSResourceGroup3a43e4"
                       }
                     ],
                     "privateIPAddressVersion": "IPv4",
                     "subnet": {
-                      "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/virtualNetworks/myVNet3a43e4/subnets/myVMSN3a43e4",
+                      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/virtualNetworks/myVNet3a43e4/subnets/myVMSN3a43e4",
                       "resourceGroup": "myVMSSResourceGroup3a43e4"
                     }
                   }
@@ -437,7 +444,7 @@ Results:
           "ssh": {
             "publicKeys": [
               {
-                "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDChUiONFSUdk5nk00XeujLNIfdijKwBR/cqAqAw8xa57BlI22Azntp625scK9Gpze9wFNj/bPDS29+PZXOaEjVljYHU/tgcbcvHR0sNUNoAvMPHRfSN2WebDUCDHK1hBQxPwiI4OWTbpYRm/E2deGe5gUpBoaA1AwOZVs1+6Z6unHOkhslqLJmNW+Rb8YUtRnbL3XZLUOwyPSkNMgARiMb+QWq0W2V6TtD+rM2pMVIf/D21PdHLsTBQ+DC0DeUyBlgGiueqijGcD0zmE6N6nAu2ps7sO+zxmnP37zbIRbwEHfdpQkPwnx42REgZ7ep/K9gnwWzSk1uIrxrSGypPqUV",
+                "keyData": "ssh-rsa xxxxxxx",
                 "path": "/home/azureuser/.ssh/authorized_keys"
               }
             ]
@@ -470,6 +477,10 @@ Results:
 }
 ```
 
+### Install ngnix with VMSS extensions 
+
+The below command uses VMSS extension to run custom script. For testing purposes, here we install ngnix and publish a page that shows the hostname of the Virtual Machine that your HTTP requests hits. We use this custom script for this pusposes : https://raw.githubusercontent.com/Azure-Samples/compute-automation-configurations/master/automate_nginx.sh 
+
 
 ```bash
 az vmss extension set --publisher Microsoft.Azure.Extensions --version 2.0  --name CustomScript --resource-group $MY_RESOURCE_GROUP_NAME --vmss-name $MY_VMSS_NAME --settings '{ "fileUris": ["https://raw.githubusercontent.com/Azure-Samples/compute-automation-configurations/master/automate_nginx.sh"], "commandToExecute": "./automate_nginx.sh" }' -o JSON
@@ -486,7 +497,7 @@ Results:
   "doNotRunExtensionsOnOverprovisionedVMs": false,
   "extendedLocation": null,
   "hostGroup": null,
-  "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSS3a43e4",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSS3a43e4",
   "identity": null,
   "location": "eastus",
   "name": "myVMSS3a43e4",
@@ -576,7 +587,7 @@ Results:
             {
               "applicationGatewayBackendAddressPools": [
                 {
-                  "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/applicationGateways/myAPPGW3a43e4/backendAddressPools/appGatewayBackendPool",
+                  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/applicationGateways/myAPPGW3a43e4/backendAddressPools/appGatewayBackendPool",
                   "resourceGroup": "myVMSSResourceGroup3a43e4"
                 }
               ],
@@ -588,7 +599,7 @@ Results:
               "privateIpAddressVersion": "IPv4",
               "publicIpAddressConfiguration": null,
               "subnet": {
-                "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/virtualNetworks/myVNet3a43e4/subnets/myVMSN3a43e4",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/virtualNetworks/myVNet3a43e4/subnets/myVMSN3a43e4",
                 "resourceGroup": "myVMSSResourceGroup3a43e4"
               }
             }
@@ -613,7 +624,7 @@ Results:
         "ssh": {
           "publicKeys": [
             {
-              "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDChUiONFSUdk5nk00XeujLNIfdijKwBR/cqAqAw8xa57BlI22Azntp625scK9Gpze9wFNj/bPDS29+PZXOaEjVljYHU/tgcbcvHR0sNUNoAvMPHRfSN2WebDUCDHK1hBQxPwiI4OWTbpYRm/E2deGe5gUpBoaA1AwOZVs1+6Z6unHOkhslqLJmNW+Rb8YUtRnbL3XZLUOwyPSkNMgARiMb+QWq0W2V6TtD+rM2pMVIf/D21PdHLsTBQ+DC0DeUyBlgGiueqijGcD0zmE6N6nAu2ps7sO+zxmnP37zbIRbwEHfdpQkPwnx42REgZ7ep/K9gnwWzSk1uIrxrSGypPqUV",
+              "keyData": "ssh-rsa xxxxxxx",
               "path": "/home/azureuser/.ssh/authorized_keys"
             }
           ]
@@ -666,6 +677,9 @@ Results:
 }
 ```
 
+### Test the page
+
+The below command shows you the public IP of your Application Gateway. You can cpaste the IP adress to a browser page for testing.
 
 ```bash
 az network public-ip show --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_APPGW_PUBLIC_IP_NAME --query [ipAddress]  --output tsv
