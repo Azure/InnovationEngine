@@ -672,41 +672,6 @@ az network public-ip show --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AP
 ```
 
 
-### Enable Azure AD login for a Linux Virtual Machine in Azure
-
-The following example has deploys a Linux VM and then installs the extension to enable Azure AD login for a Linux VM. VM extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines.
-
-```bash
-az vm extension set \
-    --publisher Microsoft.Azure.ActiveDirectory \
-    --name AADSSHLoginForLinux \
-    --resource-group $MY_RESOURCE_GROUP_NAME \
-    --vm-name $MY_VM_NAME
-```
-
-# Store IP Address of VM in order to SSH
-run the following command to get the IP Address of the VM and store it as an environment variable
-
-```bash
-export IP_ADDRESS=$(az vm show --show-details --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_VM_NAME --query publicIps --output tsv)
-```
-
-# SSH Into VM
-
-<!--## Export the SSH configuration for use with SSH clients that support OpenSSH & SSH into the VM.
-Login to Azure Linux VMs with Azure AD supports exporting the OpenSSH certificate and configuration. That means you can use any SSH clients that support OpenSSH-based certificates to sign in through Azure AD. The following example exports the configuration for all IP addresses assigned to the VM:-->
-
-<!--
-```bash
-yes | az ssh config --file ~/.ssh/config --name $MY_VM_NAME --resource-group $MY_RESOURCE_GROUP_NAME
-```
--->
-
-You can now SSH into the VM by running the output of the following command in your ssh client of choice
-
-```bash
-ssh -o StrictHostKeyChecking=no $MY_USERNAME@$IP_ADDRESS
-```
 
 # Next Steps
 
