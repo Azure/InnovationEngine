@@ -20,7 +20,7 @@ export MY_VM_SN_PREFIX="10.$NETWORK_PREFIX.0.0/24"
 export MY_APPGW_SN_NAME="myAPPGWSN$RANDOM_ID"
 export MY_APPGW_SN_PREFIX="10.$NETWORK_PREFIX.1.0/24"
 export MY_APPGW_NAME="myAPPGW$RANDOM_ID"
-export MY_APPGW_BACKENDPOOL_NAME="myAPPGWBackendpool$RANDOM_ID"
+export MY_APPGW_PUBLIC_IP_NAME="myAPPGWPublicIP$RANDOM_ID"
 
 ```
 # Login to Azure using the CLI
@@ -32,7 +32,7 @@ In order to run commands against Azure using the CLI you need to login. This is 
 A resource group is a container for related resources. All resources must be placed in a resource group. We will create one for this tutorial. The following command creates a resource group with the previously defined $MY_RESOURCE_GROUP_NAME and $REGION parameters.
 
 ```bash
-az group create --name $MY_RESOURCE_GROUP_NAME --location $REGION
+az group create --name $MY_RESOURCE_GROUP_NAME --location $REGION -o JSON
 ```
 
 Results:
@@ -60,7 +60,7 @@ You need to create network resources before you proceed the VMSS steps. In this 
 #### Create Virtual Network (VNET) and VM Subnet
 
 ```bash
-az network vnet create  --name $MY_VNET_NAME  --resource-group $MY_RESOURCE_GROUP_NAME --location $REGION  --address-prefix $MY_VNET_PREFIX  --subnet-name $MY_VM_SN_NAME --subnet-prefix $MY_VM_SN_PREFIX 
+az network vnet create  --name $MY_VNET_NAME  --resource-group $MY_RESOURCE_GROUP_NAME --location $REGION  --address-prefix $MY_VNET_PREFIX  --subnet-name $MY_VM_SN_NAME --subnet-prefix $MY_VM_SN_PREFIX -o JSON
 ```
 
 Results:
