@@ -21,18 +21,19 @@ openai.api_base = os.getenv("OPENAI_API_BASE")  # Your Azure OpenAI resource's e
 openai.api_key = os.getenv("OPENAI_API_KEY")  # Your Azure OpenAI resource's API Key
 github_access_token = os.getenv("GitHub_Token") # Your GitHUB personal access token
 g = Github(login_or_token=github_access_token)
-relevant_azure_docs = ['https://learn.microsoft.com/en-us/azure/virtual-machines/linux/quick-create-cli', 'https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-secure-web-server'] # Links to Azure docs that you want to convert to executable docs as a list
+relevant_azure_docs = [] # Links to Azure docs that you want to convert to executable docs as a list
 ### END OF USER INPUT ###
 
+clock_sync_commands = ["sudo hwclock -s", "sudo apt-get install ntpdate", "sudo ntpdate ntp.ubuntu.com"]
+for command in clock_sync_commands:
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    if error:
+        print("Error: ", error)
+
 script_path = os.path.realpath(__file__)
-
-# Get the directory of the current script
 script_dir = os.path.dirname(script_path)
-
-# Get the root directory of the project by going up three levels from the script directory
 root_dir = os.path.dirname(os.path.dirname(script_dir))
-
-# Define the absolute path to the AIDocs directory
 AI_Docs = os.path.join(root_dir, "scenarios", "ocd", "AIDocs")
 test_exec_docs = "None"
 
@@ -55,7 +56,6 @@ if os.path.exists(AI_Docs):
         if 'all' in test_exec_docs.lower():
             test_exec_docs = []
             for root, dirs, files in os.walk(AI_Docs):
-                print((root, dirs, files))
                 for dir in dirs:
                     if any('md' in file for file in files):
                         test_exec_docs.append(dir)
@@ -309,7 +309,7 @@ def get_azure_doc_text(url):
 
 def get_latest_error_log():
     error_line_num = 0
-    log_file = 'ie.log'
+    log_file = os.path.join(root_dir, 'ie.log')
     with open(log_file, 'r') as file:
         for i, line in enumerate(file, 1):
             if re.search(r'level=error', line):
@@ -436,7 +436,7 @@ if test_exec_docs != "None":
                 for filename in filenames:
                     if '.md' in filename:
                         file_path = os.path.join(dirpath, filename)
-                        ie_test_command = f'./bin/ie test {file_path}'
+                        ie_test_command = os.path.join(root_dir, f'bin/ie test {file_path}')
                         ie_test_result = subprocess.run(ie_test_command, shell=True)
                         if 'Error' in ie_test_result.stdout.decode() or ie_test_result.returncode != 0:
                             print(f"IE Log:\n{get_latest_error_log()}")
@@ -451,7 +451,7 @@ if test_exec_docs == "None":
             for filename in filenames:
                 if '.md' in filename:
                     file_path = os.path.join(dirpath, filename)
-                    ie_test_command = f'./bin/ie test {file_path}'
+                    ie_test_command = os.path.join(root_dir, f'bin/ie test {file_path}')
                     ie_test_result = subprocess.run(ie_test_command, shell=True)
                     if 'Error' in ie_test_result.stdout.decode() or ie_test_result.returncode != 0:
                         print(f"IE Log:\n{get_latest_error_log()}")
