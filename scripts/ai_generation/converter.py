@@ -24,26 +24,37 @@ g = Github(login_or_token=github_access_token)
 relevant_azure_docs = ['https://learn.microsoft.com/en-us/azure/virtual-machines/linux/quick-create-cli', 'https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-secure-web-server'] # Links to Azure docs that you want to convert to executable docs as a list
 ### END OF USER INPUT ###
 
+script_path = os.path.realpath(__file__)
+
+# Get the directory of the current script
+script_dir = os.path.dirname(script_path)
+
+# Get the root directory of the project by going up three levels from the script directory
+root_dir = os.path.dirname(os.path.dirname(script_dir))
+
+# Define the absolute path to the AIDocs directory
+AI_Docs = os.path.join(root_dir, "scenarios", "ocd", "AIDocs")
 test_exec_docs = "None"
-if os.path.exists('scenarios/ocd/AIDocs'):
-    test_exec_docs = input("Do you want to test exec doc(s)? (one or all or no): ") 
+
+if os.path.exists(AI_Docs):
+    test_exec_docs = input("Do you want to test current exec doc(s)? (one or all or no): ") 
     while True:
         if 'one' in test_exec_docs.lower():
             valid_exec_doc = False
             test_exec_docs = input("Enter the name of the exec doc you want to test: ")
             test_exec_docs = [test_exec_docs]
-            for root, dirs, files in os.walk('scenarios/ocd/AIDocs'):
+            for root, dirs, files in os.walk(AI_Docs):
                 for dir in dirs:
                     if ''.join(test_exec_docs).lower() in dir.lower():
                         valid_exec_doc = True
             if not valid_exec_doc:
-                test_exec_docs = input("Invalid input. Do you want to test exec doc(s)? (one or all or no): ")
+                test_exec_docs = input("Invalid input. Do you want to test current exec doc(s)? (one or all or no): ")
                 break
             else:
                 break
         if 'all' in test_exec_docs.lower():
             test_exec_docs = []
-            for root, dirs, files in os.walk('scenarios/ocd/AIDocs'):
+            for root, dirs, files in os.walk(AI_Docs):
                 print((root, dirs, files))
                 for dir in dirs:
                     if any('md' in file for file in files):
@@ -53,7 +64,7 @@ if os.path.exists('scenarios/ocd/AIDocs'):
             test_exec_docs = ""
             break
         else:
-            test_exec_docs = input("Invalid input. Do you want to test exec doc(s)? (one or all or no): ")
+            test_exec_docs = input("Invalid input. Do you want to test current exec doc(s)? (one or all or no): ")
 
 allowed_commands_list = ['azurecli','bash', 'terraform', 'azure-cli-interactive', 'console', 'yaml']
 
@@ -333,8 +344,8 @@ if test_exec_docs != "":
             if match:
                 azure_doc_name = match.group(1).replace("'", "").replace('"', '').replace(':', '')
                 azure_doc_name = ''.join(word.capitalize() for word in azure_doc_name.split())
-                if not os.path.exists(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''))):
-                    os.makedirs(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', '')))
+                if not os.path.exists(os.path.join(AI_Docs, azure_doc_name.replace('.md', ''))):
+                    os.makedirs(os.path.join(AI_Docs, azure_doc_name.replace('.md', '')))
 
             if '```' in azure_doc_text:
                 env_var_dict = {}
@@ -359,7 +370,7 @@ if test_exec_docs != "":
                             target_position = azure_doc_text[0:azure_doc_text.find(command)+len(command)].find(target)
                             closest_match = max(matches, key=lambda match: abs(match.start() - target_position))
                             yaml_filename = str(azure_doc_text[0:azure_doc_text.find(command)+len(command)][closest_match.start():closest_match.end()]).replace('`', '').replace('"', '').replace('*', '')
-                            with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), yaml_filename), 'w') as file:
+                            with open(os.path.join(AI_Docs, azure_doc_name.replace('.md', ''), yaml_filename), 'w') as file:
                                 file.write(command)
                         else:
                             command = ' '.join(raw_command.replace(command_type,'').replace('\n', '').replace('`', '').split())
@@ -415,12 +426,12 @@ if test_exec_docs != "":
                 azure_doc_text = modify_header_permissions_ie_tag(azure_doc_text, all_permissions)
                 azure_doc_text = remove_clean_up_resources_section(azure_doc_text)
 
-                with open(os.path.join('scenarios/ocd/AIDocs', azure_doc_name.replace('.md', ''), f'README.md'), 'w') as f:
+                with open(os.path.join(AI_Docs, azure_doc_name.replace('.md', ''), f'README.md'), 'w') as f:
                     f.write(azure_doc_text)
 
 if test_exec_docs != "None":
     for exec_doc in test_exec_docs:
-        for dirpath, dirnames, filenames in os.walk(os.path.join('scenarios/ocd/AIDocs', exec_doc)):
+        for dirpath, dirnames, filenames in os.walk(os.path.join(AI_Docs, exec_doc)):
             try:        
                 for filename in filenames:
                     if '.md' in filename:
@@ -435,7 +446,7 @@ if test_exec_docs != "None":
                 print(f"IE Log:\n{get_latest_error_log()}")
 
 if test_exec_docs == "None":
-    for dirpath, dirnames, filenames in os.walk('scenarios/ocd/AIDocs'):
+    for dirpath, dirnames, filenames in os.walk(AI_Docs):
         try:        
             for filename in filenames:
                 if '.md' in filename:
