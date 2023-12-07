@@ -2,7 +2,7 @@
 
 BINARY_DIR := bin
 IE_BINARY := $(BINARY_DIR)/ie
-API_BINARY := $(BINARY_DIR)/api
+AI_BINARY := $(BINARY_DIR)/api
 
 # -------------------------- Native build targets ------------------------------
 
@@ -19,6 +19,12 @@ build-runner: build-ie build-api
 	@CGO_ENABLED=0 go build -o "$(BINARY_DIR)/runner" cmd/runner/main.go
 
 build-all: build-ie build-api build-runner
+
+# ------------------------------ Install targets ----------------------------------
+
+install-ie:
+	@echo "Installing the Innovation Engine CLI..."
+	@CGO_ENABLED=0 go install cmd/ie/ie.go
 
 # ------------------------------ Test targets ----------------------------------
 
