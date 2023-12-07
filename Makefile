@@ -2,7 +2,7 @@
 
 BINARY_DIR := bin
 IE_BINARY := $(BINARY_DIR)/ie
-AI_BINARY := $(BINARY_DIR)/api
+API_BINARY := $(BINARY_DIR)/api
 
 # -------------------------- Native build targets ------------------------------
 
