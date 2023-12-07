@@ -1,0 +1,19 @@
+#cloud-config
+package_upgrade: true
+packages:
+  - nginx
+write_files:
+  - owner: www-data:www-data
+  - path: /etc/nginx/sites-available/default
+    content: |
+      server {
+        listen 443 ssl;
+        ssl_certificate /etc/nginx/ssl/mycert.cert;
+        ssl_certificate_key /etc/nginx/ssl/mycert.prv;
+      }
+runcmd:
+  - secretsname=$(find /var/lib/waagent/ -name "*.prv" | cut -c -57)
+  - mkdir /etc/nginx/ssl
+  - cp $secretsname.crt /etc/nginx/ssl/mycert.cert
+  - cp $secretsname.prv /etc/nginx/ssl/mycert.prv
+  - service nginx restart
