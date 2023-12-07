@@ -20,6 +20,12 @@ build-runner: build-ie build-api
 
 build-all: build-ie build-api build-runner
 
+# ------------------------------ Install targets -------------------------------
+
+install-ie:
+	@echo "Installing the Innovation Engine CLI..."
+	@CGO_ENABLED=0 go install cmd/ie/ie.go
+
 # ------------------------------ Test targets ----------------------------------
 
 test-all:
