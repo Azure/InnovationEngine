@@ -9,17 +9,17 @@ on:
     branches:
       - main
   workflow_dispatch:
-
 jobs:
   test-ocd-scenarios:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build all targets.
+      - name: Build & test all targets.
         run: |
           make build-all
           make test-all
       - name: Sign into Azure
+        if: github.event_name != 'pull_request'
         uses: azure/actions/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
