@@ -20,7 +20,7 @@ build-runner: build-ie build-api
 
 build-all: build-ie build-api build-runner
 
-# ------------------------------ Install targets ----------------------------------
+# ------------------------------ Install targets -------------------------------
 
 install-ie:
 	@echo "Installing the Innovation Engine CLI..."
