@@ -129,7 +129,7 @@ type BashCommandConfiguration struct {
 // Executes a bash command and returns the output or error.
 func ExecuteBashCommand(command string, config BashCommandConfiguration) (CommandOutput, error) {
 	var commandWithStateSaved = []string{
-    "set -e",
+		"set -e",
 		command,
 		"IE_LAST_COMMAND_EXIT_CODE=\"$?\"",
 		"env > " + environmentStateFile,

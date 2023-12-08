@@ -53,14 +53,40 @@ func TestEnvironmentVariableValidationAndFiltering(t *testing.T) {
 			"_AnotherValidKey": "value2",
 		}
 
-    if len(validEnvMap) != len(expectedValidEnvMap) {
-      t.Errorf("Expected validEnvMap to have %d keys, got %d", len(expectedValidEnvMap), len(validEnvMap))
-    }
+		if len(validEnvMap) != len(expectedValidEnvMap) {
+			t.Errorf(
+				"Expected validEnvMap to have %d keys, got %d",
+				len(expectedValidEnvMap),
+				len(validEnvMap),
+			)
+		}
 
 		for key, value := range validEnvMap {
 			if expectedValue, ok := expectedValidEnvMap[key]; !ok || value != expectedValue {
 				t.Errorf("Expected validEnvMap[%s] to be %s, got %s", key, expectedValue, value)
 			}
+		}
+	})
+}
+
+func TestBashCommandExecution(t *testing.T) {
+	// Test command execution
+	t.Run("Valid command execution", func(t *testing.T) {
+		cmd := "printf hello"
+		result, err := ExecuteBashCommand(
+			cmd,
+			BashCommandConfiguration{
+				EnvironmentVariables: nil,
+				InheritEnvironment:   true,
+				InteractiveCommand:   false,
+				WriteToHistory:       false,
+			},
+		)
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %v", err)
+		}
+		if result.StdOut != "hello" {
+			t.Errorf("Expected result to be non-empty, got '%s'", result.StdOut)
 		}
 	})
 }
