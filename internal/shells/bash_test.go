@@ -108,7 +108,7 @@ func TestBashCommandExecution(t *testing.T) {
 
 	})
 
-	t.Run("Command with multiple commands", func(t *testing.T) {
+	t.Run("Command with multiple subcommands", func(t *testing.T) {
 		cmd := "printf hello; printf world"
 		result, err := ExecuteBashCommand(
 			cmd,
@@ -124,6 +124,23 @@ func TestBashCommandExecution(t *testing.T) {
 		}
 		if result.StdOut != "helloworld" {
 			t.Errorf("Expected result to be non-empty, got '%s'", result.StdOut)
+		}
+	})
+
+	t.Run("Command with multiple subcommands exits on first error", func(t *testing.T) {
+		cmd := "printf hello; not_real_command; printf world"
+		_, err := ExecuteBashCommand(
+			cmd,
+			BashCommandConfiguration{
+				EnvironmentVariables: nil,
+				InheritEnvironment:   true,
+				InteractiveCommand:   false,
+				WriteToHistory:       false,
+			},
+		)
+
+		if err == nil {
+			t.Errorf("Expected an error to occur, but the command succeeded.")
 		}
 	})
 
