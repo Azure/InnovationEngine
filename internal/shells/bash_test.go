@@ -70,7 +70,7 @@ func TestEnvironmentVariableValidationAndFiltering(t *testing.T) {
 }
 
 func TestBashCommandExecution(t *testing.T) {
-	// Test command execution
+	// Ensures that if a command succeeds, the output is returned.
 	t.Run("Valid command execution", func(t *testing.T) {
 		cmd := "printf hello"
 		result, err := ExecuteBashCommand(
@@ -90,6 +90,7 @@ func TestBashCommandExecution(t *testing.T) {
 		}
 	})
 
+	// Ensures that if a command fails, an error is returned.
 	t.Run("Invalid command execution", func(t *testing.T) {
 		cmd := "not_real_command"
 		_, err := ExecuteBashCommand(
@@ -108,6 +109,7 @@ func TestBashCommandExecution(t *testing.T) {
 
 	})
 
+	// Test the execution of commands with multiple subcommands.
 	t.Run("Command with multiple subcommands", func(t *testing.T) {
 		cmd := "printf hello; printf world"
 		result, err := ExecuteBashCommand(
@@ -127,6 +129,8 @@ func TestBashCommandExecution(t *testing.T) {
 		}
 	})
 
+	// Ensures that if one of the subcommands fail, the other commands do
+	// as well.
 	t.Run("Command with multiple subcommands exits on first error", func(t *testing.T) {
 		cmd := "printf hello; not_real_command; printf world"
 		_, err := ExecuteBashCommand(
@@ -142,8 +146,11 @@ func TestBashCommandExecution(t *testing.T) {
 		if err == nil {
 			t.Errorf("Expected an error to occur, but the command succeeded.")
 		}
+
 	})
 
+	// Ensures that commands can access environment variables passed into
+	// the configuration.
 	t.Run("Command with environment variables", func(t *testing.T) {
 		cmd := "printf $TEST_ENV_VAR"
 		result, err := ExecuteBashCommand(
