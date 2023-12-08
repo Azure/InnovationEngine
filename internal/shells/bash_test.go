@@ -89,4 +89,65 @@ func TestBashCommandExecution(t *testing.T) {
 			t.Errorf("Expected result to be non-empty, got '%s'", result.StdOut)
 		}
 	})
+
+	t.Run("Invalid command execution", func(t *testing.T) {
+		cmd := "not_real_command"
+		_, err := ExecuteBashCommand(
+			cmd,
+			BashCommandConfiguration{
+				EnvironmentVariables: nil,
+				InheritEnvironment:   true,
+				InteractiveCommand:   false,
+				WriteToHistory:       false,
+			},
+		)
+
+		if err == nil {
+			t.Errorf("Expected an error to occur, but the command succeeded.")
+		}
+
+	})
+
+	t.Run("Command with multiple commands", func(t *testing.T) {
+		cmd := "printf hello; printf world"
+		result, err := ExecuteBashCommand(
+			cmd,
+			BashCommandConfiguration{
+				EnvironmentVariables: nil,
+				InheritEnvironment:   true,
+				InteractiveCommand:   false,
+				WriteToHistory:       false,
+			},
+		)
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %v", err)
+		}
+		if result.StdOut != "helloworld" {
+			t.Errorf("Expected result to be non-empty, got '%s'", result.StdOut)
+		}
+	})
+
+	t.Run("Command with environment variables", func(t *testing.T) {
+		cmd := "printf $TEST_ENV_VAR"
+		result, err := ExecuteBashCommand(
+			cmd,
+			BashCommandConfiguration{
+				EnvironmentVariables: map[string]string{
+					"TEST_ENV_VAR": "hello",
+				},
+				InheritEnvironment: true,
+				InteractiveCommand: false,
+				WriteToHistory:     false,
+			},
+		)
+
+		if err != nil {
+			t.Errorf("Expected err to be nil, got %v", err)
+		}
+
+		if result.StdOut != "hello" {
+			t.Errorf("Expected result to be non-empty, got '%s'", result.StdOut)
+		}
+	})
+
 }
