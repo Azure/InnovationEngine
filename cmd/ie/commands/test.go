@@ -1,11 +1,10 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
-	"os"
 
 	"github.com/Azure/InnovationEngine/internal/engine"
-	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -19,15 +18,13 @@ func init() {
 }
 
 var testCommand = &cobra.Command{
-	Use:   "test",
+	Use:   "test [markdown file]",
 	Args:  cobra.MinimumNArgs(1),
 	Short: "Test document commands against it's expected outputs.",
-	Run: func(cmd *cobra.Command, args []string) {
-
+	RunE: func(cmd *cobra.Command, args []string) error {
 		markdownFile := args[0]
 		if markdownFile == "" {
-			cmd.Help()
-			return
+			return errors.New("no markdown file specified")
 		}
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
@@ -39,11 +36,8 @@ var testCommand = &cobra.Command{
 			Subscription:  subscription,
 			CorrelationId: "",
 		})
-
 		if err != nil {
-			logging.GlobalLogger.Errorf("Error creating engine %s", err)
-			fmt.Printf("Error creating engine %s", err)
-			os.Exit(1)
+			return fmt.Errorf("creating engine: %w", err)
 		}
 
 		scenario, err := engine.CreateScenarioFromMarkdown(
@@ -52,12 +46,13 @@ var testCommand = &cobra.Command{
 			nil,
 		)
 		if err != nil {
-			logging.GlobalLogger.Errorf("Error creating scenario %s", err)
-			fmt.Printf("Error creating engine %s", err)
-			os.Exit(1)
+			return fmt.Errorf("creating scenario: %w", err)
 		}
 
-		innovationEngine.TestScenario(scenario)
+		if err := innovationEngine.TestScenario(scenario); err != nil {
+			return fmt.Errorf("testing scenario: %w", err)
+		}
 
+		return nil
 	},
 }

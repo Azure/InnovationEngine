@@ -8,7 +8,6 @@ import (
 
 	"github.com/Azure/InnovationEngine/internal/engine"
 	"github.com/Azure/InnovationEngine/internal/engine/environments"
-	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +21,7 @@ var toBashCommand = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		markdownFile := args[0]
 		if markdownFile == "" {
-			logging.GlobalLogger.Errorf("Error: No markdown file specified.")
-			return errors.New("error: No markdown file specified")
+			return errors.New("no markdown file specified")
 		}
 
 		environment, _ := cmd.Flags().GetString("environment")
@@ -34,16 +32,7 @@ var toBashCommand = &cobra.Command{
 		for _, environmentVariable := range environmentVariables {
 			keyValuePair := strings.SplitN(environmentVariable, "=", 2)
 			if len(keyValuePair) != 2 {
-				logging.GlobalLogger.Errorf(
-					"Error: Invalid environment variable format: %s",
-					environmentVariable,
-				)
-				fmt.Printf("Error: Invalid environment variable format: %s", environmentVariable)
-				cmd.Help()
-				return fmt.Errorf(
-					"error: Invalid environment variable format, %s",
-					environmentVariable,
-				)
+				return fmt.Errorf("invalid environment variable format: %s", environmentVariable)
 			}
 
 			cliEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
@@ -54,11 +43,8 @@ var toBashCommand = &cobra.Command{
 			markdownFile,
 			[]string{"bash", "azurecli", "azurecli-interactive", "terraform"},
 			cliEnvironmentVariables)
-
 		if err != nil {
-			logging.GlobalLogger.Errorf("Error creating scenario: %s", err)
-			fmt.Printf("Error creating scenario: %s", err)
-			return err
+			return fmt.Errorf("creating scenario: %w", err)
 		}
 
 		// If within cloudshell, we need to wrap the script in a json object to
@@ -66,11 +52,8 @@ var toBashCommand = &cobra.Command{
 		if environments.IsAzureEnvironment(environment) {
 			script := AzureScript{Script: scenario.ToShellScript()}
 			scriptJson, err := json.Marshal(script)
-
 			if err != nil {
-				logging.GlobalLogger.Errorf("Error converting to json: %s", err)
-				fmt.Printf("Error converting to json: %s", err)
-				return err
+				return fmt.Errorf("converting to json: %w", err)
 			}
 
 			fmt.Printf("ie_us%sie_ue\n", scriptJson)
@@ -79,7 +62,6 @@ var toBashCommand = &cobra.Command{
 		}
 
 		return nil
-
 	},
 }
 

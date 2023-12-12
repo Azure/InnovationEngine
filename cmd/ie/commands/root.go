@@ -14,27 +14,24 @@ import (
 var rootCommand = &cobra.Command{
 	Use:   "ie",
 	Short: "The innovation engine.",
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		logLevel, err := cmd.Flags().GetString("log-level")
 		if err != nil {
-			fmt.Printf("Error getting log level: %s", err)
-			os.Exit(1)
+			return fmt.Errorf("getting log level: %w", err)
 		}
 		logging.Init(logging.LevelFromString(logLevel))
 
 		// Check environment
 		environment, err := cmd.Flags().GetString("environment")
 		if err != nil {
-			fmt.Printf("Error getting environment: %s", err)
-			logging.GlobalLogger.Errorf("Error getting environment: %s", err)
-			os.Exit(1)
+			return fmt.Errorf("getting environment: %w", err)
 		}
 
 		if !environments.IsValidEnvironment(environment) {
-			fmt.Printf("Invalid environment: %s", environment)
-			logging.GlobalLogger.Errorf("Invalid environment: %s", err)
-			os.Exit(1)
+			return fmt.Errorf("validating environment: %w", err)
 		}
+
+		return nil
 	},
 }
 
@@ -49,7 +46,7 @@ func ExecuteCLI() {
 		StringArray("feature", []string{}, "Enables the specified feature. Format: --feature <feature>")
 
 	if err := rootCommand.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Printf("Error executing command: %s\n", err)
 		logging.GlobalLogger.Errorf("Error executing command: %s", err)
 		os.Exit(1)
 	}

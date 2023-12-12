@@ -1,12 +1,11 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/engine"
-	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -37,12 +36,10 @@ var executeCommand = &cobra.Command{
 	Use:   "execute [markdown file]",
 	Args:  cobra.MinimumNArgs(1),
 	Short: "Execute the commands for an Azure deployment scenario.",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		markdownFile := args[0]
 		if markdownFile == "" {
-			logging.GlobalLogger.Errorf("Error: No markdown file specified.")
-			cmd.Help()
-			os.Exit(1)
+			return errors.New("no markdown file specified")
 		}
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
@@ -64,13 +61,7 @@ var executeCommand = &cobra.Command{
 		for _, environmentVariable := range environmentVariables {
 			keyValuePair := strings.SplitN(environmentVariable, "=", 2)
 			if len(keyValuePair) != 2 {
-				logging.GlobalLogger.Errorf(
-					"Error: Invalid environment variable format: %s",
-					environmentVariable,
-				)
-				fmt.Printf("Error: Invalid environment variable format: %s", environmentVariable)
-				cmd.Help()
-				os.Exit(1)
+				return fmt.Errorf("invalid environment variable format: %s", environmentVariable)
 			}
 
 			cliEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
@@ -81,13 +72,7 @@ var executeCommand = &cobra.Command{
 			case "render-values":
 				renderValues = true
 			default:
-				logging.GlobalLogger.Errorf(
-					"Error: Invalid feature: %s",
-					feature,
-				)
-				fmt.Printf("Error: Invalid feature: %s\n", feature)
-				cmd.Help()
-				os.Exit(1)
+				return fmt.Errorf("invalid feature: %s", feature)
 			}
 		}
 
@@ -98,9 +83,7 @@ var executeCommand = &cobra.Command{
 			cliEnvironmentVariables,
 		)
 		if err != nil {
-			logging.GlobalLogger.Errorf("Error creating scenario: %s", err)
-			fmt.Printf("Error creating scenario: %s", err)
-			os.Exit(1)
+			return fmt.Errorf("creating scenario: %w", err)
 		}
 
 		innovationEngine, err := engine.NewEngine(engine.EngineConfiguration{
@@ -112,19 +95,15 @@ var executeCommand = &cobra.Command{
 			WorkingDirectory: workingDirectory,
 			RenderValues:     renderValues,
 		})
-
 		if err != nil {
-			logging.GlobalLogger.Errorf("Error creating engine: %s", err)
-			fmt.Printf("Error creating engine: %s", err)
-			os.Exit(1)
+			return fmt.Errorf("creating engine: %w", err)
 		}
 
 		// Execute the scenario
-		err = innovationEngine.ExecuteScenario(scenario)
-		if err != nil {
-			logging.GlobalLogger.Errorf("Error executing scenario: %s", err)
-			fmt.Printf("Error executing scenario: %s", err)
-			os.Exit(1)
+		if err = innovationEngine.ExecuteScenario(scenario); err != nil {
+			return fmt.Errorf("executing scenario: %w", err)
 		}
+
+		return nil
 	},
 }
