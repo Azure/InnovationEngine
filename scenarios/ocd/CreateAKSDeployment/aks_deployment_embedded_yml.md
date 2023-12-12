@@ -197,6 +197,117 @@ Finally, an Ingress resource is created to route traffic to the Azure Vote appli
 A test voting app YML file is already prepared. To deploy this app run the following command
 
 ```bash
+cat << EOF > azure-vote-start.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-vote-back
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azure-vote-back
+  template:
+    metadata:
+      labels:
+        app: azure-vote-back
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: azure-vote-back
+        image: docker.io/bitnami/redis:6.0.8
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 6379
+          name: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azure-vote-back
+  namespace: default
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: azure-vote-back
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-vote-front
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azure-vote-front
+  template:
+    metadata:
+      labels:
+        app: azure-vote-front
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: azure-vote-front
+        image: mcr.microsoft.com/azuredocs/azure-vote-front:v1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 80
+        env:
+        - name: REDIS
+          value: "azure-vote-back"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azure-vote-front
+  namespace: default
+spec:
+  ports:
+  - port: 80
+  selector:
+    app: azure-vote-front
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vote-ingress
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: azure-vote-front
+            port:
+              number: 80
+EOF
+```
+
+```bash
 kubectl apply -f azure-vote-start.yml
 ```
 
@@ -318,6 +429,42 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
    The issuer we are using can be found in the `cluster-issuer-prod.yml file`
 
    ```bash
+   cat << EOF > cluster-issuer-prod.yml
+   #!/bin/bash
+   #kubectl apply -f - <<EOF
+   apiVersion: cert-manager.io/v1
+   kind: ClusterIssuer
+   metadata:
+   name: letsencrypt-prod
+   spec:
+   acme:
+      # You must replace this email address with your own.
+      # Let's Encrypt will use this to contact you about expiring
+      # certificates, and issues related to your account.
+      email: $SSL_EMAIL_ADDRESS
+      # ACME server URL for Let’s Encrypt’s prod environment.
+      # The staging environment will not issue trusted certificates but is
+      # used to ensure that the verification process is working properly
+      # before moving to production
+      server: https://acme-v02.api.letsencrypt.org/directory
+      # Secret resource used to store the account's private key.
+      privateKeySecretRef:
+         name: letsencrypt
+      # Enable the HTTP-01 challenge provider
+      # you prove ownership of a domain by ensuring that a particular
+      # file is present at the domain
+      solvers:
+      - http01:
+         ingress:
+            class: nginx
+            podTemplate:
+               spec:
+               nodeSelector:
+                  "kubernetes.io/os": linux
+   EOF
+   ```
+
+   ```bash
    cluster_issuer_variables=$(<cluster-issuer-prod.yml)
    echo "${cluster_issuer_variables//\$SSL_EMAIL_ADDRESS/$SSL_EMAIL_ADDRESS}" | kubectl apply -f -
    ```
@@ -325,6 +472,39 @@ Cert-manager provides Helm charts as a first-class method of installation on Kub
 5. Upate Voting App Application to use Cert-Manager to obtain an SSL Certificate.
 
    The full YAML file can be found in `azure-vote-nginx-ssl.yml`
+
+   ```bash
+   cat << EOF > azure-vote-nginx-ssl.yml
+   ---
+   # INGRESS WITH SSL PROD
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+   name: vote-ingress
+   namespace: default
+   annotations:
+      kubernetes.io/tls-acme: "true"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+   spec:
+   ingressClassName: nginx
+   tls:
+   - hosts:
+      - $FQDN
+      secretName: azure-vote-nginx-secret
+   rules:
+      - host: $FQDN
+         http:
+         paths:
+         - path: /
+            pathType: Prefix
+            backend:
+               service:
+               name: azure-vote-front
+               port:
+                  number: 80
+   EOF
+   ```
 
    ```bash
    azure_vote_nginx_ssl_variables=$(<azure-vote-nginx-ssl.yml)
