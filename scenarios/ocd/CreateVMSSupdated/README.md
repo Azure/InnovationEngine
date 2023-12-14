@@ -371,7 +371,7 @@ az network application-gateway create   --name $MY_APPGW_NAME --location $REGION
 The below command creates a zone redundant Virtual Machine Scale Set (VMSS) within your resource group $MY_RESOURCE_GROUP_NAME. We integrate the Application Gateway that we created previous step. This command creates 2 Standard_DS2_v2 SKU Virtual Machines in subnet $MY_VM_SN_NAME. 
 
 ```bash
- az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --generate-ssh-keys --instance-count 2 --zones 1 2 3 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
+ az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --assign-identity --instance-count 2 --zones 1 2 3 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
  ```
 
 Results:
@@ -381,12 +381,17 @@ Results:
 {
   "vmss": {
     "doNotRunExtensionsOnOverprovisionedVMs": false,
+    "identity": {
+      "systemAssignedIdentity": "f94ce139-a0b1-4844-a836-1396b6572826",
+      "userAssignedIdentities": {}
+    },
     "orchestrationMode": "Uniform",
     "overprovision": true,
+    "platformFaultDomainCount": 1,
     "provisioningState": "Succeeded",
-    "singlePlacementGroup": true,
-    "timeCreated": "2023-12-04T16:10:30.5546744+00:00",
-    "uniqueId": "ae68f82c-54f3-4263-8252-7f25f1b276bb",
+    "singlePlacementGroup": false,
+    "timeCreated": "2023-12-14T10:50:58.8584886+00:00",
+    "uniqueId": "ca55e9a8-4c6f-4491-b217-4420a312f993",
     "upgradePolicy": {
       "mode": "Automatic",
       "rollingUpgradePolicy": {
@@ -402,7 +407,7 @@ Results:
       "networkProfile": {
         "networkInterfaceConfigurations": [
           {
-            "name": "myvms0ce7Nic",
+            "name": "myvms5aa3Nic",
             "properties": {
               "disableTcpStateTracking": false,
               "dnsSettings": {
@@ -412,18 +417,18 @@ Results:
               "enableIPForwarding": false,
               "ipConfigurations": [
                 {
-                  "name": "myvms0ce7IPConfig",
+                  "name": "myvms5aa3IPConfig",
                   "properties": {
                     "applicationGatewayBackendAddressPools": [
                       {
-                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/applicationGateways/myAPPGW3a43e4/backendAddressPools/appGatewayBackendPool",
-                        "resourceGroup": "myVMSSResourceGroup3a43e4"
+                        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Network/applicationGateways/myAPPGWaf9072/backendAddressPools/appGatewayBackendPool",
+                        "resourceGroup": "myVMSSResourceGroupaf9072"
                       }
                     ],
                     "privateIPAddressVersion": "IPv4",
                     "subnet": {
-                      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/virtualNetworks/myVNet3a43e4/subnets/myVMSN3a43e4",
-                      "resourceGroup": "myVMSSResourceGroup3a43e4"
+                      "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Network/virtualNetworks/myVNetaf9072/subnets/myVMSNaf9072",
+                      "resourceGroup": "myVMSSResourceGroupaf9072"
                     }
                   }
                 }
@@ -436,7 +441,7 @@ Results:
       "osProfile": {
         "adminUsername": "azureuser",
         "allowExtensionOperations": true,
-        "computerNamePrefix": "myvms0ce7",
+        "computerNamePrefix": "myvms5aa3",
         "linuxConfiguration": {
           "disablePasswordAuthentication": true,
           "enableVMAgentPlatformUpdates": false,
@@ -444,7 +449,7 @@ Results:
           "ssh": {
             "publicKeys": [
               {
-                "keyData": "ssh-rsa xxxxxxx",
+                "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDChUiONFSUdk5nk00XeujLNIfdijKwBR/cqAqAw8xa57BlI22Azntp625scK9Gpze9wFNj/bPDS29+PZXOaEjVljYHU/tgcbcvHR0sNUNoAvMPHRfSN2WebDUCDHK1hBQxPwiI4OWTbpYRm/E2deGe5gUpBoaA1AwOZVs1+6Z6unHOkhslqLJmNW+Rb8YUtRnbL3XZLUOwyPSkNMgARiMb+QWq0W2V6TtD+rM2pMVIf/D21PdHLsTBQ+DC0DeUyBlgGiueqijGcD0zmE6N6nAu2ps7sO+zxmnP37zbIRbwEHfdpQkPwnx42REgZ7ep/K9gnwWzSk1uIrxrSGypPqUV",
                 "path": "/home/azureuser/.ssh/authorized_keys"
               }
             ]
@@ -456,9 +461,9 @@ Results:
       "storageProfile": {
         "diskControllerType": "SCSI",
         "imageReference": {
-          "offer": "0001-com-ubuntu-minimal-jammy",
+          "offer": "0001-com-ubuntu-server-jammy",
           "publisher": "Canonical",
-          "sku": "minimal-22_04-lts-gen2",
+          "sku": "22_04-lts-gen2",
           "version": "latest"
         },
         "osDisk": {
@@ -471,8 +476,9 @@ Results:
           "osType": "Linux"
         }
       },
-      "timeCreated": "2023-12-04T16:10:30.5546744+00:00"
-    }
+      "timeCreated": "2023-12-14T10:50:58.8584886+00:00"
+    },
+    "zoneBalance": false
   }
 }
 ```
@@ -677,6 +683,337 @@ Results:
 }
 ```
 
+### Enable Azure AD login for a Linux Virtual Machine 
+The following command installs the extension to enable Azure AD login for a Linux VM.
+
+```bash
+ az vmss extension set --publisher Microsoft.Azure.ActiveDirectory --name AADSSHLoginForLinux --resource-group $MY_RESOURCE_GROUP_NAME --vmss-name $MY_VMSS_NAME
+```
+Results:
+
+<!-- expected_similarity=0.3 -->
+```json  
+{
+  "additionalCapabilities": null,
+  "automaticRepairsPolicy": null,
+  "constrainedMaximumCapacity": null,
+  "doNotRunExtensionsOnOverprovisionedVMs": false,
+  "extendedLocation": null,
+  "hostGroup": null,
+  "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+  "identity": {
+    "principalId": "f94ce139-a0b1-4844-a836-1396b6572826",
+    "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+    "type": "SystemAssigned",
+    "userAssignedIdentities": null
+  },
+  "location": "eastus",
+  "name": "myVMSSaf9072",
+  "orchestrationMode": "Uniform",
+  "overprovision": true,
+  "plan": null,
+  "platformFaultDomainCount": 1,
+  "priorityMixPolicy": null,
+  "provisioningState": "Succeeded",
+  "proximityPlacementGroup": null,
+  "resourceGroup": "myVMSSResourceGroupaf9072",
+  "scaleInPolicy": null,
+  "singlePlacementGroup": false,
+  "sku": {
+    "capacity": 2,
+    "name": "Standard_DS2_v2",
+    "tier": "Standard"
+  },
+  "spotRestorePolicy": null,
+  "tags": {},
+  "timeCreated": "2023-12-14T10:50:58.858488+00:00",
+  "type": "Microsoft.Compute/virtualMachineScaleSets",
+  "uniqueId": "ca55e9a8-4c6f-4491-b217-4420a312f993",
+  "upgradePolicy": {
+    "automaticOsUpgradePolicy": null,
+    "mode": "Automatic",
+    "rollingUpgradePolicy": {
+      "enableCrossZoneUpgrade": null,
+      "maxBatchInstancePercent": 20,
+      "maxSurge": false,
+      "maxUnhealthyInstancePercent": 20,
+      "maxUnhealthyUpgradedInstancePercent": 20,
+      "pauseTimeBetweenBatches": "PT0S",
+      "prioritizeUnhealthyInstances": null,
+      "rollbackFailedInstancesOnPolicyBreach": false
+    }
+  },
+  "virtualMachineProfile": {
+    "applicationProfile": null,
+    "billingProfile": null,
+    "capacityReservation": null,
+    "diagnosticsProfile": null,
+    "evictionPolicy": null,
+    "extensionProfile": {
+      "extensions": [
+        {
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": null,
+          "forceUpdateTag": null,
+          "id": null,
+          "name": "AADSSHLoginForLinux",
+          "protectedSettings": null,
+          "protectedSettingsFromKeyVault": null,
+          "provisionAfterExtensions": null,
+          "provisioningState": null,
+          "publisher": "Microsoft.Azure.ActiveDirectory",
+          "settings": null,
+          "suppressFailures": null,
+          "type": null,
+          "typeHandlerVersion": "1.0",
+          "typePropertiesType": "AADSSHLoginForLinux"
+        }
+      ],
+      "extensionsTimeBudget": null
+    },
+    "hardwareProfile": null,
+    "licenseType": null,
+    "networkProfile": {
+      "healthProbe": null,
+      "networkApiVersion": null,
+      "networkInterfaceConfigurations": [
+        {
+          "deleteOption": null,
+          "disableTcpStateTracking": false,
+          "dnsSettings": {
+            "dnsServers": []
+          },
+          "enableAcceleratedNetworking": false,
+          "enableFpga": null,
+          "enableIpForwarding": false,
+          "ipConfigurations": [
+            {
+              "applicationGatewayBackendAddressPools": [
+                {
+                  "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Network/applicationGateways/myAPPGWaf9072/backendAddressPools/appGatewayBackendPool",   
+                  "resourceGroup": "myVMSSResourceGroupaf9072"
+                }
+              ],
+              "applicationSecurityGroups": null,
+              "loadBalancerBackendAddressPools": null,
+              "loadBalancerInboundNatPools": null,
+              "name": "myvms5aa3IPConfig",
+              "primary": null,
+              "privateIpAddressVersion": "IPv4",
+              "publicIpAddressConfiguration": null,
+              "subnet": {
+                "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Network/virtualNetworks/myVNetaf9072/subnets/myVMSNaf9072",
+                "resourceGroup": "myVMSSResourceGroupaf9072"
+              }
+            }
+          ],
+          "name": "myvms5aa3Nic",
+          "networkSecurityGroup": null,
+          "primary": true
+        }
+      ]
+    },
+    "osProfile": {
+      "adminPassword": null,
+      "adminUsername": "azureuser",
+      "allowExtensionOperations": true,
+      "computerNamePrefix": "myvms5aa3",
+      "customData": null,
+      "linuxConfiguration": {
+        "disablePasswordAuthentication": true,
+        "enableVmAgentPlatformUpdates": false,
+        "patchSettings": null,
+        "provisionVmAgent": true,
+        "ssh": {
+          "publicKeys": [
+            {
+              "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDChUiONFSUdk5nk00XeujLNIfdijKwBR/cqAqAw8xa57BlI22Azntp625scK9Gpze9wFNj/bPDS29+PZXOaEjVljYHU/tgcbcvHR0sNUNoAvMPHRfSN2WebDUCDHK1hBQxPwiI4OWTbpYRm/E2deGe5gUpBoaA1AwOZVs1+6Z6unHOkhslqLJmNW+Rb8YUtRnbL3XZLUOwyPSkNMgARiMb+QWq0W2V6TtD+rM2pMVIf/D21PdHLsTBQ+DC0DeUyBlgGiueqijGcD0zmE6N6nAu2ps7sO+zxmnP37zbIRbwEHfdpQkPwnx42REgZ7ep/K9gnwWzSk1uIrxrSGypPqUV",
+              "path": "/home/azureuser/.ssh/authorized_keys"
+            }
+          ]
+        }
+      },
+      "requireGuestProvisionSignal": true,
+      "secrets": [],
+      "windowsConfiguration": null
+    },
+    "priority": null,
+    "scheduledEventsProfile": null,
+    "securityPostureReference": null,
+    "securityProfile": null,
+    "serviceArtifactReference": null,
+    "storageProfile": {
+      "dataDisks": null,
+      "diskControllerType": "SCSI",
+      "imageReference": {
+        "communityGalleryImageId": null,
+        "exactVersion": null,
+        "id": null,
+        "offer": "0001-com-ubuntu-server-jammy",
+        "publisher": "Canonical",
+        "sharedGalleryImageId": null,
+        "sku": "22_04-lts-gen2",
+        "version": "latest"
+      },
+      "osDisk": {
+        "caching": "ReadWrite",
+        "createOption": "FromImage",
+        "deleteOption": null,
+        "diffDiskSettings": null,
+        "diskSizeGb": 30,
+        "image": null,
+        "managedDisk": {
+          "diskEncryptionSet": null,
+          "securityProfile": null,
+          "storageAccountType": "Premium_LRS"
+        },
+        "name": null,
+        "osType": "Linux",
+        "vhdContainers": null,
+        "writeAcceleratorEnabled": null
+      }
+    },
+    "userData": null
+  },
+  "zoneBalance": false,
+  "zones": [
+    "1",
+    "2",
+    "3"
+  ]
+}
+
+```
+
+# Define an autoscale profle  
+
+To enable autoscale on a scale set, you first define an autoscale profile. This profile defines the default, minimum, and maximum scale set capacity. These limits let you control cost by not continually creating VM instances, and balance acceptable performance with a minimum number of instances that remain in a scale-in event.
+The following example sets the default, and minimum, capacity of 2 VM instances, and a maximum of 10:
+
+```bash
+az monitor autoscale create --resource-group $MY_RESOURCE_GROUP_NAME --resource  $MY_VMSS_NAME --resource-type Microsoft.Compute/virtualMachineScaleSets --name autoscale --min-count 2 --max-count 10 --count 2
+```
+
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+```json  
+{
+  "enabled": true,
+  "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupaf9072/providers/microsoft.insights/autoscalesettings/autoscale",
+  "location": "eastus",
+  "name": "autoscale",
+  "namePropertiesName": "autoscale",
+  "notifications": [
+    {
+      "email": {
+        "customEmails": [],
+        "sendToSubscriptionAdministrator": false,
+        "sendToSubscriptionCoAdministrators": false
+      },
+      "webhooks": []
+    }
+  ],
+  "predictiveAutoscalePolicy": {
+    "scaleLookAheadTime": null,
+    "scaleMode": "Disabled"
+  },
+  "profiles": [
+    {
+      "capacity": {
+        "default": "2",
+        "maximum": "10",
+        "minimum": "2"
+      },
+      "fixedDate": null,
+      "name": "default",
+      "recurrence": null,
+      "rules": []
+    }
+  ],
+  "resourceGroup": "myVMSSResourceGroupaf9072",
+  "systemData": null,
+  "tags": {},
+  "targetResourceLocation": null,
+  "targetResourceUri": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+  "type": "Microsoft.Insights/autoscaleSettings"
+}
+```
+
+# Create a rule to autoscale out
+
+The Following command creates a rule that increases the number of VM instances in a scale set when the average CPU load is greater than 70% over a 5-minute period. When the rule triggers, the number of VM instances is increased by three.
+
+```bash
+az monitor autoscale rule create --resource-group $MY_RESOURCE_GROUP_NAME --autoscale-name autoscale --condition "Percentage CPU > 70 avg 5m" --scale out 3
+```
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+```json 
+{
+  "metricTrigger": {
+    "dimensions": [],
+    "dividePerInstance": null,
+    "metricName": "Percentage CPU",
+    "metricNamespace": null,
+    "metricResourceLocation": null,
+    "metricResourceUri": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+    "operator": "GreaterThan",
+    "statistic": "Average",
+    "threshold": "70",
+    "timeAggregation": "Average",
+    "timeGrain": "PT1M",
+    "timeWindow": "PT5M"
+  },
+  "scaleAction": {
+    "cooldown": "PT5M",
+    "direction": "Increase",
+    "type": "ChangeCount",
+    "value": "3"
+  }
+} 
+```
+
+# Create a rule to autoscale in
+
+Create another rule with az monitor autoscale rule create that decreases the number of VM instances in a scale set when the average CPU load then drops below 30% over a 5-minute period. The following example defines the rule to scale in the number of VM instances by one.
+
+```bash
+az monitor autoscale rule create --resource-group  $MY_RESOURCE_GROUP_NAME --autoscale-name autoscale --condition "Percentage CPU < 30 avg 5m" --scale in 1
+```
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+```json 
+{
+  "metricTrigger": {
+    "dimensions": [],
+    "dividePerInstance": null,
+    "metricName": "Percentage CPU",
+    "metricNamespace": null,
+    "metricResourceLocation": null,
+    "metricResourceUri": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+    "operator": "LessThan",
+    "statistic": "Average",
+    "threshold": "30",
+    "timeAggregation": "Average",
+    "timeGrain": "PT1M",
+    "timeWindow": "PT5M"
+  },
+  "scaleAction": {
+    "cooldown": "PT5M",
+    "direction": "Decrease",
+    "type": "ChangeCount",
+    "value": "1"
+  }
+}
+```
+
+
 ### Test the page
 
 The below command shows you the public IP of your Application Gateway. You can cpaste the IP adress to a browser page for testing.
@@ -687,9 +1024,8 @@ az network public-ip show --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AP
 
 
 
+
+
 # Next Steps
 
-* [VM Documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/)
-* [Use Cloud-Init to initialize a Linux VM on first boot](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-automate-vm-deployment)
-* [Create custom VM images](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-custom-images)
-* [Load Balance VMs](https://learn.microsoft.com/en-us/azure/load-balancer/quickstart-load-balancer-standard-public-cli)
+* [VMSS Documentation](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview)
