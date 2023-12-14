@@ -223,11 +223,11 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							logging.GlobalLogger.Errorf("Error executing command: %s", commandErr.Error())
 
 							azureStatus.SetError(commandErr)
-	environments.AttachResourceURIsToAzureStatus(
-		&azureStatus,
-		resourceGroupName,
-		e.Configuration.Environment,
-	)
+							environments.AttachResourceURIsToAzureStatus(
+								&azureStatus,
+								resourceGroupName,
+								e.Configuration.Environment,
+							)
 							environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
 							return commandErr
