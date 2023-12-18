@@ -371,7 +371,7 @@ az network application-gateway create   --name $MY_APPGW_NAME --location $REGION
 The below command creates a zone redundant Virtual Machine Scale Set (VMSS) within your resource group $MY_RESOURCE_GROUP_NAME. We integrate the Application Gateway that we created previous step. This command creates 2 Standard_DS2_v2 SKU Virtual Machines in subnet $MY_VM_SN_NAME. 
 
 ```bash
- az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --generate-ssh-keys --instance-count 2 --zones 1 2 3 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
+az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --generate-ssh-keys --public-ip-per-vm --instance-count 2 --zones 1 2 3 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
  ```
 
 Results:
@@ -386,8 +386,8 @@ Results:
     "platformFaultDomainCount": 1,
     "provisioningState": "Succeeded",
     "singlePlacementGroup": false,
-    "timeCreated": "2023-12-18T11:47:36.5304981+00:00",
-    "uniqueId": "79aa92f5-cf99-486b-9b9c-32d67edd80dc",
+    "timeCreated": "2023-12-18T14:51:32.7740167+00:00",
+    "uniqueId": "b13f443e-ae79-46e9-8643-23d6177187ca",
     "upgradePolicy": {
       "mode": "Automatic",
       "rollingUpgradePolicy": {
@@ -403,7 +403,7 @@ Results:
       "networkProfile": {
         "networkInterfaceConfigurations": [
           {
-            "name": "myvmsd8f0Nic",
+            "name": "myvmsa53cNic",
             "properties": {
               "disableTcpStateTracking": false,
               "dnsSettings": {
@@ -413,18 +413,26 @@ Results:
               "enableIPForwarding": false,
               "ipConfigurations": [
                 {
-                  "name": "myvmsd8f0IPConfig",
+                  "name": "myvmsa53cIPConfig",
                   "properties": {
                     "applicationGatewayBackendAddressPools": [
                       {
-                        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",   
-                        "resourceGroup": "myVMSSResourceGroupa653af"
+                        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup7e8bdd/providers/Microsoft.Network/applicationGateways/myAPPGW7e8bdd/backendAddressPools/appGatewayBackendPool",   
+                        "resourceGroup": "myVMSSResourceGroup7e8bdd"
                       }
                     ],
                     "privateIPAddressVersion": "IPv4",
+                    "publicIPAddressConfiguration": {
+                      "name": "instancepublicip",
+                      "properties": {
+                        "idleTimeoutInMinutes": 10,
+                        "ipTags": [],
+                        "publicIPAddressVersion": "IPv4"
+                      }
+                    },
                     "subnet": {
-                      "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/virtualNetworks/myVNeta653af/subnets/myVMSNa653af",
-                      "resourceGroup": "myVMSSResourceGroupa653af"
+                      "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup7e8bdd/providers/Microsoft.Network/virtualNetworks/myVNet7e8bdd/subnets/myVMSN7e8bdd",
+                      "resourceGroup": "myVMSSResourceGroup7e8bdd"
                     }
                   }
                 }
@@ -437,7 +445,7 @@ Results:
       "osProfile": {
         "adminUsername": "azureuser",
         "allowExtensionOperations": true,
-        "computerNamePrefix": "myvmsd8f0",
+        "computerNamePrefix": "myvmsa53c",
         "linuxConfiguration": {
           "disablePasswordAuthentication": true,
           "enableVMAgentPlatformUpdates": false,
@@ -472,7 +480,7 @@ Results:
           "osType": "Linux"
         }
       },
-      "timeCreated": "2023-12-18T11:47:36.5304981+00:00"
+      "timeCreated": "2023-12-18T14:51:32.7740167+00:00"
     },
     "zoneBalance": false
   }
