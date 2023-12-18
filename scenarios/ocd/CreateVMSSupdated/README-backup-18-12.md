@@ -371,7 +371,7 @@ az network application-gateway create   --name $MY_APPGW_NAME --location $REGION
 The below command creates a zone redundant Virtual Machine Scale Set (VMSS) within your resource group $MY_RESOURCE_GROUP_NAME. We integrate the Application Gateway that we created previous step. This command creates 2 Standard_DS2_v2 SKU Virtual Machines in subnet $MY_VM_SN_NAME. 
 
 ```bash
- az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --generate-ssh-keys --assign-identity --instance-count 2 --zones 1 2 3 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
+ az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --assign-identity --instance-count 2 --zones 1 2 3 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
  ```
 
 Results:
@@ -382,7 +382,7 @@ Results:
   "vmss": {
     "doNotRunExtensionsOnOverprovisionedVMs": false,
     "identity": {
-      "systemAssignedIdentity": "a1d40a38-b75e-47bc-b743-0588ba50ffd0",
+      "systemAssignedIdentity": "f94ce139-a0b1-4844-a836-1396b6572826",
       "userAssignedIdentities": {}
     },
     "orchestrationMode": "Uniform",
@@ -390,8 +390,8 @@ Results:
     "platformFaultDomainCount": 1,
     "provisioningState": "Succeeded",
     "singlePlacementGroup": false,
-    "timeCreated": "2023-12-18T11:29:22.668574+00:00",
-    "uniqueId": "ed30a5ad-e8ed-43fa-93e7-55ad28ff3d93",
+    "timeCreated": "2023-12-14T10:50:58.8584886+00:00",
+    "uniqueId": "ca55e9a8-4c6f-4491-b217-4420a312f993",
     "upgradePolicy": {
       "mode": "Automatic",
       "rollingUpgradePolicy": {
@@ -407,7 +407,7 @@ Results:
       "networkProfile": {
         "networkInterfaceConfigurations": [
           {
-            "name": "myvmsd8f0Nic",
+            "name": "myvms5aa3Nic",
             "properties": {
               "disableTcpStateTracking": false,
               "dnsSettings": {
@@ -417,18 +417,18 @@ Results:
               "enableIPForwarding": false,
               "ipConfigurations": [
                 {
-                  "name": "myvmsd8f0IPConfig",
+                  "name": "myvms5aa3IPConfig",
                   "properties": {
                     "applicationGatewayBackendAddressPools": [
                       {
-                        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",
-                        "resourceGroup": "myVMSSResourceGroupa653af"
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Network/applicationGateways/myAPPGWaf9072/backendAddressPools/appGatewayBackendPool",
+                        "resourceGroup": "myVMSSResourceGroupaf9072"
                       }
                     ],
                     "privateIPAddressVersion": "IPv4",
                     "subnet": {
-                      "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/virtualNetworks/myVNeta653af/subnets/myVMSNa653af",
-                      "resourceGroup": "myVMSSResourceGroupa653af"
+                      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Network/virtualNetworks/myVNetaf9072/subnets/myVMSNaf9072",
+                      "resourceGroup": "myVMSSResourceGroupaf9072"
                     }
                   }
                 }
@@ -441,7 +441,7 @@ Results:
       "osProfile": {
         "adminUsername": "azureuser",
         "allowExtensionOperations": true,
-        "computerNamePrefix": "myvmsd8f0",
+        "computerNamePrefix": "myvms5aa3",
         "linuxConfiguration": {
           "disablePasswordAuthentication": true,
           "enableVMAgentPlatformUpdates": false,
@@ -476,10 +476,210 @@ Results:
           "osType": "Linux"
         }
       },
-      "timeCreated": "2023-12-18T11:29:22.668574+00:00"
+      "timeCreated": "2023-12-14T10:50:58.8584886+00:00"
     },
     "zoneBalance": false
   }
+}
+```
+
+### Install ngnix with VMSS extensions 
+
+The below command uses VMSS extension to run custom script. For testing purposes, here we install ngnix and publish a page that shows the hostname of the Virtual Machine that your HTTP requests hits. We use this custom script for this pusposes : https://raw.githubusercontent.com/Azure-Samples/compute-automation-configurations/master/automate_nginx.sh 
+
+
+```bash
+az vmss extension set --publisher Microsoft.Azure.Extensions --version 2.0  --name CustomScript --resource-group $MY_RESOURCE_GROUP_NAME --vmss-name $MY_VMSS_NAME --settings '{ "fileUris": ["https://raw.githubusercontent.com/Azure-Samples/compute-automation-configurations/master/automate_nginx.sh"], "commandToExecute": "./automate_nginx.sh" }' -o JSON
+```
+
+Results:
+
+<!-- expected_similarity=0.3 -->
+```json  
+{
+  "additionalCapabilities": null,
+  "automaticRepairsPolicy": null,
+  "constrainedMaximumCapacity": null,
+  "doNotRunExtensionsOnOverprovisionedVMs": false,
+  "extendedLocation": null,
+  "hostGroup": null,
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSS3a43e4",
+  "identity": null,
+  "location": "eastus",
+  "name": "myVMSS3a43e4",
+  "orchestrationMode": "Uniform",
+  "overprovision": true,
+  "plan": null,
+  "platformFaultDomainCount": null,
+  "priorityMixPolicy": null,
+  "provisioningState": "Succeeded",
+  "proximityPlacementGroup": null,
+  "resourceGroup": "myVMSSResourceGroup3a43e4",
+  "scaleInPolicy": null,
+  "singlePlacementGroup": true,
+  "sku": {
+    "capacity": 2,
+    "name": "Standard_DS2_v2",
+    "tier": "Standard"
+  },
+  "spotRestorePolicy": null,
+  "tags": {},
+  "timeCreated": "2023-12-04T16:10:30.554674+00:00",
+  "type": "Microsoft.Compute/virtualMachineScaleSets",
+  "uniqueId": "ae68f82c-54f3-4263-8252-7f25f1b276bb",
+  "upgradePolicy": {
+    "automaticOsUpgradePolicy": null,
+    "mode": "Automatic",
+    "rollingUpgradePolicy": {
+      "enableCrossZoneUpgrade": null,
+      "maxBatchInstancePercent": 20,
+      "maxSurge": false,
+      "maxUnhealthyInstancePercent": 20,
+      "maxUnhealthyUpgradedInstancePercent": 20,
+      "pauseTimeBetweenBatches": "PT0S",
+      "prioritizeUnhealthyInstances": null,
+      "rollbackFailedInstancesOnPolicyBreach": false
+    }
+  },
+  "virtualMachineProfile": {
+    "applicationProfile": null,
+    "billingProfile": null,
+    "capacityReservation": null,
+    "diagnosticsProfile": null,
+    "evictionPolicy": null,
+    "extensionProfile": {
+      "extensions": [
+        {
+          "autoUpgradeMinorVersion": true,
+          "enableAutomaticUpgrade": null,
+          "forceUpdateTag": null,
+          "id": null,
+          "name": "CustomScript",
+          "protectedSettings": null,
+          "protectedSettingsFromKeyVault": null,
+          "provisionAfterExtensions": null,
+          "provisioningState": null,
+          "publisher": "Microsoft.Azure.Extensions",
+          "settings": {
+            "commandToExecute": "./automate_nginx.sh",
+            "fileUris": [
+              "https://raw.githubusercontent.com/Azure-Samples/compute-automation-configurations/master/automate_nginx.sh"
+            ]
+          },
+          "suppressFailures": null,
+          "type": null,
+          "typeHandlerVersion": "2.0",
+          "typePropertiesType": "CustomScript"
+        }
+      ],
+      "extensionsTimeBudget": null
+    },
+    "hardwareProfile": null,
+    "licenseType": null,
+    "networkProfile": {
+      "healthProbe": null,
+      "networkApiVersion": null,
+      "networkInterfaceConfigurations": [
+        {
+          "deleteOption": null,
+          "disableTcpStateTracking": false,
+          "dnsSettings": {
+            "dnsServers": []
+          },
+          "enableAcceleratedNetworking": false,
+          "enableFpga": null,
+          "enableIpForwarding": false,
+          "ipConfigurations": [
+            {
+              "applicationGatewayBackendAddressPools": [
+                {
+                  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/applicationGateways/myAPPGW3a43e4/backendAddressPools/appGatewayBackendPool",
+                  "resourceGroup": "myVMSSResourceGroup3a43e4"
+                }
+              ],
+              "applicationSecurityGroups": null,
+              "loadBalancerBackendAddressPools": null,
+              "loadBalancerInboundNatPools": null,
+              "name": "myvms0ce7IPConfig",
+              "primary": null,
+              "privateIpAddressVersion": "IPv4",
+              "publicIpAddressConfiguration": null,
+              "subnet": {
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup3a43e4/providers/Microsoft.Network/virtualNetworks/myVNet3a43e4/subnets/myVMSN3a43e4",
+                "resourceGroup": "myVMSSResourceGroup3a43e4"
+              }
+            }
+          ],
+          "name": "myvms0ce7Nic",
+          "networkSecurityGroup": null,
+          "primary": true
+        }
+      ]
+    },
+    "osProfile": {
+      "adminPassword": null,
+      "adminUsername": "azureuser",
+      "allowExtensionOperations": true,
+      "computerNamePrefix": "myvms0ce7",
+      "customData": null,
+      "linuxConfiguration": {
+        "disablePasswordAuthentication": true,
+        "enableVmAgentPlatformUpdates": false,
+        "patchSettings": null,
+        "provisionVmAgent": true,
+        "ssh": {
+          "publicKeys": [
+            {
+              "keyData": "ssh-rsa xxxxxxx",
+              "path": "/home/azureuser/.ssh/authorized_keys"
+            }
+          ]
+        }
+      },
+      "requireGuestProvisionSignal": true,
+      "secrets": [],
+      "windowsConfiguration": null
+    },
+    "priority": null,
+    "scheduledEventsProfile": null,
+    "securityPostureReference": null,
+    "securityProfile": null,
+    "serviceArtifactReference": null,
+    "storageProfile": {
+      "dataDisks": null,
+      "diskControllerType": "SCSI",
+      "imageReference": {
+        "communityGalleryImageId": null,
+        "exactVersion": null,
+        "id": null,
+        "offer": "0001-com-ubuntu-minimal-jammy",
+        "publisher": "Canonical",
+        "sharedGalleryImageId": null,
+        "sku": "minimal-22_04-lts-gen2",
+        "version": "latest"
+      },
+      "osDisk": {
+        "caching": "ReadWrite",
+        "createOption": "FromImage",
+        "deleteOption": null,
+        "diffDiskSettings": null,
+        "diskSizeGb": 30,
+        "image": null,
+        "managedDisk": {
+          "diskEncryptionSet": null,
+          "securityProfile": null,
+          "storageAccountType": "Premium_LRS"
+        },
+        "name": null,
+        "osType": "Linux",
+        "vhdContainers": null,
+        "writeAcceleratorEnabled": null
+      }
+    },
+    "userData": null
+  },
+  "zoneBalance": null,
+  "zones": null
 }
 ```
 
