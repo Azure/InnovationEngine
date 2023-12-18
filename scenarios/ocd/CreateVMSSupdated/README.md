@@ -371,7 +371,7 @@ az network application-gateway create   --name $MY_APPGW_NAME --location $REGION
 The below command creates a zone redundant Virtual Machine Scale Set (VMSS) within your resource group $MY_RESOURCE_GROUP_NAME. We integrate the Application Gateway that we created previous step. This command creates 2 Standard_DS2_v2 SKU Virtual Machines in subnet $MY_VM_SN_NAME. 
 
 ```bash
- az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --generate-ssh-keys --assign-identity --instance-count 2 --zones 1 2 3 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
+ az vmss create --name $MY_VMSS_NAME --resource-group $MY_RESOURCE_GROUP_NAME --image $MY_VM_IMAGE --admin-username $MY_USERNAME --generate-ssh-keys --instance-count 2 --zones 1 2 3 --vnet-name $MY_VNET_NAME --subnet $MY_VM_SN_NAME --vm-sku Standard_DS2_v2 --upgrade-policy-mode Automatic --app-gateway $MY_APPGW_NAME --backend-pool-name appGatewayBackendPool -o JSON
  ```
 
 Results:
@@ -381,17 +381,13 @@ Results:
 {
   "vmss": {
     "doNotRunExtensionsOnOverprovisionedVMs": false,
-    "identity": {
-      "systemAssignedIdentity": "a1d40a38-b75e-47bc-b743-0588ba50ffd0",
-      "userAssignedIdentities": {}
-    },
     "orchestrationMode": "Uniform",
     "overprovision": true,
     "platformFaultDomainCount": 1,
     "provisioningState": "Succeeded",
     "singlePlacementGroup": false,
-    "timeCreated": "2023-12-18T11:29:22.668574+00:00",
-    "uniqueId": "ed30a5ad-e8ed-43fa-93e7-55ad28ff3d93",
+    "timeCreated": "2023-12-18T11:47:36.5304981+00:00",
+    "uniqueId": "79aa92f5-cf99-486b-9b9c-32d67edd80dc",
     "upgradePolicy": {
       "mode": "Automatic",
       "rollingUpgradePolicy": {
@@ -421,7 +417,7 @@ Results:
                   "properties": {
                     "applicationGatewayBackendAddressPools": [
                       {
-                        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",
+                        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",   
                         "resourceGroup": "myVMSSResourceGroupa653af"
                       }
                     ],
@@ -476,19 +472,22 @@ Results:
           "osType": "Linux"
         }
       },
-      "timeCreated": "2023-12-18T11:29:22.668574+00:00"
+      "timeCreated": "2023-12-18T11:47:36.5304981+00:00"
     },
     "zoneBalance": false
   }
 }
 ```
 
-### Enable Azure AD login for a Linux Virtual Machine 
-The following command installs the extension to enable Azure AD login for a Linux VM.
+### Install ngnix with VMSS extensions 
+
+The below command uses VMSS extension to run custom script. For testing purposes, here we install ngnix and publish a page that shows the hostname of the Virtual Machine that your HTTP requests hits. We use this custom script for this pusposes : https://raw.githubusercontent.com/Azure-Samples/compute-automation-configurations/master/automate_nginx.sh 
+
 
 ```bash
- az vmss extension set --publisher Microsoft.Azure.ActiveDirectory --name AADSSHLoginForLinux --resource-group $MY_RESOURCE_GROUP_NAME --vmss-name $MY_VMSS_NAME
+az vmss extension set --publisher Microsoft.Azure.Extensions --version 2.0  --name CustomScript --resource-group $MY_RESOURCE_GROUP_NAME --vmss-name $MY_VMSS_NAME --settings '{ "fileUris": ["https://raw.githubusercontent.com/Azure-Samples/compute-automation-configurations/master/automate_nginx.sh"], "commandToExecute": "./automate_nginx.sh" }' -o JSON
 ```
+
 Results:
 
 <!-- expected_similarity=0.3 -->
@@ -500,15 +499,10 @@ Results:
   "doNotRunExtensionsOnOverprovisionedVMs": false,
   "extendedLocation": null,
   "hostGroup": null,
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
-  "identity": {
-    "principalId": "f94ce139-a0b1-4844-a836-1396b6572826",
-    "tenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
-    "type": "SystemAssigned",
-    "userAssignedIdentities": null
-  },
+  "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSa653af",
+  "identity": null,
   "location": "eastus",
-  "name": "myVMSSaf9072",
+  "name": "myVMSSa653af",
   "orchestrationMode": "Uniform",
   "overprovision": true,
   "plan": null,
@@ -516,7 +510,7 @@ Results:
   "priorityMixPolicy": null,
   "provisioningState": "Succeeded",
   "proximityPlacementGroup": null,
-  "resourceGroup": "myVMSSResourceGroupaf9072",
+  "resourceGroup": "myVMSSResourceGroupa653af",
   "scaleInPolicy": null,
   "singlePlacementGroup": false,
   "sku": {
@@ -526,9 +520,9 @@ Results:
   },
   "spotRestorePolicy": null,
   "tags": {},
-  "timeCreated": "2023-12-14T10:50:58.858488+00:00",
+  "timeCreated": "2023-12-18T11:47:36.530498+00:00",
   "type": "Microsoft.Compute/virtualMachineScaleSets",
-  "uniqueId": "ca55e9a8-4c6f-4491-b217-4420a312f993",
+  "uniqueId": "79aa92f5-cf99-486b-9b9c-32d67edd80dc",
   "upgradePolicy": {
     "automaticOsUpgradePolicy": null,
     "mode": "Automatic",
@@ -556,17 +550,22 @@ Results:
           "enableAutomaticUpgrade": null,
           "forceUpdateTag": null,
           "id": null,
-          "name": "AADSSHLoginForLinux",
+          "name": "CustomScript",
           "protectedSettings": null,
           "protectedSettingsFromKeyVault": null,
           "provisionAfterExtensions": null,
           "provisioningState": null,
-          "publisher": "Microsoft.Azure.ActiveDirectory",
-          "settings": null,
+          "publisher": "Microsoft.Azure.Extensions",
+          "settings": {
+            "commandToExecute": "./automate_nginx.sh",
+            "fileUris": [
+              "https://raw.githubusercontent.com/Azure-Samples/compute-automation-configurations/master/automate_nginx.sh"
+            ]
+          },
           "suppressFailures": null,
           "type": null,
-          "typeHandlerVersion": "1.0",
-          "typePropertiesType": "AADSSHLoginForLinux"
+          "typeHandlerVersion": "2.0",
+          "typePropertiesType": "CustomScript"
         }
       ],
       "extensionsTimeBudget": null
@@ -590,24 +589,24 @@ Results:
             {
               "applicationGatewayBackendAddressPools": [
                 {
-                  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Network/applicationGateways/myAPPGWaf9072/backendAddressPools/appGatewayBackendPool",   
-                  "resourceGroup": "myVMSSResourceGroupaf9072"
+                  "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",
+                  "resourceGroup": "myVMSSResourceGroupa653af"
                 }
               ],
               "applicationSecurityGroups": null,
               "loadBalancerBackendAddressPools": null,
               "loadBalancerInboundNatPools": null,
-              "name": "myvms5aa3IPConfig",
+              "name": "myvmsd8f0IPConfig",
               "primary": null,
               "privateIpAddressVersion": "IPv4",
               "publicIpAddressConfiguration": null,
               "subnet": {
-                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Network/virtualNetworks/myVNetaf9072/subnets/myVMSNaf9072",
-                "resourceGroup": "myVMSSResourceGroupaf9072"
+                "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/virtualNetworks/myVNeta653af/subnets/myVMSNa653af",
+                "resourceGroup": "myVMSSResourceGroupa653af"
               }
             }
           ],
-          "name": "myvms5aa3Nic",
+          "name": "myvmsd8f0Nic",
           "networkSecurityGroup": null,
           "primary": true
         }
@@ -617,7 +616,7 @@ Results:
       "adminPassword": null,
       "adminUsername": "azureuser",
       "allowExtensionOperations": true,
-      "computerNamePrefix": "myvms5aa3",
+      "computerNamePrefix": "myvmsd8f0",
       "customData": null,
       "linuxConfiguration": {
         "disablePasswordAuthentication": true,
@@ -682,8 +681,8 @@ Results:
     "3"
   ]
 }
-
 ```
+
 
 # Define an autoscale profile  
 
