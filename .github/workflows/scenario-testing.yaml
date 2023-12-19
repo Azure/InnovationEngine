@@ -38,6 +38,6 @@ jobs:
             apk add --no-cache make git openssh openssl helm
             make test-upstream-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
       - name: Display ie.log file
-        if: github.event_name != 'pull_request'
+        if: (success() || failure()) && github.event_name != 'pull_request'
         run: |
           cat ie.log
