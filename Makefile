@@ -42,7 +42,7 @@ test-scenario:
 test-scenarios:
 	@echo "Testing out the scenarios"
 	for dir in ./scenarios/ocd/*/; do \
-		 $(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)"; \
+		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)") || exit $$?; \
 	done
 
 test-upstream-scenarios:
@@ -54,7 +54,7 @@ test-upstream-scenarios:
 		if ! [ -f $${dir}README.md ]; then \
 			continue; \
 		fi; \
-		$(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)"; \
+		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)") || exit $$?; \
 	done
 
 # ------------------------------- Run targets ----------------------------------
