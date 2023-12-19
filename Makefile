@@ -50,7 +50,7 @@ test-upstream-scenarios:
 	@git config --global --add safe.directory /home/runner/work/InnovationEngine/InnovationEngine
 	@git submodule update --init --recursive
 	@echo "Testing out the upstream scenarios"
-	for dir in ./upstream-scenarios/exec-docs/*/; do \
+	for dir in ./upstream-scenarios/scenarios/*/; do \
 		if ! [ -f $${dir}README.md ]; then \
 			continue; \
 		fi; \
