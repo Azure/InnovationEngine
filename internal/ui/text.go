@@ -27,6 +27,16 @@ var (
 	OcdStatusUpdateStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000"))
 )
 
+var (
+	InteractiveModeStepTitleStyle = lipgloss.NewStyle().
+					Foreground(lipgloss.Color("#518BAD")).
+					Bold(true)
+	InteractiveModeCodeblockDescriptionStyle = lipgloss.NewStyle().
+							Foreground(lipgloss.Color("#ffffff"))
+	InteractiveModeCodeblockStyle = lipgloss.NewStyle().
+					Foreground(lipgloss.Color("#fff")).Background(lipgloss.Color("#000000"))
+)
+
 func RemoveHorizontalAlign(s string) string {
 	return strings.Join(
 		mapSliceString(

@@ -55,11 +55,13 @@ func (e *Engine) TestScenario(scenario *Scenario) error {
 	})
 }
 
+// Executes a Scenario in interactive mode. This mode goes over each codeblock
+// step by step and allows the user to interact with the codeblock.
 func (e *Engine) InteractWithScenario(scenario *Scenario) error {
 	return fs.UsingDirectory(e.Configuration.WorkingDirectory, func() error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
-		// Test the steps
+		// Interact with the steps
 		fmt.Println(ui.ScenarioTitleStyle.Render(scenario.Name))
 		err := e.InteractWithSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 		return err
