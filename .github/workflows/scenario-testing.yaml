@@ -35,7 +35,7 @@ jobs:
         if: github.event_name != 'pull_request'
         with:
           inlineScript: |
-            apk add --no-cache make git
+            apk add --no-cache make git openssh openssl helm
             make test-upstream-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
       - name: Display ie.log file
         if: github.event_name != 'pull_request'
