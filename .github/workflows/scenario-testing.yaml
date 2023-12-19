@@ -15,6 +15,7 @@ permissions:
 jobs:
   test-ocd-scenarios:
     runs-on: ubuntu-latest
+    environment: Production
     steps:
       - uses: actions/checkout@v2
       - name: Build all targets.
