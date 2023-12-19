@@ -37,7 +37,7 @@ SUBSCRIPTION ?= 00000000-0000-0000-0000-000000000000
 SCENARIO ?= ./README.md
 test-scenario:
 	@echo "Running scenario $(SCENARIO)"
-	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION)
+	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY)
 
 test-scenarios:
 	@echo "Testing out the scenarios"
@@ -54,7 +54,7 @@ test-upstream-scenarios:
 		if ! [ -f $${dir}README.md ]; then \
 			continue; \
 		fi; \
-		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)") || exit $$?; \
+		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)" WORKING_DIRECTORY="$${dir}") || exit $$?; \
 	done
 
 # ------------------------------- Run targets ----------------------------------

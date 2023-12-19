@@ -16,6 +16,8 @@ func init() {
 		Bool("verbose", false, "Enable verbose logging & standard output.")
 	testCommand.PersistentFlags().
 		String("subscription", "", "Sets the subscription ID used by a scenarios azure-cli commands. Will rely on the default subscription if not set.")
+	testCommand.PersistentFlags().
+		String("working-directory", ".", "Sets the working directory for innovation engine to operate out of. Restores the current working directory when finished.")
 }
 
 var testCommand = &cobra.Command{
@@ -32,12 +34,14 @@ var testCommand = &cobra.Command{
 
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		subscription, _ := cmd.Flags().GetString("subscription")
+		workingDirectory, _ := cmd.Flags().GetString("working-directory")
 
 		innovationEngine, err := engine.NewEngine(engine.EngineConfiguration{
-			Verbose:       verbose,
-			DoNotDelete:   false,
-			Subscription:  subscription,
-			CorrelationId: "",
+			Verbose:          verbose,
+			DoNotDelete:      false,
+			Subscription:     subscription,
+			CorrelationId:    "",
+			WorkingDirectory: workingDirectory,
 		})
 
 		if err != nil {
