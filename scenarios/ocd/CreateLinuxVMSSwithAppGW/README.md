@@ -417,7 +417,7 @@ Results:
                   "properties": {
                     "applicationGatewayBackendAddressPools": [
                       {
-                        "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup7e8bdd/providers/Microsoft.Network/applicationGateways/myAPPGW7e8bdd/backendAddressPools/appGatewayBackendPool",   
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup7e8bdd/providers/Microsoft.Network/applicationGateways/myAPPGW7e8bdd/backendAddressPools/appGatewayBackendPool",   
                         "resourceGroup": "myVMSSResourceGroup7e8bdd"
                       }
                     ],
@@ -431,7 +431,7 @@ Results:
                       }
                     },
                     "subnet": {
-                      "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroup7e8bdd/providers/Microsoft.Network/virtualNetworks/myVNet7e8bdd/subnets/myVMSN7e8bdd",
+                      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup7e8bdd/providers/Microsoft.Network/virtualNetworks/myVNet7e8bdd/subnets/myVMSN7e8bdd",
                       "resourceGroup": "myVMSSResourceGroup7e8bdd"
                     }
                   }
@@ -453,7 +453,7 @@ Results:
           "ssh": {
             "publicKeys": [
               {
-                "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDChUiONFSUdk5nk00XeujLNIfdijKwBR/cqAqAw8xa57BlI22Azntp625scK9Gpze9wFNj/bPDS29+PZXOaEjVljYHU/tgcbcvHR0sNUNoAvMPHRfSN2WebDUCDHK1hBQxPwiI4OWTbpYRm/E2deGe5gUpBoaA1AwOZVs1+6Z6unHOkhslqLJmNW+Rb8YUtRnbL3XZLUOwyPSkNMgARiMb+QWq0W2V6TtD+rM2pMVIf/D21PdHLsTBQ+DC0DeUyBlgGiueqijGcD0zmE6N6nAu2ps7sO+zxmnP37zbIRbwEHfdpQkPwnx42REgZ7ep/K9gnwWzSk1uIrxrSGypPqUV",
+                "keyData": "ssh-rsa xxxxxxxx",
                 "path": "/home/azureuser/.ssh/authorized_keys"
               }
             ]
@@ -507,7 +507,7 @@ Results:
   "doNotRunExtensionsOnOverprovisionedVMs": false,
   "extendedLocation": null,
   "hostGroup": null,
-  "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSa653af",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSa653af",
   "identity": null,
   "location": "eastus",
   "name": "myVMSSa653af",
@@ -597,7 +597,7 @@ Results:
             {
               "applicationGatewayBackendAddressPools": [
                 {
-                  "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",
+                  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",
                   "resourceGroup": "myVMSSResourceGroupa653af"
                 }
               ],
@@ -609,7 +609,7 @@ Results:
               "privateIpAddressVersion": "IPv4",
               "publicIpAddressConfiguration": null,
               "subnet": {
-                "id": "/subscriptions/5584d5a3-dd16-4928-81dd-f9f5641091ea/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/virtualNetworks/myVNeta653af/subnets/myVMSNa653af",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/virtualNetworks/myVNeta653af/subnets/myVMSNa653af",
                 "resourceGroup": "myVMSSResourceGroupa653af"
               }
             }
@@ -634,7 +634,7 @@ Results:
         "ssh": {
           "publicKeys": [
             {
-              "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDChUiONFSUdk5nk00XeujLNIfdijKwBR/cqAqAw8xa57BlI22Azntp625scK9Gpze9wFNj/bPDS29+PZXOaEjVljYHU/tgcbcvHR0sNUNoAvMPHRfSN2WebDUCDHK1hBQxPwiI4OWTbpYRm/E2deGe5gUpBoaA1AwOZVs1+6Z6unHOkhslqLJmNW+Rb8YUtRnbL3XZLUOwyPSkNMgARiMb+QWq0W2V6TtD+rM2pMVIf/D21PdHLsTBQ+DC0DeUyBlgGiueqijGcD0zmE6N6nAu2ps7sO+zxmnP37zbIRbwEHfdpQkPwnx42REgZ7ep/K9gnwWzSk1uIrxrSGypPqUV",
+              "keyData": "ssh-rsa xxxxxxxx",
               "path": "/home/azureuser/.ssh/authorized_keys"
             }
           ]
@@ -831,8 +831,8 @@ az network public-ip show --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_AP
 
 
 
-
-
-# Next Steps
+# References
 
 * [VMSS Documentation](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview)
+* [VMSS AutoScale](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/tutorial-autoscale-cli?tabs=Ubuntu)
+
