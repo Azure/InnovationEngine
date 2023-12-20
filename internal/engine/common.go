@@ -11,20 +11,7 @@ import (
 	"github.com/xrash/smetrics"
 )
 
-// Indents a multi-line command to be nested under the first line of the
-// command.
-func indentMultiLineCommand(content string, indentation int) string {
-	lines := strings.Split(content, "\n")
-	for i := 1; i < len(lines); i++ {
-		if strings.HasSuffix(strings.TrimSpace(lines[i-1]), "\\") {
-			lines[i] = strings.Repeat(" ", indentation) + lines[i]
-		} else if strings.TrimSpace(lines[i]) != "" {
-			lines[i] = strings.Repeat(" ", indentation) + lines[i]
-		}
 
-	}
-	return strings.Join(lines, "\n")
-}
 
 // Compares the actual output of a command to the expected output of a command.
 func compareCommandOutputs(

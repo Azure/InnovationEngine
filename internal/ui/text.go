@@ -34,8 +34,23 @@ var (
 	InteractiveModeCodeblockDescriptionStyle = lipgloss.NewStyle().
 							Foreground(lipgloss.Color("#ffffff"))
 	InteractiveModeCodeblockStyle = lipgloss.NewStyle().
-					Foreground(lipgloss.Color("#fff")).Background(lipgloss.Color("#000000"))
+					Foreground(lipgloss.Color("#fff"))
 )
+
+// Indents a multi-line command to be nested under the first line of the
+// command.
+func IndentMultiLineCommand(content string, indentation int) string {
+	lines := strings.Split(content, "\n")
+	for i := 1; i < len(lines); i++ {
+		if strings.HasSuffix(strings.TrimSpace(lines[i-1]), "\\") {
+			lines[i] = strings.Repeat(" ", indentation) + lines[i]
+		} else if strings.TrimSpace(lines[i]) != "" {
+			lines[i] = strings.Repeat(" ", indentation) + lines[i]
+		}
+
+	}
+	return strings.Join(lines, "\n")
+}
 
 func RemoveHorizontalAlign(s string) string {
 	return strings.Join(

@@ -105,9 +105,9 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 					environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 					return err
 				}
-				finalCommandOutput = indentMultiLineCommand(renderedCommand.StdOut, 4)
+				finalCommandOutput = ui.IndentMultiLineCommand(renderedCommand.StdOut, 4)
 			} else {
-				finalCommandOutput = indentMultiLineCommand(block.Content, 4)
+				finalCommandOutput = ui.IndentMultiLineCommand(block.Content, 4)
 			}
 
 			fmt.Print("    " + finalCommandOutput)

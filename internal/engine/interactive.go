@@ -26,7 +26,7 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 				),
 			)
 			fmt.Print(
-				indentMultiLineCommand(
+				ui.IndentMultiLineCommand(
 					fmt.Sprintf(
 						"      %s",
 						ui.InteractiveModeCodeblockStyle.Render(
@@ -35,7 +35,7 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 					),
 					6),
 			)
-      fmt.Println()
+			fmt.Println()
 		}
 	}
 
