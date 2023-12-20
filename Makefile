@@ -35,6 +35,7 @@ test-all:
 
 SUBSCRIPTION ?= 00000000-0000-0000-0000-000000000000
 SCENARIO ?= ./README.md
+WORKING_DIRECTORY ?= $(PWD)
 test-scenario:
 	@echo "Running scenario $(SCENARIO)"
 	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY)
