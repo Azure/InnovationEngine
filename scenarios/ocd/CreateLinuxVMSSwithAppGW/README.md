@@ -743,7 +743,7 @@ Results:
   "systemData": null,
   "tags": {},
   "targetResourceLocation": null,
-  "targetResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+  "targetResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSxxxxxx",
   "type": "Microsoft.Insights/autoscaleSettings"
 }
 ```
@@ -767,7 +767,7 @@ Results:
     "metricName": "Percentage CPU",
     "metricNamespace": null,
     "metricResourceLocation": null,
-    "metricResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+    "metricResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSxxxxxx",
     "operator": "GreaterThan",
     "statistic": "Average",
     "threshold": "70",
@@ -803,7 +803,7 @@ Results:
     "metricName": "Percentage CPU",
     "metricNamespace": null,
     "metricResourceLocation": null,
-    "metricResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+    "metricResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSxxxxxx",
     "operator": "LessThan",
     "statistic": "Average",
     "threshold": "30",
