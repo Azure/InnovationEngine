@@ -386,7 +386,7 @@ Results:
     "platformFaultDomainCount": 1,
     "provisioningState": "Succeeded",
     "singlePlacementGroup": false,
-    "timeCreated": "2023-12-18T14:51:32.7740167+00:00",
+    "timeCreated": "20xx-xx-xxTxx:xx:xx.xxxxxx+00:00",
     "uniqueId": "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx",
     "upgradePolicy": {
       "mode": "Automatic",
@@ -417,7 +417,7 @@ Results:
                   "properties": {
                     "applicationGatewayBackendAddressPools": [
                       {
-                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/applicationGateways/myAPPGW7e8bdd/backendAddressPools/appGatewayBackendPool",   
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/applicationGateways/myAPPGW7xxxxx/backendAddressPools/appGatewayBackendPool",   
                         "resourceGroup": "myVMSSResourceGroupxxxxxx"
                       }
                     ],
@@ -431,7 +431,7 @@ Results:
                       }
                     },
                     "subnet": {
-                      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/virtualNetworks/myVNet7e8bdd/subnets/myVMSN7e8bdd",
+                      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxxxx/subnets/myVMSN7xxxxx",
                       "resourceGroup": "myVMSSResourceGroupxxxxxxx"
                     }
                   }
@@ -480,7 +480,7 @@ Results:
           "osType": "Linux"
         }
       },
-      "timeCreated": "2023-12-18T14:51:32.7740167+00:00"
+      "timeCreated": "20xx-xx-xxTxx:xx:xx.xxxxxx+00:00"
     },
     "zoneBalance": false
   }
@@ -507,10 +507,10 @@ Results:
   "doNotRunExtensionsOnOverprovisionedVMs": false,
   "extendedLocation": null,
   "hostGroup": null,
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSa653af",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSxxxxx",
   "identity": null,
   "location": "eastus",
-  "name": "myVMSSa653af",
+  "name": "myVMSSxxxx",
   "orchestrationMode": "Uniform",
   "overprovision": true,
   "plan": null,
@@ -528,7 +528,7 @@ Results:
   },
   "spotRestorePolicy": null,
   "tags": {},
-  "timeCreated": "2023-12-18T11:47:36.530498+00:00",
+  "timeCreated": "20xx-xx-xxTxx:xx:xx.xxxxxx+00:00",
   "type": "Microsoft.Compute/virtualMachineScaleSets",
   "uniqueId": "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx",
   "upgradePolicy": {
@@ -597,24 +597,24 @@ Results:
             {
               "applicationGatewayBackendAddressPools": [
                 {
-                  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",
+                  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/applicationGateways/myAPPGWxxxx/backendAddressPools/appGatewayBackendPool",
                   "resourceGroup": "myVMSSResourceGroupxxxxxx"
                 }
               ],
               "applicationSecurityGroups": null,
               "loadBalancerBackendAddressPools": null,
               "loadBalancerInboundNatPools": null,
-              "name": "myvmsd8f0IPConfig",
+              "name": "myvmsdxxxIPConfig",
               "primary": null,
               "privateIpAddressVersion": "IPv4",
               "publicIpAddressConfiguration": null,
               "subnet": {
-                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/virtualNetworks/myVNeta653af/subnets/myVMSNa653af",
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/virtualNetworks/myVNetxxxxx/subnets/myVMSNxxxxx",
                 "resourceGroup": "myVMSSResourceGroupaxxxxx"
               }
             }
           ],
-          "name": "myvmsd8f0Nic",
+          "name": "myvmsxxxxxx",
           "networkSecurityGroup": null,
           "primary": true
         }
@@ -624,7 +624,7 @@ Results:
       "adminPassword": null,
       "adminUsername": "azureuser",
       "allowExtensionOperations": true,
-      "computerNamePrefix": "myvmsd8f0",
+      "computerNamePrefix": "myvmsdxxx",
       "customData": null,
       "linuxConfiguration": {
         "disablePasswordAuthentication": true,
