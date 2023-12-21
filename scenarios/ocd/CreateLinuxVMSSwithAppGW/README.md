@@ -387,7 +387,7 @@ Results:
     "provisioningState": "Succeeded",
     "singlePlacementGroup": false,
     "timeCreated": "2023-12-18T14:51:32.7740167+00:00",
-    "uniqueId": "b13f443e-ae79-46e9-8643-23d6177187ca",
+    "uniqueId": "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx",
     "upgradePolicy": {
       "mode": "Automatic",
       "rollingUpgradePolicy": {
@@ -417,8 +417,8 @@ Results:
                   "properties": {
                     "applicationGatewayBackendAddressPools": [
                       {
-                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup7e8bdd/providers/Microsoft.Network/applicationGateways/myAPPGW7e8bdd/backendAddressPools/appGatewayBackendPool",   
-                        "resourceGroup": "myVMSSResourceGroup7e8bdd"
+                        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/applicationGateways/myAPPGW7e8bdd/backendAddressPools/appGatewayBackendPool",   
+                        "resourceGroup": "myVMSSResourceGroupxxxxxx"
                       }
                     ],
                     "privateIPAddressVersion": "IPv4",
@@ -431,8 +431,8 @@ Results:
                       }
                     },
                     "subnet": {
-                      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroup7e8bdd/providers/Microsoft.Network/virtualNetworks/myVNet7e8bdd/subnets/myVMSN7e8bdd",
-                      "resourceGroup": "myVMSSResourceGroup7e8bdd"
+                      "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/virtualNetworks/myVNet7e8bdd/subnets/myVMSN7e8bdd",
+                      "resourceGroup": "myVMSSResourceGroupxxxxxxx"
                     }
                   }
                 }
@@ -507,7 +507,7 @@ Results:
   "doNotRunExtensionsOnOverprovisionedVMs": false,
   "extendedLocation": null,
   "hostGroup": null,
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSa653af",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSa653af",
   "identity": null,
   "location": "eastus",
   "name": "myVMSSa653af",
@@ -518,7 +518,7 @@ Results:
   "priorityMixPolicy": null,
   "provisioningState": "Succeeded",
   "proximityPlacementGroup": null,
-  "resourceGroup": "myVMSSResourceGroupa653af",
+  "resourceGroup": "myVMSSResourceGroupxxxxx",
   "scaleInPolicy": null,
   "singlePlacementGroup": false,
   "sku": {
@@ -530,7 +530,7 @@ Results:
   "tags": {},
   "timeCreated": "2023-12-18T11:47:36.530498+00:00",
   "type": "Microsoft.Compute/virtualMachineScaleSets",
-  "uniqueId": "79aa92f5-cf99-486b-9b9c-32d67edd80dc",
+  "uniqueId": "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx",
   "upgradePolicy": {
     "automaticOsUpgradePolicy": null,
     "mode": "Automatic",
@@ -597,8 +597,8 @@ Results:
             {
               "applicationGatewayBackendAddressPools": [
                 {
-                  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",
-                  "resourceGroup": "myVMSSResourceGroupa653af"
+                  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/applicationGateways/myAPPGWa653af/backendAddressPools/appGatewayBackendPool",
+                  "resourceGroup": "myVMSSResourceGroupxxxxxx"
                 }
               ],
               "applicationSecurityGroups": null,
@@ -609,8 +609,8 @@ Results:
               "privateIpAddressVersion": "IPv4",
               "publicIpAddressConfiguration": null,
               "subnet": {
-                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupa653af/providers/Microsoft.Network/virtualNetworks/myVNeta653af/subnets/myVMSNa653af",
-                "resourceGroup": "myVMSSResourceGroupa653af"
+                "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/Microsoft.Network/virtualNetworks/myVNeta653af/subnets/myVMSNa653af",
+                "resourceGroup": "myVMSSResourceGroupaxxxxx"
               }
             }
           ],
@@ -708,7 +708,7 @@ Results:
 ```json  
 {
   "enabled": true,
-  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupaf9072/providers/microsoft.insights/autoscalesettings/autoscale",
+  "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxx/providers/microsoft.insights/autoscalesettings/autoscale",
   "location": "eastus",
   "name": "autoscale",
   "namePropertiesName": "autoscale",
@@ -739,11 +739,11 @@ Results:
       "rules": []
     }
   ],
-  "resourceGroup": "myVMSSResourceGroupaf9072",
+  "resourceGroup": "myVMSSResourceGroupxxxxx",
   "systemData": null,
   "tags": {},
   "targetResourceLocation": null,
-  "targetResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+  "targetResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
   "type": "Microsoft.Insights/autoscaleSettings"
 }
 ```
@@ -767,7 +767,7 @@ Results:
     "metricName": "Percentage CPU",
     "metricNamespace": null,
     "metricResourceLocation": null,
-    "metricResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+    "metricResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
     "operator": "GreaterThan",
     "statistic": "Average",
     "threshold": "70",
@@ -803,7 +803,7 @@ Results:
     "metricName": "Percentage CPU",
     "metricNamespace": null,
     "metricResourceLocation": null,
-    "metricResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupaf9072/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
+    "metricResourceUri": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMSSResourceGroupxxxxxx/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSSaf9072",
     "operator": "LessThan",
     "statistic": "Average",
     "threshold": "30",
