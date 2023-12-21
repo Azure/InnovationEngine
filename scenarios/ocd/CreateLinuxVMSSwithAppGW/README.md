@@ -81,7 +81,7 @@ Results:
     "name": "myVNetxxxxxx",
     "provisioningState": "Succeeded",
     "resourceGroup": "myVMSSResourceGroupxxxxxx",
-    "resourceGuid": "f00034be-612e-4462-a711-93d0bb263e46",
+    "resourceGuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     "subnets": [
       {
         "addressPrefix": "10.X.0.0/24",
@@ -347,7 +347,7 @@ az network application-gateway create   --name $MY_APPGW_NAME --location $REGION
         "type": "Microsoft.Network/applicationGateways/requestRoutingRules"
       }
     ],
-    "resourceGuid": "d6da1e9a-9d53-4292-bda5-3883963034ff",
+    "resourceGuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     "rewriteRuleSets": [],
     "routingRules": [],
     "sku": {
