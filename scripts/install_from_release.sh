@@ -1,3 +1,4 @@
+# Script to install scenarios file.  Pass in language code parameter for a particular language, such as it-it for Italian.
 set -e
 
 # Define the language parameter (default is 'en')
