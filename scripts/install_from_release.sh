@@ -13,7 +13,7 @@ fi
 # Download the binary from the latest
 echo "Installing IE & scenarios from the latest release..."
 wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/latest/ie > /dev/null
-wget -q -O scenarios.zip https://github.com/MicrosoftDocs/executable-docs/releases/download/v.1.0.1/$scenarios > /dev/null
+wget -q -O scenarios.zip https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/$scenarios > /dev/null
 
 # Setup permissions & move to the local bin
 chmod +x ie > /dev/null
