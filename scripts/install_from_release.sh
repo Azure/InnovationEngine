@@ -9,7 +9,7 @@ lang=${1:-''}
 if [ "$lang" = "" ]; then
   scenarios='https://github.com/Azure/InnovationEngine/releases/download/latest/scenarios.zip'
 # Otherwise, download the scenarios from Microsoft Docs in the appropriate langauge
-else if [ "$lang" = "en-us" ]; then
+elif [ "$lang" = "en-us" ]; then
   scenarios='https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/scenarios.zip'
 else
   scenarios="https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/$lang-scenarios.zip"
