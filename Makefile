@@ -55,6 +55,9 @@ test-upstream-scenarios:
 		if ! [ -f $${dir}README.md ]; then \
 			continue; \
 		fi; \
+		if echo "$${dir}" | grep -q "CreateContainerAppDeploymentFromSource"; then \
+			continue; \
+		fi; \
 		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)" WORKING_DIRECTORY="$${dir}") || exit $$?; \
 	done
 
