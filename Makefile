@@ -35,14 +35,30 @@ test-all:
 
 SUBSCRIPTION ?= 00000000-0000-0000-0000-000000000000
 SCENARIO ?= ./README.md
+WORKING_DIRECTORY ?= $(PWD)
 test-scenario:
 	@echo "Running scenario $(SCENARIO)"
-	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION)
+	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY)
 
 test-scenarios:
 	@echo "Testing out the scenarios"
 	for dir in ./scenarios/ocd/*/; do \
-		 $(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)"; \
+		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)") || exit $$?; \
+	done
+
+test-upstream-scenarios:
+	@echo "Pulling the upstream scenarios"
+	@git config --global --add safe.directory /home/runner/work/InnovationEngine/InnovationEngine
+	@git submodule update --init --recursive
+	@echo "Testing out the upstream scenarios"
+	for dir in ./upstream-scenarios/scenarios/*/; do \
+		if ! [ -f $${dir}README.md ]; then \
+			continue; \
+		fi; \
+		if echo "$${dir}" | grep -q "CreateContainerAppDeploymentFromSource"; then \
+			continue; \
+		fi; \
+		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)" WORKING_DIRECTORY="$${dir}") || exit $$?; \
 	done
 
 # ------------------------------- Run targets ----------------------------------

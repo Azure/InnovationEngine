@@ -34,10 +34,11 @@ jobs:
         uses: azure/CLI@v1
         if: github.event_name != 'pull_request'
         with:
+          azcliversion: 2.53.0
           inlineScript: |
-            apk add --no-cache make
-            make test-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
+            apk add --no-cache make git openssh openssl helm curl jq
+            make test-upstream-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
       - name: Display ie.log file
-        if: github.event_name != 'pull_request'
+        if: (success() || failure()) && github.event_name != 'pull_request'
         run: |
           cat ie.log
