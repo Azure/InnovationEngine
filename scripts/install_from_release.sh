@@ -7,13 +7,13 @@ SCENARIOS=""
 
 # Map the language parameter to the corresponding scenarios file
 # If no parameter, download the scenarios from IE
-if [ "$lang" = "" ]; then
+if [ "$LANG" = "" ]; then
   SCENARIOS='https://github.com/Azure/InnovationEngine/releases/download/latest/scenarios.zip'
 # Otherwise, download the scenarios from Microsoft Docs in the appropriate langauge
-elif [ "$lang" = "en-us" ]; then
+elif [ "$LANG" = "en-us" ]; then
   SCENARIOS='https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/scenarios.zip'
 else
-  SCENARIOS="https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/$lang-scenarios.zip"
+  SCENARIOS="https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/$LANG-scenarios.zip"
 fi
 
 # Download the binary from the latest
