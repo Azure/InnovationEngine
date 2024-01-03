@@ -2,23 +2,24 @@
 set -e
 
 # Define the language parameter
-lang=${1:-''}
+LANG="${1:-''}"
+SCENARIOS=""
 
 # Map the language parameter to the corresponding scenarios file
 # If no parameter, download the scenarios from IE
 if [ "$lang" = "" ]; then
-  scenarios='https://github.com/Azure/InnovationEngine/releases/download/latest/scenarios.zip'
+  SCENARIOS='https://github.com/Azure/InnovationEngine/releases/download/latest/scenarios.zip'
 # Otherwise, download the scenarios from Microsoft Docs in the appropriate langauge
 elif [ "$lang" = "en-us" ]; then
-  scenarios='https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/scenarios.zip'
+  SCENARIOS='https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/scenarios.zip'
 else
-  scenarios="https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/$lang-scenarios.zip"
+  SCENARIOS="https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/$lang-scenarios.zip"
 fi
 
 # Download the binary from the latest
 echo "Installing IE & scenarios from the latest release..."
 wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/latest/ie > /dev/null
-wget -q -O scenarios.zip "$scenarios" > /dev/null
+wget -q -O scenarios.zip "$SCENARIOS" > /dev/null
 
 # Setup permissions & move to the local bin
 chmod +x ie > /dev/null
