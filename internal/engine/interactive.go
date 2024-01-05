@@ -1,9 +1,7 @@
 package engine
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -16,6 +14,7 @@ import (
 	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/terminal"
 	"github.com/Azure/InnovationEngine/internal/ui"
+	"github.com/eiannone/keyboard"
 )
 
 // Interact with each individual step from a scenario and let the user
@@ -39,6 +38,13 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 	}
 	environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
+	err = keyboard.Open()
+	if err != nil {
+		logging.GlobalLogger.Fatalf("Error opening keyboard: %s", err)
+	}
+
+	defer keyboard.Close()
+
 	for stepNumber, step := range stepsToExecute {
 		stepTitle := fmt.Sprintf("Step %d. %s\n", stepNumber+1, step.Name)
 		fmt.Println(ui.StepTitleStyle.Render(stepTitle))
@@ -59,21 +65,17 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 			validCommandEntered := false
 
 			for !validCommandEntered {
-				reader := bufio.NewReader(os.Stdin)
 				fmt.Print(
 					"Enter a command to proceed or h to see available commands: ",
 				)
-				text, _ := reader.ReadString('\n')
+				char, _, err := keyboard.GetKey()
+				if err != nil {
+					logging.GlobalLogger.Fatalf("Error reading keyboard input: %s", err)
+				}
 
-				switch text {
-				case "h\n":
-					fmt.Println("Available commands:")
-					fmt.Println("  e - execute this step")
-					fmt.Println("  h - show this help")
-					fmt.Println("  s - skip this step")
-					fmt.Println("  q - quit")
+				switch char {
 
-				case "e\n":
+				case 'e':
 					// execute the command as a goroutine to allow for the spinner to be
 					// rendered while the command is executing.
 					validCommandEntered = true
@@ -126,7 +128,13 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 								expectedRegex := codeBlock.ExpectedOutput.ExpectedRegex
 								expectedOutputLanguage := codeBlock.ExpectedOutput.Language
 
-								outputComparisonError := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
+								outputComparisonError := compareCommandOutputs(
+									actualOutput,
+									expectedOutput,
+									expectedSimilarity,
+									expectedRegex,
+									expectedOutputLanguage,
+								)
 
 								if outputComparisonError != nil {
 									logging.GlobalLogger.Errorf("Error comparing command outputs: %s", outputComparisonError.Error())
@@ -187,6 +195,7 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 							}
 
 							break renderingLoop
+
 						default:
 							frame = (frame + 1) % len(spinnerFrames)
 							fmt.Printf("\r  %s", ui.SpinnerStyle.Render(string(spinnerFrames[frame])))
@@ -194,21 +203,32 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 						}
 					}
 
-				case "s\n":
+				case 's':
 					// skip the codeblock.
 					validCommandEntered = true
 					logging.GlobalLogger.Infof(
-						"Skip command entered for step %d.%d",
+						"Skip used on step %d.%d",
 						stepNumber,
 						codeBlockNumber,
 					)
 
-				case "q\n":
+				case 'q':
 					// quit the program
 					logging.GlobalLogger.Info("Quit command entered, exiting interactive mode")
 					return nil
 
+				case 'h':
+					fallthrough
+				default:
+					// If h any other key is entered, show the available commands.
+					fmt.Println("Available commands:")
+					fmt.Println("  e - execute this step")
+					fmt.Println("  h - show this help")
+					fmt.Println("  s - skip this step")
+					fmt.Println("  q - quit")
+
 				}
+
 			}
 
 		}
