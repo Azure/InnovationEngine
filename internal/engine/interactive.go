@@ -40,32 +40,21 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 	environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
 	for stepNumber, step := range stepsToExecute {
-		stepTitle := fmt.Sprintf("  Step %d. %s\n", stepNumber+1, step.Name)
+		stepTitle := fmt.Sprintf("Step %d. %s\n", stepNumber+1, step.Name)
 		fmt.Println(ui.StepTitleStyle.Render(stepTitle))
 		azureStatus.CurrentStep = stepNumber + 1
 
 		for codeBlockNumber, codeBlock := range step.CodeBlocks {
 			fmt.Println(
 				ui.InteractiveModeCodeBlockDescriptionStyle.Render(
-					fmt.Sprintf(
-						"    %d.%d %s",
-						stepNumber+1,
-						codeBlockNumber+1,
-						codeBlock.Description,
-					),
+					codeBlock.Description,
 				),
 			)
-			fmt.Print(
-				ui.IndentMultiLineCommand(
-					fmt.Sprintf(
-						"      %s",
-						ui.InteractiveModeCodeBlockStyle.Render(
-							codeBlock.Content,
-						),
-					),
-					6),
+			fmt.Println(
+				ui.InteractiveModeCodeBlockStyle.Render(
+					codeBlock.Content,
+				),
 			)
-			fmt.Println()
 
 			validCommandEntered := false
 
