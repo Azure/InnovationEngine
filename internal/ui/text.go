@@ -31,9 +31,9 @@ var (
 	InteractiveModeStepTitleStyle = lipgloss.NewStyle().
 					Foreground(lipgloss.Color("#518BAD")).
 					Bold(true)
-	InteractiveModeCodeblockDescriptionStyle = lipgloss.NewStyle().
+	InteractiveModeCodeBlockDescriptionStyle = lipgloss.NewStyle().
 							Foreground(lipgloss.Color("#ffffff"))
-	InteractiveModeCodeblockStyle = lipgloss.NewStyle().
+	InteractiveModeCodeBlockStyle = lipgloss.NewStyle().
 					Foreground(lipgloss.Color("#fff"))
 )
 
