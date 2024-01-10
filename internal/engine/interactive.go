@@ -32,9 +32,18 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
 
-	// Add steps to the azure status
+
 	for stepNumber, step := range stepsToExecute {
-		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name))
+
+		azureCodeBlocks := []environments.AzureCodeBlock{}
+		for _, block := range step.CodeBlocks {
+			azureCodeBlocks = append(azureCodeBlocks, environments.AzureCodeBlock{
+				Command:     block.Content,
+				Description: block.Description,
+			})
+		}
+
+		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name), azureCodeBlocks)
 	}
 	environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 

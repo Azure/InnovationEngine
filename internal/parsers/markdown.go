@@ -142,11 +142,15 @@ func ExtractCodeBlocksFromAst(
 				content := extractTextFromMarkdown(&n.BaseBlock, source)
 				description := ""
 
-				switch n := lastNode.(type) {
-				case *ast.Paragraph:
-					description = string(extractTextFromMarkdown(&n.BaseBlock, source))
-				default:
-					logging.GlobalLogger.Warnf("The node before the last codeblock %s is not a paragraph, it is a %s", content, n.Kind())
+				if lastNode != nil {
+					switch n := lastNode.(type) {
+					case *ast.Paragraph:
+						description = string(extractTextFromMarkdown(&n.BaseBlock, source))
+					default:
+						logging.GlobalLogger.Warnf("The node before the codeblock `%s` is not a paragraph, it is a %s", content, n.Kind())
+					}
+				} else {
+					logging.GlobalLogger.Warnf("There are no markdown elements before the last codeblock `%s`", content)
 				}
 
 				lastNode = node
