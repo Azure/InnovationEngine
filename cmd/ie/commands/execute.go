@@ -123,7 +123,7 @@ var executeCommand = &cobra.Command{
 		err = innovationEngine.ExecuteScenario(scenario)
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error executing scenario: %s", err)
-			fmt.Printf("Error executing scenario: %s", err)
+			fmt.Printf("Error executing scenario: %s\n", err)
 			os.Exit(1)
 		}
 	},
