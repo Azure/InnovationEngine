@@ -84,6 +84,24 @@ func ReportAzureStatus(status AzureDeploymentStatus, environment string) {
 	}
 }
 
+// Same as ReportAzureStatus, but returns the status string instead of printing it.
+func GetAzureStatus(status AzureDeploymentStatus, environment string) string {
+	if !IsAzureEnvironment(environment) {
+		return ""
+	}
+
+	statusJson, err := status.AsJsonString()
+	if err != nil {
+		logging.GlobalLogger.Error("Failed to marshal status", err)
+		return ""
+	} else {
+		// We add these strings to the output so that the portal can find and parse
+		// the JSON status.
+		ocdStatus := fmt.Sprintf("ie_us%sie_ue", statusJson)
+		return ocdStatus
+	}
+}
+
 // Attach deployed resource URIs to the one click deployment status if we're in
 // the correct environment & we have a resource group name.
 func AttachResourceURIsToAzureStatus(

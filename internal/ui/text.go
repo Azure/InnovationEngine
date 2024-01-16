@@ -28,13 +28,22 @@ var (
 )
 
 var (
-	InteractiveModeStepTitleStyle = lipgloss.NewStyle().
-					Foreground(lipgloss.Color("#518BAD")).
-					Bold(true)
 	InteractiveModeCodeBlockDescriptionStyle = lipgloss.NewStyle().
 							Foreground(lipgloss.Color("#ffffff"))
 	InteractiveModeCodeBlockStyle = lipgloss.NewStyle().
 					Foreground(lipgloss.Color("#fff"))
+
+	InteractiveModeStepTitleStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Right = "├"
+		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
+	}().Foreground(lipgloss.Color("#518BAD")).Bold(true)
+
+	InteractiveModeStepFooterStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Left = "┤"
+		return InteractiveModeStepTitleStyle.Copy().BorderStyle(b)
+	}().Foreground(lipgloss.Color("#fff"))
 )
 
 // Indents a multi-line command to be nested under the first line of the

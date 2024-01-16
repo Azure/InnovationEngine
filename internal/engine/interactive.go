@@ -12,236 +12,459 @@ import (
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/patterns"
 	"github.com/Azure/InnovationEngine/internal/shells"
-	"github.com/Azure/InnovationEngine/internal/terminal"
 	"github.com/Azure/InnovationEngine/internal/ui"
-	"github.com/eiannone/keyboard"
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/viewport"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
-// Interact with each individual step from a scenario and let the user
-// interact with the codecodeBlocks.
-func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
+type InteractiveModeCommands struct {
+	execute key.Binding
+	skip    key.Binding
+	quit    key.Binding
+}
+
+// State for the codeblock in interactive mode. Used to keep track of the
+// state of each codeblock.
+type CodeBlockState struct {
+	CodeBlock       parsers.CodeBlock
+	CodeBlockNumber int
+	Error           error
+	StdErr          string
+	StdOut          string
+	StepName        string
+	StepNumber      int
+	Success         bool
+}
+
+type interactiveModeViewPorts struct {
+	step    viewport.Model
+	command viewport.Model
+	output  viewport.Model
+}
+
+type InteractiveModeModel struct {
+	azureStatus       environments.AzureDeploymentStatus
+	codeBlockState    map[int]CodeBlockState
+	commands          InteractiveModeCommands
+	currentCodeBlock  int
+	env               map[string]string
+	environment       string
+	executingCommand  bool
+	height            int
+	help              help.Model
+	resourceGroupName string
+	scenarioTitle     string
+	width             int
+	scenarioCompleted bool
+	viewports         interactiveModeViewPorts
+	ready             bool
+}
+
+// Initialize the intractive mode model
+func (model InteractiveModeModel) Init() tea.Cmd {
+	environments.ReportAzureStatus(model.azureStatus, model.environment)
+	return tea.Batch(clearScreen(), tea.Tick(time.Millisecond*10, func(t time.Time) tea.Msg {
+		return tea.KeyMsg{Type: tea.KeyCtrlL} // This is to force a repaint
+	}))
+}
+
+type SuccessfulCommandMessage struct {
+	StdOut string
+	StdErr string
+}
+
+type FailedCommandMessage struct {
+	StdOut string
+	StdErr string
+	Error  error
+}
+
+// Executes a bash command and returns a tea message with the output. This function
+// will be executed asycnhronously.
+func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) tea.Cmd {
+	return func() tea.Msg {
+		logging.GlobalLogger.Info("Executing command: ", codeBlock.Content)
+		output, err := shells.ExecuteBashCommand(codeBlock.Content, shells.BashCommandConfiguration{
+			EnvironmentVariables: env,
+			InheritEnvironment:   true,
+			InteractiveCommand:   false,
+			WriteToHistory:       true,
+		})
+
+		if err != nil {
+			logging.GlobalLogger.Errorf("Error executing command: %s", err.Error())
+			return FailedCommandMessage{
+				StdOut: output.StdOut,
+				StdErr: output.StdErr,
+				Error:  err,
+			}
+		}
+
+		// Check command output against the expected output.
+		actualOutput := output.StdOut
+		expectedOutput := codeBlock.ExpectedOutput.Content
+		expectedSimilarity := codeBlock.ExpectedOutput.ExpectedSimilarity
+		expectedRegex := codeBlock.ExpectedOutput.ExpectedRegex
+		expectedOutputLanguage := codeBlock.ExpectedOutput.Language
+
+		outputComparisonError := compareCommandOutputs(
+			actualOutput,
+			expectedOutput,
+			expectedSimilarity,
+			expectedRegex,
+			expectedOutputLanguage,
+		)
+
+		if outputComparisonError != nil {
+			logging.GlobalLogger.Errorf(
+				"Error comparing command outputs: %s",
+				outputComparisonError.Error(),
+			)
+
+			return FailedCommandMessage{
+				StdOut: output.StdOut,
+				StdErr: output.StdErr,
+				Error:  outputComparisonError,
+			}
+
+		}
+
+		logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
+		return SuccessfulCommandMessage{
+			StdOut: output.StdOut,
+			StdErr: output.StdErr,
+		}
+	}
+}
+
+func ExecuteCodeBlockSync(command string, env map[string]string) tea.Msg {
+	logging.GlobalLogger.Info("Executing command: ", command)
+	output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{
+		EnvironmentVariables: env,
+		InheritEnvironment:   true,
+		InteractiveCommand:   true,
+		WriteToHistory:       true,
+	})
+
+	if err != nil {
+		return FailedCommandMessage{
+			StdOut: output.StdOut,
+			StdErr: output.StdErr,
+			Error:  err,
+		}
+	}
+
+	logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
+	return SuccessfulCommandMessage{
+		StdOut: output.StdOut,
+		StdErr: output.StdErr,
+	}
+}
+
+// clearScreen returns a command that clears the terminal screen and positions the cursor at the top-left corner
+func clearScreen() tea.Cmd {
+	return func() tea.Msg {
+		fmt.Print(
+			"\033[H\033[2J",
+		) // ANSI escape codes for clearing the screen and repositioning the cursor
+		return nil
+	}
+}
+
+func updateAzureStatus(model InteractiveModeModel) tea.Cmd {
+	return func() tea.Msg {
+		logging.GlobalLogger.Infof(
+			"Attempting to update the azure status: %+v",
+			model.azureStatus,
+		)
+		environments.ReportAzureStatus(model.azureStatus, model.environment)
+		return AzureStatusUpdated{}
+	}
+}
+
+type AzureStatusUpdated struct{}
+
+func initializeViewports(model InteractiveModeModel, width, height int) interactiveModeViewPorts {
+
+	currentBlock := model.codeBlockState[model.currentCodeBlock]
+
+	stepViewport := viewport.New(width, 8)
+	stepViewport.SetContent(currentBlock.CodeBlock.Description)
+
+	commandViewport := viewport.New(width, 6)
+	commandViewport.SetContent(currentBlock.CodeBlock.Content)
+
+	// Initialize the output view ports
+
+	outputViewport := viewport.New(width, 4)
+	outputViewport.SetContent(currentBlock.StdOut)
+
+	return interactiveModeViewPorts{
+		step:    stepViewport,
+		command: commandViewport,
+		output:  outputViewport,
+	}
+}
+
+// Updates the intractive mode model
+func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
+
+	var commands []tea.Cmd
+
+	switch message := message.(type) {
+
+	case tea.WindowSizeMsg:
+
+		model.width = message.Width
+		if !model.ready {
+			model.viewports = initializeViewports(model, message.Width, message.Height)
+			model.ready = true
+		} else {
+			model.viewports.step.Width = message.Width
+			model.viewports.command.Width = message.Width
+			model.viewports.output.Width = message.Width
+		}
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(message, model.commands.execute):
+			model.executingCommand = true
+			codeBlock := model.codeBlockState[model.currentCodeBlock].CodeBlock
+			fmt.Printf("Executing %s\n", codeBlock.Content)
+			commands = append(commands, ExecuteCodeBlockAsync(
+				codeBlock,
+				lib.CopyMap(model.env),
+			))
+		case key.Matches(message, model.commands.skip):
+			model.currentCodeBlock++
+		case key.Matches(message, model.commands.quit):
+			commands = append(commands, tea.Quit)
+		}
+
+	case SuccessfulCommandMessage:
+		model.executingCommand = false
+		step := model.currentCodeBlock
+
+		// Update the state of the codeblock which finished executing.
+		codeBlockState := model.codeBlockState[step]
+		codeBlockState.StdOut = message.StdOut
+		codeBlockState.StdErr = message.StdErr
+		codeBlockState.Success = true
+		model.viewports.output.SetContent(codeBlockState.StdOut)
+		logging.GlobalLogger.Infof("Finished executing: %s", codeBlockState.CodeBlock.Content)
+
+		// Extract the resource group name from the command output if
+		// it's not already set.
+		if model.resourceGroupName == "" && patterns.AzCommand.MatchString(codeBlockState.CodeBlock.Content) {
+			logging.GlobalLogger.Info("Attempting to extract resource group name from command output")
+			tmpResourceGroup := az.FindResourceGroupName(codeBlockState.StdOut)
+			if tmpResourceGroup != "" {
+				logging.GlobalLogger.WithField("resourceGroup", tmpResourceGroup).Info("Found resource group")
+				model.resourceGroupName = tmpResourceGroup
+			}
+		}
+
+		// Increment the codeblock and update the viewport content.
+		model.currentCodeBlock++
+
+		commands = append(commands, updateAzureStatus(model))
+
+	case FailedCommandMessage:
+		model.executingCommand = false
+		model.azureStatus.SetError(message.Error)
+		environments.AttachResourceURIsToAzureStatus(
+			&model.azureStatus,
+			model.resourceGroupName,
+			model.environment,
+		)
+		model.viewports.output.SetContent(message.StdErr)
+		commands = append(commands, updateAzureStatus(model))
+
+	case AzureStatusUpdated:
+		// After the status has been updated, we force a window resize to
+		// render over the status update. For some reason, clearing the screen
+		// manually seems to cause the text produced by View() to not render
+		// properly if we don't trigger a window size event.
+		model.azureStatus.CurrentStep++
+		commands = append(commands, func() tea.Msg {
+			return tea.WindowSizeMsg{
+				Width:  model.width,
+				Height: model.height,
+			}
+		})
+	}
+
+	// Update viewport content
+	block := model.codeBlockState[model.currentCodeBlock]
+	model.viewports.step.SetContent(block.CodeBlock.Description)
+	model.viewports.command.SetContent(block.CodeBlock.Content)
+	model.viewports.output.SetContent(block.StdOut)
+
+	// Update all the viewports and append resulting commands.
+	var command tea.Cmd
+	model.viewports.step, command = model.viewports.step.Update(message)
+	commands = append(commands, command)
+	model.viewports.command, command = model.viewports.command.Update(message)
+	commands = append(commands, command)
+	model.viewports.output, command = model.viewports.output.Update(message)
+	commands = append(commands, command)
+
+	return model, tea.Batch(commands...)
+}
+func (model InteractiveModeModel) helpView() string {
+	return "\n" + model.help.ShortHelpView([]key.Binding{
+		model.commands.execute,
+		model.commands.skip,
+		model.commands.quit,
+	})
+}
+func (model InteractiveModeModel) View() string {
+
+	stepName := model.codeBlockState[model.currentCodeBlock].StepName
+	stepView := fmt.Sprintf("%s\n%s\n%s",
+		viewportHeaderView(
+			fmt.Sprintf("Step %d: %s", model.currentCodeBlock+1, stepName),
+			model.width,
+		),
+		model.viewports.step.View(),
+		viewportFooterView(
+			fmt.Sprintf("%3.f%%", model.viewports.step.ScrollPercent()*100),
+			model.width,
+		),
+	)
+
+	commandView := fmt.Sprintf("%s\n%s\n%s",
+		viewportHeaderView(
+			"Command",
+			model.width,
+		),
+		model.viewports.command.View(),
+		viewportFooterView(
+			" ",
+			model.width,
+		),
+	)
+
+	outputView := fmt.Sprintf("%s\n%s\n%s",
+		viewportHeaderView(
+			"Output",
+			model.width,
+		),
+		model.viewports.output.View(),
+		viewportFooterView(
+			fmt.Sprintf("%3.f%%", model.viewports.output.ScrollPercent()*100),
+			model.width,
+		),
+	)
+
+	return stepView + "\n" + commandView + "\n" + outputView + "\n" + model.helpView()
+}
+
+func viewportHeaderView(header string, viewportWidth int) string {
+	title := ui.InteractiveModeStepTitleStyle.Render(header)
+	line := strings.Repeat("─", lib.Max(0, viewportWidth-lipgloss.Width(title)))
+	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
+}
+
+func viewportFooterView(footer string, viewportWidth int) string {
+	footer = ui.InteractiveModeStepFooterStyle.Render(footer)
+	line := strings.Repeat("─", lib.Max(0, viewportWidth-lipgloss.Width(footer)))
+	return lipgloss.JoinHorizontal(lipgloss.Center, line, footer)
+}
+
+func NewInteractiveModeModel(
+	engine *Engine,
+	steps []Step,
+	env map[string]string,
+) (InteractiveModeModel, error) {
+	// TODO: In the future we should just set the current step for the azure status
+	// to one as the default.
 	var azureStatus = environments.NewAzureDeploymentStatus()
-	var resourceGroupName string = ""
-	err := az.SetSubscription(e.Configuration.Subscription)
+	azureStatus.CurrentStep = 1
+	totalCodeBlocks := 0
+	codeBlockState := make(map[int]CodeBlockState)
+
+	err := az.SetSubscription(engine.Configuration.Subscription)
 	if err != nil {
 		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
 		azureStatus.SetError(err)
-		environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
-		return err
+		environments.ReportAzureStatus(azureStatus, engine.Configuration.Environment)
+		return InteractiveModeModel{}, err
 	}
 
-	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
-
-
-	for stepNumber, step := range stepsToExecute {
-
+	for stepNumber, step := range steps {
 		azureCodeBlocks := []environments.AzureCodeBlock{}
-		for _, block := range step.CodeBlocks {
+		for blockNumber, block := range step.CodeBlocks {
 			azureCodeBlocks = append(azureCodeBlocks, environments.AzureCodeBlock{
 				Command:     block.Content,
 				Description: block.Description,
 			})
-		}
 
-		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name), azureCodeBlocks)
-	}
-	environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
-
-	err = keyboard.Open()
-	if err != nil {
-		logging.GlobalLogger.Fatalf("Error opening keyboard: %s", err)
-	}
-
-	defer keyboard.Close()
-
-	for stepNumber, step := range stepsToExecute {
-		stepTitle := fmt.Sprintf("Step %d. %s\n", stepNumber+1, step.Name)
-		fmt.Println(ui.StepTitleStyle.Render(stepTitle))
-		azureStatus.CurrentStep = stepNumber + 1
-
-		for codeBlockNumber, codeBlock := range step.CodeBlocks {
-			fmt.Println(
-				ui.InteractiveModeCodeBlockDescriptionStyle.Render(
-					codeBlock.Description,
-				),
-			)
-			fmt.Println(
-				ui.InteractiveModeCodeBlockStyle.Render(
-					codeBlock.Content,
-				),
-			)
-
-			validCommandEntered := false
-
-			for !validCommandEntered {
-				fmt.Print(
-					"Enter a command to proceed or h to see available commands: ",
-				)
-				char, _, err := keyboard.GetKey()
-				if err != nil {
-					logging.GlobalLogger.Fatalf("Error reading keyboard input: %s", err)
-				}
-
-				switch char {
-
-				case 'e':
-					// execute the command as a goroutine to allow for the spinner to be
-					// rendered while the command is executing.
-					validCommandEntered = true
-					done := make(chan error)
-					var commandOutput shells.CommandOutput
-					lines := strings.Count(codeBlock.Content, "\n") + 2
-					// If the command is an SSH command, we need to forward the input and
-					// output
-					interactiveCommand := false
-					if patterns.SshCommand.MatchString(codeBlock.Content) {
-						interactiveCommand = true
-					}
-
-					logging.GlobalLogger.WithField("isInteractive", interactiveCommand).
-						Infof("Executing command: %s", codeBlock.Content)
-
-					var commandErr error
-					var frame int = 0
-
-					// execute the codecodeBlock
-					go func(codeBlock parsers.CodeBlock) {
-						output, err := shells.ExecuteBashCommand(
-							codeBlock.Content,
-							shells.BashCommandConfiguration{
-								EnvironmentVariables: lib.CopyMap(env),
-								InheritEnvironment:   true,
-								InteractiveCommand:   false,
-								WriteToHistory:       true,
-							},
-						)
-						logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
-						logging.GlobalLogger.Infof("Command output to stderr:\n %s", output.StdErr)
-						commandOutput = output
-						done <- err
-					}(codeBlock)
-				renderingLoop:
-					// While the command is executing, render the spinner.
-					for {
-						select {
-						case commandErr = <-done:
-							// Show the cursor, check the result of the command, and display the
-							// final status.
-							terminal.ShowCursor()
-
-							if commandErr == nil {
-
-								actualOutput := commandOutput.StdOut
-								expectedOutput := codeBlock.ExpectedOutput.Content
-								expectedSimilarity := codeBlock.ExpectedOutput.ExpectedSimilarity
-								expectedRegex := codeBlock.ExpectedOutput.ExpectedRegex
-								expectedOutputLanguage := codeBlock.ExpectedOutput.Language
-
-								outputComparisonError := compareCommandOutputs(
-									actualOutput,
-									expectedOutput,
-									expectedSimilarity,
-									expectedRegex,
-									expectedOutputLanguage,
-								)
-
-								if outputComparisonError != nil {
-									logging.GlobalLogger.Errorf("Error comparing command outputs: %s", outputComparisonError.Error())
-
-									fmt.Printf("\r  %s \n", ui.ErrorStyle.Render("Γ£ù"))
-									terminal.MoveCursorPositionDown(lines)
-									fmt.Printf("  %s\n", ui.ErrorMessageStyle.Render(outputComparisonError.Error()))
-									fmt.Printf("	%s\n", lib.GetDifferenceBetweenStrings(codeBlock.ExpectedOutput.Content, commandOutput.StdOut))
-
-									azureStatus.SetError(outputComparisonError)
-									environments.AttachResourceURIsToAzureStatus(
-										&azureStatus,
-										resourceGroupName,
-										e.Configuration.Environment,
-									)
-									environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
-
-									return outputComparisonError
-								}
-
-								fmt.Printf("\r  %s \n", ui.CheckStyle.Render("Γ£ö"))
-								terminal.MoveCursorPositionDown(lines)
-
-								fmt.Printf("%s\n", ui.RemoveHorizontalAlign(ui.VerboseStyle.Render(commandOutput.StdOut)))
-
-								// Extract the resource group name from the command output if
-								// it's not already set.
-								if resourceGroupName == "" && patterns.AzCommand.MatchString(codeBlock.Content) {
-									logging.GlobalLogger.Info("Attempting to extract resource group name from command output")
-									tmpResourceGroup := az.FindResourceGroupName(commandOutput.StdOut)
-									if tmpResourceGroup != "" {
-										logging.GlobalLogger.WithField("resourceGroup", tmpResourceGroup).Info("Found resource group")
-										resourceGroupName = tmpResourceGroup
-									}
-								}
-
-								if stepNumber != len(stepsToExecute)-1 {
-									environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
-								}
-
-							} else {
-								terminal.ShowCursor()
-								fmt.Printf("\r  %s \n", ui.ErrorStyle.Render("Γ£ù"))
-								terminal.MoveCursorPositionDown(lines)
-								fmt.Printf("  %s\n", ui.ErrorMessageStyle.Render(commandErr.Error()))
-
-								logging.GlobalLogger.Errorf("Error executing command: %s", commandErr.Error())
-
-								azureStatus.SetError(commandErr)
-								environments.AttachResourceURIsToAzureStatus(
-									&azureStatus,
-									resourceGroupName,
-									e.Configuration.Environment,
-								)
-								environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
-
-								return commandErr
-							}
-
-							break renderingLoop
-
-						default:
-							frame = (frame + 1) % len(spinnerFrames)
-							fmt.Printf("\r  %s", ui.SpinnerStyle.Render(string(spinnerFrames[frame])))
-							time.Sleep(spinnerRefresh)
-						}
-					}
-
-				case 's':
-					// skip the codeblock.
-					validCommandEntered = true
-					logging.GlobalLogger.Infof(
-						"Skip used on step %d.%d",
-						stepNumber,
-						codeBlockNumber,
-					)
-
-				case 'q':
-					// quit the program
-					logging.GlobalLogger.Info("Quit command entered, exiting interactive mode")
-					return nil
-
-				case 'h':
-					fallthrough
-				default:
-					// If h any other key is entered, show the available commands.
-					fmt.Println("Available commands:")
-					fmt.Println("  e - execute this step")
-					fmt.Println("  h - show this help")
-					fmt.Println("  s - skip this step")
-					fmt.Println("  q - quit")
-
-				}
-
+			codeBlockState[totalCodeBlocks] = CodeBlockState{
+				StepName:        step.Name,
+				CodeBlock:       block,
+				StepNumber:      stepNumber,
+				CodeBlockNumber: blockNumber,
+				StdOut:          "",
+				StdErr:          "",
+				Error:           nil,
+				Success:         false,
 			}
 
+			totalCodeBlocks += 1
 		}
+		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name), azureCodeBlocks)
+	}
+
+	return InteractiveModeModel{
+		scenarioTitle: "Test",
+		commands: InteractiveModeCommands{
+			execute: key.NewBinding(
+				key.WithKeys("e"),
+				key.WithHelp("e", "Execute the current command."),
+			),
+			skip: key.NewBinding(
+				key.WithKeys("s"),
+				key.WithHelp("s", "Skip the current command."),
+			),
+			quit: key.NewBinding(
+				key.WithKeys("q"),
+				key.WithHelp("q", "Quit the scenario."),
+			),
+		},
+		env:               env,
+		resourceGroupName: "",
+		azureStatus:       azureStatus,
+		codeBlockState:    codeBlockState,
+		executingCommand:  false,
+		currentCodeBlock:  0,
+		help:              help.New(),
+		environment:       engine.Configuration.Environment,
+		scenarioCompleted: false,
+		ready:             false,
+	}, nil
+
+}
+
+// Interact with each individual step from a scenario and let the user
+// interact with the codecodeBlocks.
+func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
+
+	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
+
+	model, err := NewInteractiveModeModel(e, stepsToExecute, env)
+
+  if err != nil {
+    return err
+  }
+
+	if _, err := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion()).Run(); err != nil {
+		logging.GlobalLogger.Fatalf("Error initializing interactive mode: %s", err)
+		return err
 	}
 
 	return nil
+
 }

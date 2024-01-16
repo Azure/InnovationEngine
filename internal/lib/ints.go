@@ -1,3 +1,9 @@
 package lib
 
-func Int32Ptr(i int32) *int32 { return &i }
+// Max returns the larger of x or y.
+func Max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
