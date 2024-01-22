@@ -3,6 +3,8 @@ module github.com/Azure/InnovationEngine
 go 1.20
 
 require (
+	github.com/charmbracelet/bubbles v0.17.1
+	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.10.2
@@ -12,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673
 	github.com/yuin/goldmark v1.5.4
-	golang.org/x/sys v0.13.0
+	golang.org/x/sys v0.16.0
 	gopkg.in/ini.v1 v1.67.0
 	k8s.io/api v0.27.1
 	k8s.io/apimachinery v0.27.1
@@ -21,11 +23,8 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/bubbles v0.17.1 // indirect
-	github.com/charmbracelet/bubbletea v0.25.0 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
@@ -64,7 +63,7 @@ require (
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
