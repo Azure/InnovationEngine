@@ -1,4 +1,4 @@
-.PHONY: build-ie build-api build-all run-ie run-api clean test-all test all
+.PHONY: build-ie build-all run-ie clean test-all test all
 
 BINARY_DIR := bin
 IE_BINARY := $(BINARY_DIR)/ie
@@ -10,15 +10,8 @@ build-ie:
 	@echo "Building the Innovation Engine CLI..."
 	@CGO_ENABLED=0 go build -o "$(IE_BINARY)" cmd/ie/ie.go
 
-build-api:
-	@echo "Building the Innovation Engine API..."
-	@CGO_ENABLED=0 go build -o "$(API_BINARY)" cmd/api/main.go
 
-build-runner: build-ie build-api
-	@echo "Building the Innovation Engine Runner..."
-	@CGO_ENABLED=0 go build -o "$(BINARY_DIR)/runner" cmd/runner/main.go
-
-build-all: build-ie build-api build-runner
+build-all: build-ie
 
 # ------------------------------ Install targets -------------------------------
 
@@ -66,10 +59,6 @@ test-upstream-scenarios:
 run-ie: build-ie
 	@echo "Running the Innovation Engine CLI"
 	@"$(IE_BINARY)"
-
-run-api: build-api
-	@echo "Running the Innovation Engine API"
-	@"$(API_BINARY)"
 
 clean:
 	@echo "Cleaning up"

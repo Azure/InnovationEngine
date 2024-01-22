@@ -86,7 +86,9 @@ type FailedCommandMessage struct {
 // will be executed asycnhronously.
 func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) tea.Cmd {
 	return func() tea.Msg {
-		logging.GlobalLogger.Info("Executing command asynchronously: ", codeBlock.Content)
+		logging.GlobalLogger.Infof(
+			"Executing command asynchronously:\n %s", codeBlock.Content)
+
 		output, err := shells.ExecuteBashCommand(codeBlock.Content, shells.BashCommandConfiguration{
 			EnvironmentVariables: env,
 			InheritEnvironment:   true,
@@ -95,7 +97,7 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 		})
 
 		if err != nil {
-			logging.GlobalLogger.Errorf("Error executing command: %s", err.Error())
+			logging.GlobalLogger.Errorf("Error executing command:\n %s", err.Error())
 			return FailedCommandMessage{
 				StdOut: output.StdOut,
 				StdErr: output.StdErr,
@@ -220,6 +222,56 @@ func initializeViewports(model InteractiveModeModel, width, height int) interact
 	}
 }
 
+// Handle user input for interactive mode.
+func handleUserInput(
+	model InteractiveModeModel,
+	message tea.KeyMsg,
+) (InteractiveModeModel, []tea.Cmd) {
+	var commands []tea.Cmd
+	switch {
+	case key.Matches(message, model.commands.execute):
+		if model.executingCommand {
+			logging.GlobalLogger.Info("Command is already executing, ignoring execute command")
+			break
+		}
+		model.executingCommand = true
+		codeBlock := model.codeBlockState[model.currentCodeBlock].CodeBlock
+
+		// If we're on the last step and the command is an SSH command, we need
+		// to report the status before executing the command. This is needed for
+		// one click deployments and does not affect the normal execution flow.
+
+		if model.currentCodeBlock == len(model.codeBlockState)-1 &&
+			patterns.SshCommand.MatchString(codeBlock.Content) {
+			model.azureStatus.Status = "Succeeded"
+			environments.AttachResourceURIsToAzureStatus(
+				&model.azureStatus,
+				model.resourceGroupName,
+				model.environment,
+			)
+
+			commands = append(commands, tea.Sequence(
+				updateAzureStatus(model),
+				func() tea.Msg {
+					return ExecuteCodeBlockSync(codeBlock, lib.CopyMap(model.env))
+				}))
+
+		} else {
+			commands = append(commands, ExecuteCodeBlockAsync(
+				codeBlock,
+				lib.CopyMap(model.env),
+			))
+		}
+
+	case key.Matches(message, model.commands.skip):
+		model.currentCodeBlock++
+	case key.Matches(message, model.commands.quit):
+		commands = append(commands, tea.Quit)
+	}
+
+	return model, commands
+}
+
 // Updates the intractive mode model
 func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
@@ -238,42 +290,9 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.viewports.command.Width = message.Width
 			model.viewports.output.Width = message.Width
 		}
+
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(message, model.commands.execute):
-			if model.executingCommand {
-				logging.GlobalLogger.Info("Command is already executing, ignoring execute command")
-				break
-			}
-			model.executingCommand = true
-			codeBlock := model.codeBlockState[model.currentCodeBlock].CodeBlock
-
-			// If we're on the last step and the command is an SSH command, we need
-			// to report the status before executing the command. This is needed for
-			// one click deployments and does not affect the normal execution flow.
-
-			if model.currentCodeBlock == len(model.codeBlockState)-1 && patterns.SshCommand.MatchString(codeBlock.Content) {
-				model.azureStatus.Status = "Succeeded"
-				environments.AttachResourceURIsToAzureStatus(&model.azureStatus, model.resourceGroupName, model.environment)
-
-				commands = append(commands, tea.Sequence(
-					updateAzureStatus(model),
-					func() tea.Msg {
-						return ExecuteCodeBlockSync(codeBlock, lib.CopyMap(model.env))
-					}))
-
-			} else {
-				commands = append(commands, ExecuteCodeBlockAsync(
-					codeBlock,
-					lib.CopyMap(model.env),
-				))
-			}
-
-		case key.Matches(message, model.commands.skip):
-			model.currentCodeBlock++
-		case key.Matches(message, model.commands.quit):
-			commands = append(commands, tea.Quit)
-		}
+		model, commands = handleUserInput(model, message)
 
 	case SuccessfulCommandMessage:
 		// Handle successful command executions
@@ -285,16 +304,17 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
 		codeBlockState.Success = true
-		model.viewports.output.SetContent(codeBlockState.StdOut)
-		logging.GlobalLogger.Infof("Finished executing: %s", codeBlockState.CodeBlock.Content)
+		model.codeBlockState[step] = codeBlockState
+
+		logging.GlobalLogger.Infof("Finished executing:\n %s", codeBlockState.CodeBlock.Content)
 
 		// Extract the resource group name from the command output if
 		// it's not already set.
 		if model.resourceGroupName == "" && patterns.AzCommand.MatchString(codeBlockState.CodeBlock.Content) {
-			logging.GlobalLogger.Info("Attempting to extract resource group name from command output")
+			logging.GlobalLogger.Debugf("Attempting to extract resource group name from command output")
 			tmpResourceGroup := az.FindResourceGroupName(codeBlockState.StdOut)
 			if tmpResourceGroup != "" {
-				logging.GlobalLogger.WithField("resourceGroup", tmpResourceGroup).Info("Found resource group")
+				logging.GlobalLogger.Infof("Found resource group named: %s", tmpResourceGroup)
 				model.resourceGroupName = tmpResourceGroup
 			}
 		}
@@ -319,6 +339,17 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	case FailedCommandMessage:
 		// Handle failed command executions
+
+		// Update the state of the codeblock which finished executing.
+		step := model.currentCodeBlock
+		codeBlockState := model.codeBlockState[step]
+		codeBlockState.StdOut = message.StdOut
+		codeBlockState.StdErr = message.StdErr
+		codeBlockState.Success = false
+
+		model.codeBlockState[step] = codeBlockState
+
+		// Report the error
 		model.executingCommand = false
 		model.azureStatus.SetError(message.Error)
 		environments.AttachResourceURIsToAzureStatus(
@@ -326,7 +357,6 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.resourceGroupName,
 			model.environment,
 		)
-		model.viewports.output.SetContent(message.StdOut + message.StdErr)
 		commands = append(commands, updateAzureStatus(model))
 
 	case AzureStatusUpdatedMessage:
@@ -347,7 +377,12 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	block := model.codeBlockState[model.currentCodeBlock]
 	model.viewports.step.SetContent(block.CodeBlock.Description)
 	model.viewports.command.SetContent(block.CodeBlock.Content)
-	model.viewports.output.SetContent(block.StdOut)
+
+	if block.Success {
+		model.viewports.output.SetContent(block.StdOut)
+	} else {
+		model.viewports.output.SetContent(block.StdErr)
+	}
 
 	// Update all the viewports and append resulting commands.
 	var command tea.Cmd

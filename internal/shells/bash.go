@@ -197,11 +197,14 @@ func ExecuteBashCommand(command string, config BashCommandConfiguration) (Comman
 	standardOutput, standardError := stdoutBuffer.String(), stderrBuffer.String()
 
 	if err != nil {
-		return CommandOutput{}, fmt.Errorf(
-			"command exited with '%w' and the message '%s'",
-			err,
-			standardError,
-		)
+		return CommandOutput{
+				StdOut: standardOutput,
+				StdErr: standardError,
+			}, fmt.Errorf(
+				"command exited with '%w' and the message '%s'",
+				err,
+				standardError,
+			)
 	}
 
 	return CommandOutput{
