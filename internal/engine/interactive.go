@@ -53,6 +53,7 @@ type InteractiveModeModel struct {
 	env               map[string]string
 	environment       string
 	executingCommand  bool
+	isSyncCommand     bool
 	height            int
 	help              help.Model
 	resourceGroupName string
@@ -221,6 +222,12 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	var commands []tea.Cmd
 
+	// If a sync command is updating, do not update the model until the sync
+	// command finishes.
+	if model.executingCommand && model.isSyncCommand {
+		return model, nil
+	}
+
 	switch message := message.(type) {
 
 	case tea.WindowSizeMsg:
@@ -249,6 +256,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			// one click deployments and does not affect the normal execution flow.
 
 			if model.currentCodeBlock == len(model.codeBlockState)-1 && patterns.SshCommand.MatchString(codeBlock.Content) {
+				model.isSyncCommand = true
 				model.azureStatus.Status = "Succeeded"
 				environments.AttachResourceURIsToAzureStatus(&model.azureStatus, model.resourceGroupName, model.environment)
 
@@ -298,7 +306,20 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
 
-		commands = append(commands, updateAzureStatus(model))
+		// If the scenario has been completed, we need to update the azure
+		// status and quit the program.
+		if model.currentCodeBlock == len(model.codeBlockState) {
+			model.scenarioCompleted = true
+			model.azureStatus.Status = "Succeeded"
+			environments.AttachResourceURIsToAzureStatus(
+				&model.azureStatus,
+				model.resourceGroupName,
+				model.environment,
+			)
+			commands = append(commands, tea.Sequence(updateAzureStatus(model), tea.Quit))
+		} else {
+			commands = append(commands, updateAzureStatus(model))
+		}
 
 	case FailedCommandMessage:
 		// Handle failed command executions
@@ -476,6 +497,7 @@ func NewInteractiveModeModel(
 		azureStatus:       azureStatus,
 		codeBlockState:    codeBlockState,
 		executingCommand:  false,
+		isSyncCommand:     false,
 		currentCodeBlock:  0,
 		help:              help.New(),
 		environment:       engine.Configuration.Environment,
@@ -497,7 +519,7 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 		return err
 	}
 
-	if _, err := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion()).Run(); err != nil {
+	if _, err := tea.NewProgram(model, tea.WithMouseCellMotion()).Run(); err != nil {
 		logging.GlobalLogger.Fatalf("Error initializing interactive mode: %s", err)
 		return err
 	}
