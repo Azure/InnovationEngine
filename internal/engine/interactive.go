@@ -184,7 +184,7 @@ func clearScreen() tea.Cmd {
 // model.
 func updateAzureStatus(model InteractiveModeModel) tea.Cmd {
 	return func() tea.Msg {
-		logging.GlobalLogger.Infof(
+		logging.GlobalLogger.Tracef(
 			"Attempting to update the azure status: %+v",
 			model.azureStatus,
 		)
@@ -326,7 +326,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.resourceGroupName,
 			model.environment,
 		)
-		model.viewports.output.SetContent(message.StdErr)
+		model.viewports.output.SetContent(message.StdOut + message.StdErr)
 		commands = append(commands, updateAzureStatus(model))
 
 	case AzureStatusUpdatedMessage:
@@ -516,7 +516,7 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 		return err
 	}
 
-	program = tea.NewProgram(model, tea.WithMouseCellMotion())
+	program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	if _, err := program.Run(); err != nil {
 		logging.GlobalLogger.Fatalf("Error initializing interactive mode: %s", err)
 		return err
