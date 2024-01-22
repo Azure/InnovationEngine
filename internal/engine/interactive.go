@@ -86,7 +86,7 @@ type FailedCommandMessage struct {
 // will be executed asycnhronously.
 func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) tea.Cmd {
 	return func() tea.Msg {
-		logging.GlobalLogger.Info("Executing command: ", codeBlock.Content)
+		logging.GlobalLogger.Info("Executing command asynchronously: ", codeBlock.Content)
 		output, err := shells.ExecuteBashCommand(codeBlock.Content, shells.BashCommandConfiguration{
 			EnvironmentVariables: env,
 			InheritEnvironment:   true,
@@ -140,9 +140,11 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 	}
 }
 
-func ExecuteCodeBlockSync(command string, env map[string]string) tea.Msg {
-	logging.GlobalLogger.Info("Executing command: ", command)
-	output, err := shells.ExecuteBashCommand(command, shells.BashCommandConfiguration{
+// Executes a bash command syncrhonously. This function will block until the command
+// finishes executing.
+func ExecuteCodeBlockSync(codeBlock parsers.CodeBlock, env map[string]string) tea.Msg {
+	logging.GlobalLogger.Info("Executing command synchronously: ", codeBlock.Content)
+	output, err := shells.ExecuteBashCommand(codeBlock.Content, shells.BashCommandConfiguration{
 		EnvironmentVariables: env,
 		InheritEnvironment:   true,
 		InteractiveCommand:   true,
@@ -174,6 +176,8 @@ func clearScreen() tea.Cmd {
 	}
 }
 
+// Updates the azure status with the current state of the interactive mode
+// model.
 func updateAzureStatus(model InteractiveModeModel) tea.Cmd {
 	return func() tea.Msg {
 		logging.GlobalLogger.Infof(
@@ -181,12 +185,15 @@ func updateAzureStatus(model InteractiveModeModel) tea.Cmd {
 			model.azureStatus,
 		)
 		environments.ReportAzureStatus(model.azureStatus, model.environment)
-		return AzureStatusUpdated{}
+		return AzureStatusUpdatedMessage{}
 	}
 }
 
-type AzureStatusUpdated struct{}
+// Empty struct used to indicate that the azure status has been updated so
+// that we can respond to it within the Update() function.
+type AzureStatusUpdatedMessage struct{}
 
+// Initializes the viewports for the interactive mode model.
 func initializeViewports(model InteractiveModeModel, width, height int) interactiveModeViewPorts {
 
 	currentBlock := model.codeBlockState[model.currentCodeBlock]
@@ -217,8 +224,8 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch message := message.(type) {
 
 	case tea.WindowSizeMsg:
-
 		model.width = message.Width
+		model.height = message.Height
 		if !model.ready {
 			model.viewports = initializeViewports(model, message.Width, message.Height)
 			model.ready = true
@@ -230,13 +237,34 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(message, model.commands.execute):
+			if model.executingCommand {
+				logging.GlobalLogger.Info("Command is already executing, ignoring execute command")
+				break
+			}
 			model.executingCommand = true
 			codeBlock := model.codeBlockState[model.currentCodeBlock].CodeBlock
-			fmt.Printf("Executing %s\n", codeBlock.Content)
-			commands = append(commands, ExecuteCodeBlockAsync(
-				codeBlock,
-				lib.CopyMap(model.env),
-			))
+
+			// If we're on the last step and the command is an SSH command, we need
+			// to report the status before executing the command. This is needed for
+			// one click deployments and does not affect the normal execution flow.
+
+			if model.currentCodeBlock == len(model.codeBlockState)-1 && patterns.SshCommand.MatchString(codeBlock.Content) {
+				model.azureStatus.Status = "Succeeded"
+				environments.AttachResourceURIsToAzureStatus(&model.azureStatus, model.resourceGroupName, model.environment)
+
+				commands = append(commands, tea.Sequence(
+					updateAzureStatus(model),
+					func() tea.Msg {
+						return ExecuteCodeBlockSync(codeBlock, lib.CopyMap(model.env))
+					}))
+
+			} else {
+				commands = append(commands, ExecuteCodeBlockAsync(
+					codeBlock,
+					lib.CopyMap(model.env),
+				))
+			}
+
 		case key.Matches(message, model.commands.skip):
 			model.currentCodeBlock++
 		case key.Matches(message, model.commands.quit):
@@ -244,6 +272,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case SuccessfulCommandMessage:
+		// Handle successful command executions
 		model.executingCommand = false
 		step := model.currentCodeBlock
 
@@ -272,6 +301,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		commands = append(commands, updateAzureStatus(model))
 
 	case FailedCommandMessage:
+		// Handle failed command executions
 		model.executingCommand = false
 		model.azureStatus.SetError(message.Error)
 		environments.AttachResourceURIsToAzureStatus(
@@ -282,7 +312,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		model.viewports.output.SetContent(message.StdErr)
 		commands = append(commands, updateAzureStatus(model))
 
-	case AzureStatusUpdated:
+	case AzureStatusUpdatedMessage:
 		// After the status has been updated, we force a window resize to
 		// render over the status update. For some reason, clearing the screen
 		// manually seems to cause the text produced by View() to not render
@@ -313,6 +343,9 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	return model, tea.Batch(commands...)
 }
+
+// Shows the commands that the user can use to interact with the interactive
+// mode model.
 func (model InteractiveModeModel) helpView() string {
 	return "\n" + model.help.ShortHelpView([]key.Binding{
 		model.commands.execute,
@@ -320,6 +353,8 @@ func (model InteractiveModeModel) helpView() string {
 		model.commands.quit,
 	})
 }
+
+// Renders the interactive mode model.
 func (model InteractiveModeModel) View() string {
 
 	stepName := model.codeBlockState[model.currentCodeBlock].StepName
@@ -362,15 +397,17 @@ func (model InteractiveModeModel) View() string {
 	return stepView + "\n" + commandView + "\n" + outputView + "\n" + model.helpView()
 }
 
+// Renders the header for a viewport.
 func viewportHeaderView(header string, viewportWidth int) string {
 	title := ui.InteractiveModeStepTitleStyle.Render(header)
-	line := strings.Repeat("─", lib.Max(0, viewportWidth-lipgloss.Width(title)))
+	line := strings.Repeat("-", lib.Max(0, viewportWidth-lipgloss.Width(title)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }
 
+// Renders the footer for a viewport.
 func viewportFooterView(footer string, viewportWidth int) string {
 	footer = ui.InteractiveModeStepFooterStyle.Render(footer)
-	line := strings.Repeat("─", lib.Max(0, viewportWidth-lipgloss.Width(footer)))
+	line := strings.Repeat("-", lib.Max(0, viewportWidth-lipgloss.Width(footer)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, footer)
 }
 
@@ -456,9 +493,9 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 
 	model, err := NewInteractiveModeModel(e, stepsToExecute, env)
 
-  if err != nil {
-    return err
-  }
+	if err != nil {
+		return err
+	}
 
 	if _, err := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion()).Run(); err != nil {
 		logging.GlobalLogger.Fatalf("Error initializing interactive mode: %s", err)
