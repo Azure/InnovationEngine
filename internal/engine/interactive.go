@@ -190,6 +190,7 @@ func updateAzureStatus(model InteractiveModeModel) tea.Cmd {
 			"Attempting to update the azure status: %+v",
 			model.azureStatus,
 		)
+		model.azureStatus.CurrentStep++
 		environments.ReportAzureStatus(model.azureStatus, model.environment)
 		return AzureStatusUpdatedMessage{}
 	}
@@ -332,7 +333,13 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.resourceGroupName,
 				model.environment,
 			)
-			commands = append(commands, tea.Sequence(updateAzureStatus(model), tea.Quit))
+			commands = append(
+				commands,
+				tea.Sequence(
+					updateAzureStatus(model),
+					tea.Quit,
+				),
+			)
 		} else {
 			commands = append(commands, updateAzureStatus(model))
 		}
@@ -364,7 +371,6 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		// render over the status update. For some reason, clearing the screen
 		// manually seems to cause the text produced by View() to not render
 		// properly if we don't trigger a window size event.
-		model.azureStatus.CurrentStep++
 		commands = append(commands, func() tea.Msg {
 			return tea.WindowSizeMsg{
 				Width:  model.width,
@@ -375,7 +381,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Update viewport content
 	block := model.codeBlockState[model.currentCodeBlock]
-	model.viewports.step.SetContent(block.CodeBlock.Description)
+	model.viewports.step.SetContent(block.CodeBlock.Description + "\n\n" + block.CodeBlock.Content)
 	model.viewports.command.SetContent(block.CodeBlock.Content)
 
 	if block.Success {
@@ -422,18 +428,6 @@ func (model InteractiveModeModel) View() string {
 		),
 	)
 
-	commandView := fmt.Sprintf("%s\n%s\n%s",
-		viewportHeaderView(
-			"Command",
-			model.width,
-		),
-		model.viewports.command.View(),
-		viewportFooterView(
-			" ",
-			model.width,
-		),
-	)
-
 	outputView := fmt.Sprintf("%s\n%s\n%s",
 		viewportHeaderView(
 			"Output",
@@ -446,7 +440,7 @@ func (model InteractiveModeModel) View() string {
 		),
 	)
 
-	return stepView + "\n" + commandView + "\n" + outputView + "\n" + model.helpView()
+	return stepView + "\n" + outputView + "\n" + model.helpView()
 }
 
 // Renders the header for a viewport.
