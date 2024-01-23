@@ -364,7 +364,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.resourceGroupName,
 			model.environment,
 		)
-		commands = append(commands, updateAzureStatus(model))
+		commands = append(commands, tea.Sequence(updateAzureStatus(model), tea.Quit))
 
 	case AzureStatusUpdatedMessage:
 		// After the status has been updated, we force a window resize to
