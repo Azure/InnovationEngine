@@ -282,6 +282,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		model.width = message.Width
 		model.height = message.Height
+		logging.GlobalLogger.Infof("Window size changed to: %d x %d", message.Width, message.Height)
 		if !model.ready {
 			model.viewports = initializeViewports(model, message.Width, message.Height)
 			model.ready = true
@@ -290,6 +291,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.viewports.command.Width = message.Width
 			model.viewports.output.Width = message.Width
 		}
+		commands = append(commands, clearScreen())
 
 	case tea.KeyMsg:
 		model, commands = handleUserInput(model, message)
@@ -545,7 +547,7 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 		return err
 	}
 
-	program = tea.NewProgram(model, tea.WithMouseCellMotion())
+	program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	_, err = program.Run()
 
 	switch e.Configuration.Environment {
