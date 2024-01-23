@@ -545,7 +545,7 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 		return err
 	}
 
-	program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	program = tea.NewProgram(model, tea.WithMouseCellMotion())
 	_, err = program.Run()
 
 	switch e.Configuration.Environment {
