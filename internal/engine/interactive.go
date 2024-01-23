@@ -546,8 +546,26 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 	}
 
 	program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
-	if _, err := program.Run(); err != nil {
-		logging.GlobalLogger.Fatalf("Error initializing interactive mode: %s", err)
+	_, err = program.Run()
+
+	switch e.Configuration.Environment {
+	case environments.EnvironmentsAzure, environments.EnvironmentsOCD:
+		logging.GlobalLogger.Info(
+			"Cleaning environment variable file located at /tmp/env-vars",
+		)
+		err := shells.CleanEnvironmentStateFile()
+
+		if err != nil {
+			logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
+			return err
+		}
+
+	default:
+		shells.ResetStoredEnvironmentVariables()
+	}
+
+	if err != nil {
+		logging.GlobalLogger.Errorf("Failed to run program %s", err)
 		return err
 	}
 
