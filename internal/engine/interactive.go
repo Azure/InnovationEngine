@@ -190,7 +190,6 @@ func updateAzureStatus(model InteractiveModeModel) tea.Cmd {
 			"Attempting to update the azure status: %+v",
 			model.azureStatus,
 		)
-		model.azureStatus.CurrentStep++
 		environments.ReportAzureStatus(model.azureStatus, model.environment)
 		return AzureStatusUpdatedMessage{}
 	}
@@ -322,6 +321,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
+		model.azureStatus.CurrentStep++
 
 		// If the scenario has been completed, we need to update the azure
 		// status and quit the program.
