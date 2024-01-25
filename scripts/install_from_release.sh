@@ -2,7 +2,7 @@
 set -e
 
 # Define the language parameter
-LANG="${1:-''}"
+LANG="$1"
 SCENARIOS=""
 
 # Map the language parameter to the corresponding scenarios file
