@@ -9,10 +9,15 @@ on:
     branches:
       - main
   workflow_dispatch:
-
+permissions:
+  id-token: write
+  contents: read
 jobs:
   test-ocd-scenarios:
     runs-on: ubuntu-latest
+    # This is needed in order to obtain OIDC tokens to sign this pipeline into
+    # the testing subscription for any branch in this repository.
+    environment: ScenarioTesting
     steps:
       - uses: actions/checkout@v2
       - name: Build all targets.
@@ -20,17 +25,20 @@ jobs:
           make build-all
           make test-all
       - name: Sign into Azure
-        uses: azure/actions/login@v1
+        uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION }}
       - name: Run all one click deployment scenarios.
         uses: azure/CLI@v1
         if: github.event_name != 'pull_request'
         with:
+          azcliversion: 2.53.0
           inlineScript: |
-            apk add --no-cache make
-            make test-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
+            apk add --no-cache make git openssh openssl helm curl jq
+            make test-upstream-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
       - name: Display ie.log file
-        if: github.event_name != 'pull_request'
+        if: (success() || failure()) && github.event_name != 'pull_request'
         run: |
           cat ie.log
