@@ -24,7 +24,7 @@ jobs:
             echo "ie not found"
             exit 1
           fi
-          if [ ! -d "~/scenarios" ]
+          if [ ! -d "${HOME}/scenarios" ]
           then
             echo "scenarios not found"
             exit 1
