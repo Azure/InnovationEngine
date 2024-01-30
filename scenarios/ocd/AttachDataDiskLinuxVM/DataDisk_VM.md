@@ -1,5 +1,5 @@
 az login
-az account set --subscription "0bb78609-cc8b-4e7d-be30-eee8cf2dbea4"
+az account set --subscription "XXXXXXX"
 az account show
 
 #VARIABLE DECLARATION
