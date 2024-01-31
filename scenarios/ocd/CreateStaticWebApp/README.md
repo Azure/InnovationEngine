@@ -30,11 +30,11 @@ You can deploy the app as a static web app from the Azure CLI.
 
 1. Create a resource group.
 
-   ```bash
-   az group create \
-     --name $MY_RESOURCE_GROUP_NAME \
-     --location $REGION
-   ```
+```bash
+az group create \
+  --name $MY_RESOURCE_GROUP_NAME \
+  --location $REGION
+```
 
 Results:
 
@@ -55,12 +55,12 @@ Results:
 
 2. Deploy a new static web app from your repository.
 
-   ```bash
-   az staticwebapp create \
-       --name $MY_STATIC_WEB_APP_NAME \
-       --resource-group $MY_RESOURCE_GROUP_NAME \
-       --location $REGION 
-   ```
+```bash
+az staticwebapp create \
+    --name $MY_STATIC_WEB_APP_NAME \
+    --resource-group $MY_RESOURCE_GROUP_NAME \
+    --location $REGION 
+```
 
 There are two aspects to deploying a static app. The first operation creates the underlying Azure resources that make up your app. The second is a workflow that builds and publishes your application.
 
@@ -104,9 +104,6 @@ Results:
 echo "You can now visit your web server at https://$MY_STATIC_WEB_APP_URL"
 ```
 
-
-
-
 ## Next Steps
 
 Congratulations! You have successfully deployed a static web app to Azure Static Web Apps using the Azure CLI. Now that you have a basic understanding of how to deploy a static web app, you can explore more advanced features and functionality of Azure Static Web Apps.
@@ -135,9 +132,3 @@ Go to https://github.com/login/device and enter the user code 329B-3945 to activ
      --query "defaultHostname"
 
 5. Copy the URL into your browser to go to your website.
-
-## Feedback
-
-We would love to hear your feedback on this quickstart. If you have any comments or suggestions, please let us know by opening an issue on the [GitHub repository](https://github.com/Azure/static-web-apps-docs/issues/new/choose). Thank you for your feedback!
-
----
