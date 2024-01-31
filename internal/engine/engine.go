@@ -62,7 +62,6 @@ func (e *Engine) InteractWithScenario(scenario *Scenario) error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
 		// Interact with the steps
-		fmt.Println(ui.ScenarioTitleStyle.Render(scenario.Name))
 		err := e.InteractWithSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 		return err
 	})

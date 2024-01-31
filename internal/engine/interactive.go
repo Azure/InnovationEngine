@@ -95,7 +95,6 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 			InteractiveCommand:   false,
 			WriteToHistory:       true,
 		})
-
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error executing command:\n %s", err.Error())
 			return FailedCommandMessage{
@@ -201,7 +200,6 @@ type AzureStatusUpdatedMessage struct{}
 
 // Initializes the viewports for the interactive mode model.
 func initializeViewports(model InteractiveModeModel, width, height int) interactiveModeViewPorts {
-
 	currentBlock := model.codeBlockState[model.currentCodeBlock]
 
 	stepViewport := viewport.New(width, 8)
@@ -274,7 +272,6 @@ func handleUserInput(
 
 // Updates the intractive mode model
 func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
-
 	var commands []tea.Cmd
 
 	switch message := message.(type) {
@@ -323,7 +320,17 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
-		model.azureStatus.CurrentStep++
+
+		// Only increment the step for azure if the step name has changed.
+		nextCodeBlockState := model.codeBlockState[model.currentCodeBlock]
+
+
+		if codeBlockState.StepName != nextCodeBlockState.StepName {
+			logging.GlobalLogger.Debugf("Step name has changed, incrementing step for Azure")
+			model.azureStatus.CurrentStep++
+		} else {
+			logging.GlobalLogger.Debugf("Step name has not changed, not incrementing step for Azure")
+		}
 
 		// If the scenario has been completed, we need to update the azure
 		// status and quit the program.
@@ -416,7 +423,6 @@ func (model InteractiveModeModel) helpView() string {
 
 // Renders the interactive mode model.
 func (model InteractiveModeModel) View() string {
-
 	stepName := model.codeBlockState[model.currentCodeBlock].StepName
 	stepView := fmt.Sprintf("%s\n%s\n%s",
 		viewportHeaderView(
@@ -468,7 +474,7 @@ func NewInteractiveModeModel(
 ) (InteractiveModeModel, error) {
 	// TODO: In the future we should just set the current step for the azure status
 	// to one as the default.
-	var azureStatus = environments.NewAzureDeploymentStatus()
+	azureStatus := environments.NewAzureDeploymentStatus()
 	azureStatus.CurrentStep = 1
 	totalCodeBlocks := 0
 	codeBlockState := make(map[int]CodeBlockState)
@@ -532,17 +538,14 @@ func NewInteractiveModeModel(
 		scenarioCompleted: false,
 		ready:             false,
 	}, nil
-
 }
 
 // Interact with each individual step from a scenario and let the user
 // interact with the codecodeBlocks.
 func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
-
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
 
 	model, err := NewInteractiveModeModel(e, stepsToExecute, env)
-
 	if err != nil {
 		return err
 	}
@@ -556,7 +559,6 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 			"Cleaning environment variable file located at /tmp/env-vars",
 		)
 		err := shells.CleanEnvironmentStateFile()
-
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
 			return err
@@ -572,5 +574,4 @@ func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
 	}
 
 	return nil
-
 }
