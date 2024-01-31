@@ -69,15 +69,15 @@ Before you can go to your new static site, the deployment build must first finis
 3. Return to your console window and run the following command to list the website's URL.
 
 ```bash
-MY_STATIC_WEB_APP_URL=$(az staticwebapp show --name  $MY_STATIC_WEB_APP_NAME --resource-group $MY_RESOURCE_GROUP_NAME --query "defaultHostname" -o tsv)
+export MY_STATIC_WEB_APP_URL=$(az staticwebapp show --name  $MY_STATIC_WEB_APP_NAME --resource-group $MY_RESOURCE_GROUP_NAME --query "defaultHostname" -o tsv)
 ```
 
 ```bash
-runtime="5 minute";
+runtime="1 minute";
 endtime=$(date -ud "$runtime" +%s);
 while [[ $(date -u +%s) -le $endtime ]]; do
-    if curl -I -s -f $MY_STATIC_WEB_APP_URL > /dev/null ; then 
-        curl -L -s -f $MY_STATIC_WEB_APP_URL 2> /dev/null | head -n 9
+    if curl -I -s $MY_STATIC_WEB_APP_URL > /dev/null ; then 
+        curl -L -s $MY_STATIC_WEB_APP_URL 2> /dev/null | head -n 9
         break
     else 
         sleep 10
