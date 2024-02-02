@@ -229,24 +229,36 @@ func handleUserInput(
 			break
 		}
 
-    codeBlockState := model.codeBlockState[model.currentCodeBlock]
+		// Prevent the user from executing a command if the previous command has
+		// not been executed successfully or executed at all.
+		previousCodeBlock := model.currentCodeBlock - 1
+		if previousCodeBlock >= 0 {
+			previousCodeBlockState := model.codeBlockState[previousCodeBlock]
+			if !previousCodeBlockState.Success {
+				logging.GlobalLogger.Info(
+					"Previous command has not been executed successfully, ignoring execute command",
+				)
+				break
+			}
+		}
 
-    if codeBlockState.Success {
-      logging.GlobalLogger.Info("Command has already been executed, ignoring execute command")
-      break
-    }
+    // Prevent the user from executing a command if the current command has 
+    // already been executed successfully.
+		codeBlockState := model.codeBlockState[model.currentCodeBlock]
+		if codeBlockState.Success {
+			logging.GlobalLogger.Info(
+				"Command has already been executed successfully, ignoring execute command",
+			)
+			break
+		}
 
 		codeBlock := codeBlockState.CodeBlock
 
-
-
-
-
 		model.executingCommand = true
+
 		// If we're on the last step and the command is an SSH command, we need
 		// to report the status before executing the command. This is needed for
 		// one click deployments and does not affect the normal execution flow.
-
 		if model.currentCodeBlock == len(model.codeBlockState)-1 &&
 			patterns.SshCommand.MatchString(codeBlock.Content) {
 			model.azureStatus.Status = "Succeeded"
@@ -567,40 +579,4 @@ func NewInteractiveModeModel(
 		scenarioCompleted: false,
 		ready:             false,
 	}, nil
-}
-
-// Interact with each individual step from a scenario and let the user
-// interact with the codecodeBlocks.
-func (e *Engine) InteractWithSteps(steps []Step, env map[string]string) error {
-	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
-
-	model, err := NewInteractiveModeModel(e, stepsToExecute, env)
-	if err != nil {
-		return err
-	}
-
-	program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
-	_, err = program.Run()
-
-	switch e.Configuration.Environment {
-	case environments.EnvironmentsAzure, environments.EnvironmentsOCD:
-		logging.GlobalLogger.Info(
-			"Cleaning environment variable file located at /tmp/env-vars",
-		)
-		err := shells.CleanEnvironmentStateFile()
-		if err != nil {
-			logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
-			return err
-		}
-
-	default:
-		shells.ResetStoredEnvironmentVariables()
-	}
-
-	if err != nil {
-		logging.GlobalLogger.Errorf("Failed to run program %s", err)
-		return err
-	}
-
-	return nil
 }

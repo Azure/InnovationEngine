@@ -4,9 +4,13 @@ import (
 	"fmt"
 
 	"github.com/Azure/InnovationEngine/internal/az"
+	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/lib/fs"
+	"github.com/Azure/InnovationEngine/internal/logging"
+	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/ui"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // Configuration for the engine.
@@ -61,8 +65,36 @@ func (e *Engine) InteractWithScenario(scenario *Scenario) error {
 	return fs.UsingDirectory(e.Configuration.WorkingDirectory, func() error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
-		// Interact with the steps
-		err := e.InteractWithSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
-		return err
+		stepsToExecute := filterDeletionCommands(scenario.Steps, e.Configuration.DoNotDelete)
+
+		model, err := NewInteractiveModeModel(e, stepsToExecute, lib.CopyMap(scenario.Environment))
+		if err != nil {
+			return err
+		}
+
+		program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
+		_, err = program.Run()
+
+		switch e.Configuration.Environment {
+		case environments.EnvironmentsAzure, environments.EnvironmentsOCD:
+			logging.GlobalLogger.Info(
+				"Cleaning environment variable file located at /tmp/env-vars",
+			)
+			err := shells.CleanEnvironmentStateFile()
+			if err != nil {
+				logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
+				return err
+			}
+
+		default:
+			shells.ResetStoredEnvironmentVariables()
+		}
+
+		if err != nil {
+			logging.GlobalLogger.Errorf("Failed to run program %s", err)
+			return err
+		}
+
+		return nil
 	})
 }
