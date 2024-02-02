@@ -21,9 +21,10 @@ import (
 )
 
 type InteractiveModeCommands struct {
-	execute key.Binding
-	skip    key.Binding
-	quit    key.Binding
+	execute  key.Binding
+	quit     key.Binding
+	previous key.Binding
+	next     key.Binding
 }
 
 // State for the codeblock in interactive mode. Used to keep track of the
@@ -40,9 +41,8 @@ type CodeBlockState struct {
 }
 
 type interactiveModeViewPorts struct {
-	step    viewport.Model
-	command viewport.Model
-	output  viewport.Model
+	step   viewport.Model
+	output viewport.Model
 }
 
 type InteractiveModeModel struct {
@@ -205,18 +205,14 @@ func initializeViewports(model InteractiveModeModel, width, height int) interact
 	stepViewport := viewport.New(width, 8)
 	stepViewport.SetContent(currentBlock.CodeBlock.Description)
 
-	commandViewport := viewport.New(width, 6)
-	commandViewport.SetContent(currentBlock.CodeBlock.Content)
-
 	// Initialize the output view ports
 
 	outputViewport := viewport.New(width, 4)
 	outputViewport.SetContent(currentBlock.StdOut)
 
 	return interactiveModeViewPorts{
-		step:    stepViewport,
-		command: commandViewport,
-		output:  outputViewport,
+		step:   stepViewport,
+		output: outputViewport,
 	}
 }
 
@@ -232,9 +228,21 @@ func handleUserInput(
 			logging.GlobalLogger.Info("Command is already executing, ignoring execute command")
 			break
 		}
-		model.executingCommand = true
-		codeBlock := model.codeBlockState[model.currentCodeBlock].CodeBlock
 
+    codeBlockState := model.codeBlockState[model.currentCodeBlock]
+
+    if codeBlockState.Success {
+      logging.GlobalLogger.Info("Command has already been executed, ignoring execute command")
+      break
+    }
+
+		codeBlock := codeBlockState.CodeBlock
+
+
+
+
+
+		model.executingCommand = true
 		// If we're on the last step and the command is an SSH command, we need
 		// to report the status before executing the command. This is needed for
 		// one click deployments and does not affect the normal execution flow.
@@ -261,8 +269,23 @@ func handleUserInput(
 			))
 		}
 
-	case key.Matches(message, model.commands.skip):
-		model.currentCodeBlock++
+	case key.Matches(message, model.commands.previous):
+		if model.executingCommand {
+			logging.GlobalLogger.Info("Command is already executing, ignoring execute command")
+			break
+		}
+		if model.currentCodeBlock > 0 {
+			model.currentCodeBlock--
+		}
+	case key.Matches(message, model.commands.next):
+		if model.executingCommand {
+			logging.GlobalLogger.Info("Command is already executing, ignoring execute command")
+			break
+		}
+		if model.currentCodeBlock < len(model.codeBlockState)-1 {
+			model.currentCodeBlock++
+		}
+
 	case key.Matches(message, model.commands.quit):
 		commands = append(commands, tea.Quit)
 	}
@@ -285,7 +308,6 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.ready = true
 		} else {
 			model.viewports.step.Width = message.Width
-			model.viewports.command.Width = message.Width
 			model.viewports.output.Width = message.Width
 		}
 		commands = append(commands, clearScreen())
@@ -323,7 +345,6 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Only increment the step for azure if the step name has changed.
 		nextCodeBlockState := model.codeBlockState[model.currentCodeBlock]
-
 
 		if codeBlockState.StepName != nextCodeBlockState.StepName {
 			logging.GlobalLogger.Debugf("Step name has changed, incrementing step for Azure")
@@ -391,7 +412,6 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	// Update viewport content
 	block := model.codeBlockState[model.currentCodeBlock]
 	model.viewports.step.SetContent(block.CodeBlock.Description + "\n\n" + block.CodeBlock.Content)
-	model.viewports.command.SetContent(block.CodeBlock.Content)
 
 	if block.Success {
 		model.viewports.output.SetContent(block.StdOut)
@@ -403,8 +423,6 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	var command tea.Cmd
 	model.viewports.step, command = model.viewports.step.Update(message)
 	commands = append(commands, command)
-	model.viewports.command, command = model.viewports.command.Update(message)
-	commands = append(commands, command)
 	model.viewports.output, command = model.viewports.output.Update(message)
 	commands = append(commands, command)
 
@@ -414,11 +432,18 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 // Shows the commands that the user can use to interact with the interactive
 // mode model.
 func (model InteractiveModeModel) helpView() string {
-	return "\n" + model.help.ShortHelpView([]key.Binding{
-		model.commands.execute,
-		model.commands.skip,
-		model.commands.quit,
-	})
+	keyBindings := [][]key.Binding{
+		{
+			model.commands.execute,
+			model.commands.previous,
+			model.commands.next,
+		},
+		{
+			model.commands.quit,
+		},
+	}
+
+	return model.help.FullHelpView(keyBindings)
 }
 
 // Renders the interactive mode model.
@@ -518,13 +543,17 @@ func NewInteractiveModeModel(
 				key.WithKeys("e"),
 				key.WithHelp("e", "Execute the current command."),
 			),
-			skip: key.NewBinding(
-				key.WithKeys("s"),
-				key.WithHelp("s", "Skip the current command."),
-			),
 			quit: key.NewBinding(
 				key.WithKeys("q"),
 				key.WithHelp("q", "Quit the scenario."),
+			),
+			previous: key.NewBinding(
+				key.WithKeys("left"),
+				key.WithHelp("←", "Go to the previous command."),
+			),
+			next: key.NewBinding(
+				key.WithKeys("right"),
+				key.WithHelp("→", "Go to the next command."),
 			),
 		},
 		env:               env,
