@@ -11,7 +11,6 @@ import (
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/patterns"
-	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/ui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -71,133 +70,6 @@ func (model InteractiveModeModel) Init() tea.Cmd {
 	}))
 }
 
-type SuccessfulCommandMessage struct {
-	StdOut string
-	StdErr string
-}
-
-type FailedCommandMessage struct {
-	StdOut string
-	StdErr string
-	Error  error
-}
-
-// Executes a bash command and returns a tea message with the output. This function
-// will be executed asycnhronously.
-func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) tea.Cmd {
-	return func() tea.Msg {
-		logging.GlobalLogger.Infof(
-			"Executing command asynchronously:\n %s", codeBlock.Content)
-
-		output, err := shells.ExecuteBashCommand(codeBlock.Content, shells.BashCommandConfiguration{
-			EnvironmentVariables: env,
-			InheritEnvironment:   true,
-			InteractiveCommand:   false,
-			WriteToHistory:       true,
-		})
-		if err != nil {
-			logging.GlobalLogger.Errorf("Error executing command:\n %s", err.Error())
-			return FailedCommandMessage{
-				StdOut: output.StdOut,
-				StdErr: output.StdErr,
-				Error:  err,
-			}
-		}
-
-		// Check command output against the expected output.
-		actualOutput := output.StdOut
-		expectedOutput := codeBlock.ExpectedOutput.Content
-		expectedSimilarity := codeBlock.ExpectedOutput.ExpectedSimilarity
-		expectedRegex := codeBlock.ExpectedOutput.ExpectedRegex
-		expectedOutputLanguage := codeBlock.ExpectedOutput.Language
-
-		outputComparisonError := compareCommandOutputs(
-			actualOutput,
-			expectedOutput,
-			expectedSimilarity,
-			expectedRegex,
-			expectedOutputLanguage,
-		)
-
-		if outputComparisonError != nil {
-			logging.GlobalLogger.Errorf(
-				"Error comparing command outputs: %s",
-				outputComparisonError.Error(),
-			)
-
-			return FailedCommandMessage{
-				StdOut: output.StdOut,
-				StdErr: output.StdErr,
-				Error:  outputComparisonError,
-			}
-
-		}
-
-		logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
-		return SuccessfulCommandMessage{
-			StdOut: output.StdOut,
-			StdErr: output.StdErr,
-		}
-	}
-}
-
-// Executes a bash command syncrhonously. This function will block until the command
-// finishes executing.
-func ExecuteCodeBlockSync(codeBlock parsers.CodeBlock, env map[string]string) tea.Msg {
-	logging.GlobalLogger.Info("Executing command synchronously: ", codeBlock.Content)
-	program.ReleaseTerminal()
-
-	output, err := shells.ExecuteBashCommand(codeBlock.Content, shells.BashCommandConfiguration{
-		EnvironmentVariables: env,
-		InheritEnvironment:   true,
-		InteractiveCommand:   true,
-		WriteToHistory:       true,
-	})
-
-	program.RestoreTerminal()
-
-	if err != nil {
-		return FailedCommandMessage{
-			StdOut: output.StdOut,
-			StdErr: output.StdErr,
-			Error:  err,
-		}
-	}
-
-	logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
-	return SuccessfulCommandMessage{
-		StdOut: output.StdOut,
-		StdErr: output.StdErr,
-	}
-}
-
-// clearScreen returns a command that clears the terminal screen and positions the cursor at the top-left corner
-func clearScreen() tea.Cmd {
-	return func() tea.Msg {
-		fmt.Print(
-			"\033[H\033[2J",
-		) // ANSI escape codes for clearing the screen and repositioning the cursor
-		return nil
-	}
-}
-
-// Updates the azure status with the current state of the interactive mode
-// model.
-func updateAzureStatus(model InteractiveModeModel) tea.Cmd {
-	return func() tea.Msg {
-		logging.GlobalLogger.Tracef(
-			"Attempting to update the azure status: %+v",
-			model.azureStatus,
-		)
-		environments.ReportAzureStatus(model.azureStatus, model.environment)
-		return AzureStatusUpdatedMessage{}
-	}
-}
-
-// Empty struct used to indicate that the azure status has been updated so
-// that we can respond to it within the Update() function.
-type AzureStatusUpdatedMessage struct{}
-
 // Initializes the viewports for the interactive mode model.
 func initializeViewports(model InteractiveModeModel, width, height int) interactiveModeViewPorts {
 	currentBlock := model.codeBlockState[model.currentCodeBlock]
@@ -242,8 +114,8 @@ func handleUserInput(
 			}
 		}
 
-    // Prevent the user from executing a command if the current command has 
-    // already been executed successfully.
+		// Prevent the user from executing a command if the current command has
+		// already been executed successfully.
 		codeBlockState := model.codeBlockState[model.currentCodeBlock]
 		if codeBlockState.Success {
 			logging.GlobalLogger.Info(
@@ -314,7 +186,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		model.width = message.Width
 		model.height = message.Height
-		logging.GlobalLogger.Infof("Window size changed to: %d x %d", message.Width, message.Height)
+		logging.GlobalLogger.Debugf("Window size changed to: %d x %d", message.Width, message.Height)
 		if !model.ready {
 			model.viewports = initializeViewports(model, message.Width, message.Height)
 			model.ready = true
@@ -444,18 +316,20 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 // Shows the commands that the user can use to interact with the interactive
 // mode model.
 func (model InteractiveModeModel) helpView() string {
-	keyBindings := [][]key.Binding{
+	keyBindingGroups := [][]key.Binding{
+		// Command related bindings
 		{
 			model.commands.execute,
 			model.commands.previous,
 			model.commands.next,
 		},
+		// Scenario related bindings
 		{
 			model.commands.quit,
 		},
 	}
 
-	return model.help.FullHelpView(keyBindings)
+	return model.help.FullHelpView(keyBindingGroups)
 }
 
 // Renders the interactive mode model.
@@ -502,8 +376,13 @@ func viewportFooterView(footer string, viewportWidth int) string {
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, footer)
 }
 
+// TODO: Ideally we won't need a global program variable. We should
+// refactor this in the future such that each tea program is localized to the
+// function that creates it and ExecuteCodeBlockSync doesn't mutate the global
+// program variable.
 var program *tea.Program = nil
 
+// Create a new interactive mode model.
 func NewInteractiveModeModel(
 	engine *Engine,
 	steps []Step,
