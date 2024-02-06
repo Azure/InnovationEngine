@@ -28,7 +28,8 @@ az group create --name $MY_RESOURCE_GROUP_NAME --location $REGION
 Results:
 
 <!-- expected_similarity=0.3 -->
-```json   
+
+```json
 {
   "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myVMResourceGroup",
   "location": "eastus",
@@ -44,7 +45,7 @@ Results:
 
 ## Create the Virtual Machine
 
-To create a VM in this resource group we need to run a simple command, here we have provided the `--generate-ssh-keys` flag, this will cause the CLI to look for an avialable ssh key in `~/.ssh`, if one is found it will be used, otherwise one will be generated and stored in `~/.ssh`. We also provide the `--public-ip-sku Standard` flag to ensure that the machine is accessible via a public IP. Finally, we are deploying the latest `Ubuntu 22.04` image. 
+To create a VM in this resource group we need to run a simple command, here we have provided the `--generate-ssh-keys` flag, this will cause the CLI to look for an avialable ssh key in `~/.ssh`, if one is found it will be used, otherwise one will be generated and stored in `~/.ssh`. We also provide the `--public-ip-sku Standard` flag to ensure that the machine is accessible via a public IP. Finally, we are deploying the latest `Ubuntu 22.04` image.
 
 All other values are configured using environment variables.
 
@@ -62,6 +63,7 @@ az vm create \
 Results:
 
 <!-- expected_similarity=0.3 -->
+
 ```json
 {
   "fqdns": "",
@@ -89,6 +91,7 @@ az vm extension set \
 ```
 
 # Store IP Address of VM in order to SSH
+
 run the following command to get the IP Address of the VM and store it as an environment variable
 
 ```bash
@@ -114,7 +117,7 @@ ssh -o StrictHostKeyChecking=no $MY_USERNAME@$IP_ADDRESS
 
 # Next Steps
 
-* [VM Documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/)
-* [Use Cloud-Init to initialize a Linux VM on first boot](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-automate-vm-deployment)
-* [Create custom VM images](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-custom-images)
-* [Load Balance VMs](https://learn.microsoft.com/en-us/azure/load-balancer/quickstart-load-balancer-standard-public-cli)
+- [VM Documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/)
+- [Use Cloud-Init to initialize a Linux VM on first boot](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-automate-vm-deployment)
+- [Create custom VM images](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/tutorial-custom-images)
+- [Load Balance VMs](https://learn.microsoft.com/en-us/azure/load-balancer/quickstart-load-balancer-standard-public-cli)
