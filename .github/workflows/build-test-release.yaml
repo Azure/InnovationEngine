@@ -1,32 +1,32 @@
 name: build-test-release
-
 on:
   push:
     branches:
       - main
-
 jobs:
   build-test-release:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build all targets.
-      run: |
-        make build-all
-    - name: Run unit tests across all targets.
-      run: |
-        make test-all
-    - name: Prepare scenarios to be released.
-      run: |
-        sudo apt install zip
-        zip -r scenarios.zip scenarios
-    - name: Release Innovation Engine
-      uses: "marvinpinto/action-automatic-releases@latest"
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        title: "IE"
-        automatic_release_tag: "latest"
-        prerelease: true
-        files: |
-          ./bin/ie
-          ./scenarios.zip
+      - uses: actions/checkout@v2
+      - name: Build all targets.
+        run: |
+          make build-all
+      - name: Run unit tests across all targets.
+        run: |
+          make test-all
+      - name: Prepare scenarios to be released.
+        run: |
+          sudo apt install zip
+          zip -r scenarios.zip scenarios
+      - name: Release Innovation Engine
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          title: "IE"
+          automatic_release_tag: "latest"
+          prerelease: true
+          files: |
+            ./bin/ie
+            ./scenarios.zip
