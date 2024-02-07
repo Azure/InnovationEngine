@@ -19,7 +19,6 @@ func (e *Engine) TestSteps(steps []Step, env map[string]string) error {
 	var resourceGroupName string
 	stepsToExecute := filterDeletionCommands(steps, true)
 	err := az.SetSubscription(e.Configuration.Subscription)
-
 	if err != nil {
 		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
 		return err
@@ -65,7 +64,6 @@ testRunner:
 						expectedOutputLanguage := block.ExpectedOutput.Language
 
 						err := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
-
 						if err != nil {
 							logging.GlobalLogger.Errorf("Error comparing command outputs: %s", err.Error())
 							fmt.Print(ui.ErrorStyle.Render("Error when comparing the command outputs: %s\n", err.Error()))
@@ -119,7 +117,6 @@ testRunner:
 				WriteToHistory:       true,
 			},
 		)
-
 		if err != nil {
 			fmt.Print(ui.ErrorStyle.Render("Error deleting resource group: %s\n", err.Error()))
 			logging.GlobalLogger.Errorf("Error deleting resource group: %s", err.Error())

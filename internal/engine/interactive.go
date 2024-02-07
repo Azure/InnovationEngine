@@ -16,6 +16,7 @@ import (
 	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -88,14 +89,17 @@ func initializeComponents(model InteractiveModeModel, width, height int) interac
 	p.KeyMap.PrevPage = model.commands.previous
 	p.KeyMap.NextPage = model.commands.next
 
-	stepViewport := viewport.New(width, 8)
-	outputViewport := viewport.New(width, 4)
+	stepViewport := viewport.New(width, 4)
+	outputViewport := viewport.New(width, 2)
 
-	return interactiveModeComponents{
+	components := interactiveModeComponents{
 		paginator:      p,
 		stepViewport:   stepViewport,
 		outputViewport: outputViewport,
 	}
+
+	components.updateViewportHeight(height)
+	return components
 }
 
 // Handle user input for interactive mode.
@@ -187,6 +191,24 @@ func handleUserInput(
 	return model, commands
 }
 
+func (components *interactiveModeComponents) updateViewportHeight(terminalHeight int) {
+	stepViewportPercent := 0.4
+	outputViewportPercent := 0.2
+	stepViewportHeight := int(float64(terminalHeight) * stepViewportPercent)
+	outputViewportHeight := int(float64(terminalHeight) * outputViewportPercent)
+
+	if stepViewportHeight < 4 {
+		stepViewportHeight = 4
+	}
+
+	if outputViewportHeight < 2 {
+		outputViewportHeight = 2
+	}
+
+	components.stepViewport.Height = stepViewportHeight
+	components.outputViewport.Height = outputViewportHeight
+}
+
 // Updates the intractive mode model
 func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	var commands []tea.Cmd
@@ -203,6 +225,8 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			model.components.stepViewport.Width = message.Width
 			model.components.outputViewport.Width = message.Width
+			model.components.updateViewportHeight(message.Height)
+
 		}
 		commands = append(commands, clearScreen())
 
@@ -305,8 +329,47 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Update viewport content
 	block := model.codeBlockState[model.currentCodeBlock]
+
+	renderedStepSection := fmt.Sprintf(
+		"%s\n\n%s",
+		block.CodeBlock.Description,
+		block.CodeBlock.Content,
+	)
+
+	// TODO(vmarcella): We shoulkd figure out a way to not have to recreate
+	// the renderer every time we update the view.
+	renderer, err := glamour.NewTermRenderer(
+		glamour.WithAutoStyle(),
+		glamour.WithWordWrap(model.width-4),
+	)
+
+	if err == nil {
+		var glamourizedSection string
+		glamourizedSection, err = renderer.Render(
+			fmt.Sprintf(
+				"%s\n```%s\n%s```",
+				block.CodeBlock.Description,
+				block.CodeBlock.Language,
+				block.CodeBlock.Content,
+			),
+		)
+		if err != nil {
+			logging.GlobalLogger.Errorf(
+				"Error rendering codeblock: %s, using non rendered codeblock instead",
+				err,
+			)
+		} else {
+			renderedStepSection = glamourizedSection
+		}
+	} else {
+		logging.GlobalLogger.Errorf(
+			"Error creating glamour renderer: %s, using non rendered codeblock instead",
+			err,
+		)
+	}
+
 	model.components.stepViewport.SetContent(
-		block.CodeBlock.Description + "\n\n" + block.CodeBlock.Content,
+		renderedStepSection,
 	)
 
 	if block.Success {
@@ -317,8 +380,8 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Update all the viewports and append resulting commands.
 	var command tea.Cmd
-	model.components.paginator, command = model.components.paginator.Update(message)
-	commands = append(commands, command)
+
+	model.components.paginator.Page = model.currentCodeBlock
 
 	model.components.stepViewport, command = model.components.stepViewport.Update(message)
 	commands = append(commands, command)
@@ -353,11 +416,16 @@ func (model InteractiveModeModel) View() string {
 	scenarioTitle := ui.ScenarioTitleStyle.Width(model.width).
 		Align(lipgloss.Center).
 		Render(model.scenarioTitle)
-	stepName := ui.StepTitleStyle.Render(model.codeBlockState[model.currentCodeBlock].StepName)
+	stepName := ui.StepTitleStyle.Render(
+		fmt.Sprintf(
+			"Step %d - %s",
+			model.currentCodeBlock,
+			model.codeBlockState[model.currentCodeBlock].StepName,
+		),
+	)
 
 	border := lipgloss.NewStyle().
 		Width(model.components.stepViewport.Width - 2).
-		Padding(1).
 		Border(lipgloss.NormalBorder())
 
 	stepView := border.Render(model.components.stepViewport.View())
@@ -370,7 +438,12 @@ func (model InteractiveModeModel) View() string {
 		Align(lipgloss.Center).
 		Render(model.components.paginator.View())
 
-	return scenarioTitle + "\n" + paginator + "\n" + stepName + "\n" + stepView + "\n" + outputTitle + "\n" + outputView + "\n" + model.helpView()
+		// TODO(vmarcella): Format this to be more readable.
+	return ((scenarioTitle + "\n") +
+		(paginator + "\n") +
+		(stepName + "\n" + stepView + "\n\n") +
+		(outputTitle + "\n" + outputView + "\n\n") +
+		(model.helpView()))
 }
 
 // TODO: Ideally we won't need a global program variable. We should
