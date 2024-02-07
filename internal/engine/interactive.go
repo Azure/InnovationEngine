@@ -226,7 +226,6 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.components.stepViewport.Width = message.Width
 			model.components.outputViewport.Width = message.Width
 			model.components.updateViewportHeight(message.Height)
-
 		}
 		commands = append(commands, clearScreen())
 
