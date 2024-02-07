@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/Azure/InnovationEngine/internal/az"
@@ -14,6 +13,7 @@ import (
 	"github.com/Azure/InnovationEngine/internal/ui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -39,9 +39,10 @@ type CodeBlockState struct {
 	Success         bool
 }
 
-type interactiveModeViewPorts struct {
-	step   viewport.Model
-	output viewport.Model
+type interactiveModeComponents struct {
+	paginator      paginator.Model
+	stepViewport   viewport.Model
+	outputViewport viewport.Model
 }
 
 type InteractiveModeModel struct {
@@ -58,7 +59,7 @@ type InteractiveModeModel struct {
 	scenarioTitle     string
 	width             int
 	scenarioCompleted bool
-	viewports         interactiveModeViewPorts
+	components        interactiveModeComponents
 	ready             bool
 }
 
@@ -71,20 +72,29 @@ func (model InteractiveModeModel) Init() tea.Cmd {
 }
 
 // Initializes the viewports for the interactive mode model.
-func initializeViewports(model InteractiveModeModel, width, height int) interactiveModeViewPorts {
-	currentBlock := model.codeBlockState[model.currentCodeBlock]
+func initializeComponents(model InteractiveModeModel, width, height int) interactiveModeComponents {
+	// paginator setup
+	p := paginator.New()
+	p.TotalPages = len(model.codeBlockState)
+	p.Type = paginator.Dots
+	// Dots
+	p.ActiveDot = lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).
+		Render("•")
+	p.InactiveDot = lipgloss.NewStyle().
+		Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).
+		Render("•")
+
+	p.KeyMap.PrevPage = model.commands.previous
+	p.KeyMap.NextPage = model.commands.next
 
 	stepViewport := viewport.New(width, 8)
-	stepViewport.SetContent(currentBlock.CodeBlock.Description)
-
-	// Initialize the output view ports
-
 	outputViewport := viewport.New(width, 4)
-	outputViewport.SetContent(currentBlock.StdOut)
 
-	return interactiveModeViewPorts{
-		step:   stepViewport,
-		output: outputViewport,
+	return interactiveModeComponents{
+		paginator:      p,
+		stepViewport:   stepViewport,
+		outputViewport: outputViewport,
 	}
 }
 
@@ -188,11 +198,11 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		model.height = message.Height
 		logging.GlobalLogger.Debugf("Window size changed to: %d x %d", message.Width, message.Height)
 		if !model.ready {
-			model.viewports = initializeViewports(model, message.Width, message.Height)
+			model.components = initializeComponents(model, message.Width, message.Height)
 			model.ready = true
 		} else {
-			model.viewports.step.Width = message.Width
-			model.viewports.output.Width = message.Width
+			model.components.stepViewport.Width = message.Width
+			model.components.outputViewport.Width = message.Width
 		}
 		commands = append(commands, clearScreen())
 
@@ -295,19 +305,25 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Update viewport content
 	block := model.codeBlockState[model.currentCodeBlock]
-	model.viewports.step.SetContent(block.CodeBlock.Description + "\n\n" + block.CodeBlock.Content)
+	model.components.stepViewport.SetContent(
+		block.CodeBlock.Description + "\n\n" + block.CodeBlock.Content,
+	)
 
 	if block.Success {
-		model.viewports.output.SetContent(block.StdOut)
+		model.components.outputViewport.SetContent(block.StdOut)
 	} else {
-		model.viewports.output.SetContent(block.StdErr)
+		model.components.outputViewport.SetContent(block.StdErr)
 	}
 
 	// Update all the viewports and append resulting commands.
 	var command tea.Cmd
-	model.viewports.step, command = model.viewports.step.Update(message)
+	model.components.paginator, command = model.components.paginator.Update(message)
 	commands = append(commands, command)
-	model.viewports.output, command = model.viewports.output.Update(message)
+
+	model.components.stepViewport, command = model.components.stepViewport.Update(message)
+	commands = append(commands, command)
+
+	model.components.outputViewport, command = model.components.outputViewport.Update(message)
 	commands = append(commands, command)
 
 	return model, tea.Batch(commands...)
@@ -334,46 +350,27 @@ func (model InteractiveModeModel) helpView() string {
 
 // Renders the interactive mode model.
 func (model InteractiveModeModel) View() string {
-	stepName := model.codeBlockState[model.currentCodeBlock].StepName
-	stepView := fmt.Sprintf("%s\n%s\n%s",
-		viewportHeaderView(
-			fmt.Sprintf("Step %d: %s", model.currentCodeBlock+1, stepName),
-			model.width,
-		),
-		model.viewports.step.View(),
-		viewportFooterView(
-			fmt.Sprintf("%3.f%%", model.viewports.step.ScrollPercent()*100),
-			model.width,
-		),
-	)
+	scenarioTitle := ui.ScenarioTitleStyle.Width(model.width).
+		Align(lipgloss.Center).
+		Render(model.scenarioTitle)
+	stepName := ui.StepTitleStyle.Render(model.codeBlockState[model.currentCodeBlock].StepName)
 
-	outputView := fmt.Sprintf("%s\n%s\n%s",
-		viewportHeaderView(
-			"Output",
-			model.width,
-		),
-		model.viewports.output.View(),
-		viewportFooterView(
-			fmt.Sprintf("%3.f%%", model.viewports.output.ScrollPercent()*100),
-			model.width,
-		),
-	)
+	border := lipgloss.NewStyle().
+		Width(model.components.stepViewport.Width - 2).
+		Padding(1).
+		Border(lipgloss.NormalBorder())
 
-	return stepView + "\n" + outputView + "\n" + model.helpView()
-}
+	stepView := border.Render(model.components.stepViewport.View())
 
-// Renders the header for a viewport.
-func viewportHeaderView(header string, viewportWidth int) string {
-	title := ui.InteractiveModeStepTitleStyle.Render(header)
-	line := strings.Repeat("-", lib.Max(0, viewportWidth-lipgloss.Width(title)))
-	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
-}
+	outputTitle := ui.StepTitleStyle.Render("Output")
+	outputView := border.Render(model.components.outputViewport.View())
 
-// Renders the footer for a viewport.
-func viewportFooterView(footer string, viewportWidth int) string {
-	footer = ui.InteractiveModeStepFooterStyle.Render(footer)
-	line := strings.Repeat("-", lib.Max(0, viewportWidth-lipgloss.Width(footer)))
-	return lipgloss.JoinHorizontal(lipgloss.Center, line, footer)
+	paginator := lipgloss.NewStyle().
+		Width(model.width).
+		Align(lipgloss.Center).
+		Render(model.components.paginator.View())
+
+	return scenarioTitle + "\n" + paginator + "\n" + stepName + "\n" + stepView + "\n" + outputTitle + "\n" + outputView + "\n" + model.helpView()
 }
 
 // TODO: Ideally we won't need a global program variable. We should
@@ -384,6 +381,7 @@ var program *tea.Program = nil
 
 // Create a new interactive mode model.
 func NewInteractiveModeModel(
+	title string,
 	engine *Engine,
 	steps []Step,
 	env map[string]string,
@@ -428,7 +426,7 @@ func NewInteractiveModeModel(
 	}
 
 	return InteractiveModeModel{
-		scenarioTitle: "Test",
+		scenarioTitle: title,
 		commands: InteractiveModeCommands{
 			execute: key.NewBinding(
 				key.WithKeys("e"),

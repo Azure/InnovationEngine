@@ -67,7 +67,12 @@ func (e *Engine) InteractWithScenario(scenario *Scenario) error {
 
 		stepsToExecute := filterDeletionCommands(scenario.Steps, e.Configuration.DoNotDelete)
 
-		model, err := NewInteractiveModeModel(e, stepsToExecute, lib.CopyMap(scenario.Environment))
+		model, err := NewInteractiveModeModel(
+			scenario.Name,
+			e,
+			stepsToExecute,
+			lib.CopyMap(scenario.Environment),
+		)
 		if err != nil {
 			return err
 		}
