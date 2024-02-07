@@ -13,6 +13,22 @@ permissions:
   id-token: write
   contents: read
 jobs:
+  test-ie-installation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check ie installation
+        run: |
+          cat scripts/install_from_release.sh | /bin/bash
+          if ! command -v ie; then
+            echo "ie not found"
+            exit 1
+          fi
+          if [ ! -d "${HOME}/scenarios" ]
+          then
+            echo "scenarios not found"
+            exit 1
+          fi
   test-ocd-scenarios:
     runs-on: ubuntu-latest
     # This is needed in order to obtain OIDC tokens to sign this pipeline into

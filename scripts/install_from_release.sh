@@ -1,14 +1,19 @@
 # Script to install scenarios file.  Pass in language code parameter for a particular language, such as it-it for Italian.
 set -e
 
-# Define the language parameter
+# TODO: make parameters mandatory
 LANG="$1"
-SCENARIOS=""
+RELEASE="$2"
+
+# If no release is specified, download the latest release
+if [ "$RELEASE" == "" ]; then
+  RELEASE="latest"
+fi
 
 # Map the language parameter to the corresponding scenarios file
 # If no parameter, download the scenarios from IE
 if [ "$LANG" = "" ]; then
-  SCENARIOS='https://github.com/Azure/InnovationEngine/releases/download/latest/scenarios.zip'
+  SCENARIOS="https://github.com/Azure/InnovationEngine/releases/download/$RELEASE/scenarios.zip"
 # Otherwise, download the scenarios from Microsoft Docs in the appropriate langauge
 elif [ "$LANG" = "en-us" ]; then
   SCENARIOS='https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/scenarios.zip'
@@ -16,9 +21,9 @@ else
   SCENARIOS="https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/$LANG-scenarios.zip"
 fi
 
-# Download the binary from the latest
-echo "Installing IE & scenarios from the latest release..."
-wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/latest/ie > /dev/null
+# Download the binary
+echo "Installing IE & scenarios from the $RELEASE release..."
+wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/$RELEASE/ie > /dev/null
 wget -q -O scenarios.zip "$SCENARIOS" > /dev/null
 
 # Setup permissions & move to the local bin
