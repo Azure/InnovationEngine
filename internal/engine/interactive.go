@@ -319,7 +319,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		// properly if we don't trigger a window size event.
 		commands = append(commands,
 			tea.Sequence(
-				clearScreen(),
+				tea.ClearScreen,
 				func() tea.Msg {
 					return tea.WindowSizeMsg{
 						Width:  model.width,
