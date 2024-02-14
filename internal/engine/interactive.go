@@ -419,7 +419,10 @@ func (model InteractiveModeModel) View() string {
 	scenarioTitle := ui.ScenarioTitleStyle.Width(model.width).
 		Align(lipgloss.Center).
 		Render(model.scenarioTitle)
-	stepName := ui.StepTitleStyle.Render(
+	var stepTitle string
+	var stepView string
+	var stepSection string
+	stepTitle = ui.StepTitleStyle.Render(
 		fmt.Sprintf(
 			"Step %d - %s",
 			model.currentCodeBlock,
@@ -428,13 +431,29 @@ func (model InteractiveModeModel) View() string {
 	)
 
 	border := lipgloss.NewStyle().
-		Width(model.components.stepViewport.Width - 2).
-		Border(lipgloss.NormalBorder())
+		Width(model.components.stepViewport.Width - 2)
+		// 		Border(lipgloss.NormalBorder())
 
-	stepView := border.Render(model.components.stepViewport.View())
+	stepView = border.Render(model.components.stepViewport.View())
 
-	outputTitle := ui.StepTitleStyle.Render("Output")
-	outputView := border.Render(model.components.outputViewport.View())
+	if model.environment != "azure" {
+		stepSection = fmt.Sprintf("%s\n%s\n\n", stepTitle, stepView)
+	} else {
+		stepSection = fmt.Sprintf("%s\n%s\n", stepTitle, stepView)
+	}
+
+	var outputTitle string
+	var outputView string
+	var outputSection string
+	if model.environment != "azure" {
+		outputTitle = ui.StepTitleStyle.Render("Output")
+		outputView = border.Render(model.components.outputViewport.View())
+		outputSection = fmt.Sprintf("%s\n%s\n\n", outputTitle, outputView)
+	} else {
+		outputTitle = ""
+		outputView = ""
+		outputSection = ""
+	}
 
 	paginator := lipgloss.NewStyle().
 		Width(model.width).
@@ -444,8 +463,8 @@ func (model InteractiveModeModel) View() string {
 		// TODO(vmarcella): Format this to be more readable.
 	return ((scenarioTitle + "\n") +
 		(paginator + "\n") +
-		(stepName + "\n" + stepView + "\n\n") +
-		(outputTitle + "\n" + outputView + "\n\n") +
+		(stepSection) +
+		(outputSection) +
 		(model.helpView()))
 }
 
