@@ -49,7 +49,6 @@ Results:
 
 ## Create the Virtual Machine
 
-<<<<<<< HEAD
 To create a VM in this resource group we need to run a simple command, here we
 have provided the `--generate-ssh-keys` flag, this will cause the CLI to look
 for an avialable ssh key in `~/.ssh`, if one is found it will be used, otherwise
@@ -57,11 +56,6 @@ one will be generated and stored in `~/.ssh`. We also provide the
 `--public-ip-sku Standard` flag to ensure that the machine is accessible via a
 public IP. Finally, we are deploying the latest `Ubuntu 22.04` image. All other
 values are configured using environment variables.
-=======
-To create a VM in this resource group we need to run a simple command, here we have provided the `--generate-ssh-keys` flag, this will cause the CLI to look for an avialable ssh key in `~/.ssh`, if one is found it will be used, otherwise one will be generated and stored in `~/.ssh`. We also provide the `--public-ip-sku Standard` flag to ensure that the machine is accessible via a public IP. Finally, we are deploying the latest `Ubuntu 22.04` image.
-
-All other values are configured using environment variables.
->>>>>>> main
 
 ```bash
 az vm create \
@@ -109,12 +103,9 @@ az vm extension set \
 
 # Store IP Address of VM in order to SSH
 
-<<<<<<< HEAD
 Run the following command to get the IP Address of the VM and store it as an
 environment variable
-=======
-run the following command to get the IP Address of the VM and store it as an environment variable
->>>>>>> main
+
 
 ```bash
 export IP_ADDRESS=$(az vm show --show-details --resource-group $MY_RESOURCE_GROUP_NAME --name $MY_VM_NAME --query publicIps --output tsv)
