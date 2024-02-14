@@ -462,7 +462,7 @@ func (model InteractiveModeModel) View() string {
 
 		// TODO(vmarcella): Format this to be more readable.
 	return ((scenarioTitle + "\n") +
-		(paginator + "\n") +
+		(paginator + "\n\n") +
 		(stepSection) +
 		(outputSection) +
 		(model.helpView()))
