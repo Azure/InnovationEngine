@@ -428,7 +428,7 @@ func (model InteractiveModeModel) View() string {
 	stepTitle = ui.StepTitleStyle.Render(
 		fmt.Sprintf(
 			"Step %d - %s",
-			model.currentCodeBlock,
+			model.currentCodeBlock + 1,
 			model.codeBlockState[model.currentCodeBlock].StepName,
 		),
 	)
