@@ -227,7 +227,6 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.components.outputViewport.Width = message.Width
 			model.components.updateViewportHeight(message.Height)
 		}
-		commands = append(commands, clearScreen())
 
 	case tea.KeyMsg:
 		model, commands = handleUserInput(model, message)
