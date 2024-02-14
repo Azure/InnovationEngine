@@ -398,9 +398,9 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 // Shows the commands that the user can use to interact with the interactive
 // mode model.
 func (model InteractiveModeModel) helpView() string {
-  if model.environment == "azure" {
-    return ""
-  }
+	if model.environment == "azure" {
+		return ""
+	}
 	keyBindingGroups := [][]key.Binding{
 		// Command related bindings
 		{
@@ -463,12 +463,21 @@ func (model InteractiveModeModel) View() string {
 		Align(lipgloss.Center).
 		Render(model.components.paginator.View())
 
-		// TODO(vmarcella): Format this to be more readable.
+	var executing string
+
+	if model.executingCommand {
+		executing = "Executing command..."
+	} else {
+		executing = ""
+	}
+
+	// TODO(vmarcella): Format this to be more readable.
 	return ((scenarioTitle + "\n") +
 		(paginator + "\n\n") +
 		(stepSection) +
 		(outputSection) +
-		(model.helpView()))
+		(model.helpView())) +
+		(executing)
 }
 
 // TODO: Ideally we won't need a global program variable. We should
