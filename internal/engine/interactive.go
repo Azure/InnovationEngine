@@ -477,7 +477,7 @@ func (model InteractiveModeModel) View() string {
 		(stepSection) +
 		(outputSection) +
 		(model.helpView())) +
-		(executing)
+		("\n" + executing)
 }
 
 // TODO: Ideally we won't need a global program variable. We should
