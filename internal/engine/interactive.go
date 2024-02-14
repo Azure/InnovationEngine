@@ -398,6 +398,9 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 // Shows the commands that the user can use to interact with the interactive
 // mode model.
 func (model InteractiveModeModel) helpView() string {
+  if model.environment == "azure" {
+    return ""
+  }
 	keyBindingGroups := [][]key.Binding{
 		// Command related bindings
 		{
