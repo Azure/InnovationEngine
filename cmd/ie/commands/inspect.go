@@ -7,29 +7,30 @@ import (
 
 	"github.com/Azure/InnovationEngine/internal/engine"
 	"github.com/Azure/InnovationEngine/internal/logging"
+	"github.com/Azure/InnovationEngine/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 // Register the command with our command runner.
 func init() {
-	rootCommand.AddCommand(interactiveCommand)
+	rootCommand.AddCommand(inspectCommand)
 
 	// String flags
-	interactiveCommand.PersistentFlags().
+	inspectCommand.PersistentFlags().
 		String("correlation-id", "", "Adds a correlation ID to the user agent used by a scenarios azure-cli commands.")
-	interactiveCommand.PersistentFlags().
+	inspectCommand.PersistentFlags().
 		String("subscription", "", "Sets the subscription ID used by a scenarios azure-cli commands. Will rely on the default subscription if not set.")
-	interactiveCommand.PersistentFlags().
+	inspectCommand.PersistentFlags().
 		String("working-directory", ".", "Sets the working directory for innovation engine to operate out of. Restores the current working directory when finished.")
 
 	// StringArray flags
-	interactiveCommand.PersistentFlags().
+	inspectCommand.PersistentFlags().
 		StringArray("var", []string{}, "Sets an environment variable for the scenario. Format: --var <key>=<value>")
 }
 
-var interactiveCommand = &cobra.Command{
-	Use:   "interactive",
-	Short: "Execute a document in interactive mode.",
+var inspectCommand = &cobra.Command{
+	Use:   "inspect",
+	Short: "Execute a document in inspect mode.",
 	Run: func(cmd *cobra.Command, args []string) {
 		markdownFile := args[0]
 		if markdownFile == "" {
@@ -38,19 +39,8 @@ var interactiveCommand = &cobra.Command{
 			os.Exit(1)
 		}
 
-		verbose, _ := cmd.Flags().GetBool("verbose")
-		doNotDelete, _ := cmd.Flags().GetBool("do-not-delete")
-
-		subscription, _ := cmd.Flags().GetString("subscription")
-		correlationId, _ := cmd.Flags().GetString("correlation-id")
-		environment, _ := cmd.Flags().GetString("environment")
-		workingDirectory, _ := cmd.Flags().GetString("working-directory")
-
 		environmentVariables, _ := cmd.Flags().GetStringArray("var")
 		// features, _ := cmd.Flags().GetStringArray("feature")
-
-		// Known features
-		renderValues := false
 
 		// Parse the environment variables from the command line into a map
 		cliEnvironmentVariables := make(map[string]string)
@@ -71,7 +61,7 @@ var interactiveCommand = &cobra.Command{
 		// Parse the markdown file and create a scenario
 		scenario, err := engine.CreateScenarioFromMarkdown(
 			markdownFile,
-			[]string{"bash", "azurecli", "azurecli-interactive", "terraform"},
+			[]string{"bash", "azurecli", "azurecli-inspect", "terraform"},
 			cliEnvironmentVariables,
 		)
 		if err != nil {
@@ -80,28 +70,40 @@ var interactiveCommand = &cobra.Command{
 			os.Exit(1)
 		}
 
-		innovationEngine, err := engine.NewEngine(engine.EngineConfiguration{
-			Verbose:          verbose,
-			DoNotDelete:      doNotDelete,
-			Subscription:     subscription,
-			CorrelationId:    correlationId,
-			Environment:      environment,
-			WorkingDirectory: workingDirectory,
-			RenderValues:     renderValues,
-		})
-
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating engine: %s", err)
 			fmt.Printf("Error creating engine: %s", err)
 			os.Exit(1)
 		}
 
-		// Execute the scenario
-		err = innovationEngine.InteractWithScenario(scenario)
-		if err != nil {
-			logging.GlobalLogger.Errorf("Error executing scenario: %s", err)
-			fmt.Printf("Error executing scenario: %s", err)
-			os.Exit(1)
+		fmt.Println(ui.ScenarioTitleStyle.Render(scenario.Name))
+		for stepNumber, step := range scenario.Steps {
+			stepTitle := fmt.Sprintf("  %d. %s\n", stepNumber+1, step.Name)
+			fmt.Println(ui.StepTitleStyle.Render(stepTitle))
+			for codeBlockNumber, codeBlock := range step.CodeBlocks {
+				fmt.Println(
+					ui.InteractiveModeCodeBlockDescriptionStyle.Render(
+						fmt.Sprintf(
+							"    %d.%d %s",
+							stepNumber+1,
+							codeBlockNumber+1,
+							codeBlock.Description,
+						),
+					),
+				)
+				fmt.Print(
+					ui.IndentMultiLineCommand(
+						fmt.Sprintf(
+							"      %s",
+							ui.InteractiveModeCodeBlockStyle.Render(
+								codeBlock.Content,
+							),
+						),
+						6),
+				)
+				fmt.Println()
+			}
 		}
+
 	},
 }

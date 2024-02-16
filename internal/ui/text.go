@@ -27,6 +27,40 @@ var (
 	OcdStatusUpdateStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#000000"))
 )
 
+var (
+	InteractiveModeCodeBlockDescriptionStyle = lipgloss.NewStyle().
+							Foreground(lipgloss.Color("#ffffff"))
+	InteractiveModeCodeBlockStyle = lipgloss.NewStyle().
+					Foreground(lipgloss.Color("#fff"))
+
+	InteractiveModeStepTitleStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Right = "├"
+		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
+	}().Foreground(lipgloss.Color("#518BAD")).Bold(true)
+
+	InteractiveModeStepFooterStyle = func() lipgloss.Style {
+		b := lipgloss.RoundedBorder()
+		b.Left = "┤"
+		return InteractiveModeStepTitleStyle.Copy().BorderStyle(b)
+	}().Foreground(lipgloss.Color("#fff"))
+)
+
+// Indents a multi-line command to be nested under the first line of the
+// command.
+func IndentMultiLineCommand(content string, indentation int) string {
+	lines := strings.Split(content, "\n")
+	for i := 1; i < len(lines); i++ {
+		if strings.HasSuffix(strings.TrimSpace(lines[i-1]), "\\") {
+			lines[i] = strings.Repeat(" ", indentation) + lines[i]
+		} else if strings.TrimSpace(lines[i]) != "" {
+			lines[i] = strings.Repeat(" ", indentation) + lines[i]
+		}
+
+	}
+	return strings.Join(lines, "\n")
+}
+
 func RemoveHorizontalAlign(s string) string {
 	return strings.Join(
 		mapSliceString(
