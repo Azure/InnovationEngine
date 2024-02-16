@@ -11,21 +11,6 @@ import (
 	"github.com/xrash/smetrics"
 )
 
-// Indents a multi-line command to be nested under the first line of the
-// command.
-func indentMultiLineCommand(content string, indentation int) string {
-	lines := strings.Split(content, "\n")
-	for i := 1; i < len(lines); i++ {
-		if strings.HasSuffix(strings.TrimSpace(lines[i-1]), "\\") {
-			lines[i] = strings.Repeat(" ", indentation) + lines[i]
-		} else if strings.TrimSpace(lines[i]) != "" {
-			lines[i] = strings.Repeat(" ", indentation) + lines[i]
-		}
-
-	}
-	return strings.Join(lines, "\n")
-}
-
 // Compares the actual output of a command to the expected output of a command.
 func compareCommandOutputs(
 	actualOutput string,
@@ -36,7 +21,11 @@ func compareCommandOutputs(
 ) error {
 	if expectedRegex != nil {
 		if !expectedRegex.MatchString(actualOutput) {
-			return fmt.Errorf(ui.ErrorMessageStyle.Render(fmt.Sprintf("Expected output does not match: %q.", expectedRegex)))
+			return fmt.Errorf(
+				ui.ErrorMessageStyle.Render(
+					fmt.Sprintf("Expected output does not match: %q.", expectedRegex),
+				),
+			)
 		}
 
 		return nil
@@ -73,7 +62,9 @@ func compareCommandOutputs(
 	score := smetrics.JaroWinkler(expectedOutput, actualOutput, 0.7, 4)
 
 	if expectedSimilarity > score {
-		return fmt.Errorf(ui.ErrorMessageStyle.Render("Expected output does not match actual output."))
+		return fmt.Errorf(
+			ui.ErrorMessageStyle.Render("Expected output does not match actual output."),
+		)
 	}
 
 	return nil

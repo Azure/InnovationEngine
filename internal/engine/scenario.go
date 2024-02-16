@@ -170,11 +170,6 @@ func CreateScenarioFromMarkdown(
 	}, nil
 }
 
-func (s *Scenario) OverwriteEnvironmentVariables(environmentVariables map[string]string) {
-	for key, value := range environmentVariables {
-		s.Environment[key] = value
-	}
-}
 
 // Convert a scenario into a shell script
 func (s *Scenario) ToShellScript() string {

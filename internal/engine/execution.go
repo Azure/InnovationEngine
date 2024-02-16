@@ -84,7 +84,16 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 	stepsToExecute := filterDeletionCommands(steps, e.Configuration.DoNotDelete)
 
 	for stepNumber, step := range stepsToExecute {
-		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name))
+
+		azureCodeBlocks := []environments.AzureCodeBlock{}
+		for _, block := range step.CodeBlocks {
+			azureCodeBlocks = append(azureCodeBlocks, environments.AzureCodeBlock{
+				Command:     block.Content,
+				Description: block.Description,
+			})
+		}
+
+		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name), azureCodeBlocks)
 	}
 
 	environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
@@ -105,9 +114,9 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 					environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 					return err
 				}
-				finalCommandOutput = indentMultiLineCommand(renderedCommand.StdOut, 4)
+				finalCommandOutput = ui.IndentMultiLineCommand(renderedCommand.StdOut, 4)
 			} else {
-				finalCommandOutput = indentMultiLineCommand(block.Content, 4)
+				finalCommandOutput = ui.IndentMultiLineCommand(block.Content, 4)
 			}
 
 			fmt.Print("    " + finalCommandOutput)
@@ -223,11 +232,11 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							logging.GlobalLogger.Errorf("Error executing command: %s", commandErr.Error())
 
 							azureStatus.SetError(commandErr)
-	environments.AttachResourceURIsToAzureStatus(
-		&azureStatus,
-		resourceGroupName,
-		e.Configuration.Environment,
-	)
+							environments.AttachResourceURIsToAzureStatus(
+								&azureStatus,
+								resourceGroupName,
+								e.Configuration.Environment,
+							)
 							environments.ReportAzureStatus(azureStatus, e.Configuration.Environment)
 
 							return commandErr

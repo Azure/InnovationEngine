@@ -9,18 +9,30 @@ import (
 	"github.com/Azure/InnovationEngine/internal/ui"
 )
 
-// / The status of a one-click deployment.
+// codeblock metadata needed for learn mode deployments.
+type AzureCodeBlock struct {
+	Description string `json:"description"`
+	Command     string `json:"command"`
+}
+
+// Step metadata needed for learn mode deployments.
+type AzureStep struct {
+	Name       string           `json:"name"`
+	CodeBlocks []AzureCodeBlock `json:"codeblocks"`
+}
+
+// The status of a one-click deployment or learn mode deployment.
 type AzureDeploymentStatus struct {
-	Steps        []string `json:"steps"`
-	CurrentStep  int      `json:"currentStep"`
-	Status       string   `json:"status"`
-	ResourceURIs []string `json:"resourceURIs"`
-	Error        string   `json:"error"`
+	Steps        []AzureStep `json:"steps"`
+	CurrentStep  int         `json:"currentStep"`
+	Status       string      `json:"status"`
+	ResourceURIs []string    `json:"resourceURIs"`
+	Error        string      `json:"error"`
 }
 
 func NewAzureDeploymentStatus() AzureDeploymentStatus {
 	return AzureDeploymentStatus{
-		Steps:        []string{},
+		Steps:        []AzureStep{},
 		CurrentStep:  0,
 		Status:       "Executing",
 		ResourceURIs: []string{},
@@ -39,8 +51,11 @@ func (status *AzureDeploymentStatus) AsJsonString() (string, error) {
 	return string(json), nil
 }
 
-func (status *AzureDeploymentStatus) AddStep(step string) {
-	status.Steps = append(status.Steps, step)
+func (status *AzureDeploymentStatus) AddStep(step string, codeBlocks []AzureCodeBlock) {
+	status.Steps = append(status.Steps, AzureStep{
+		Name:       step,
+		CodeBlocks: codeBlocks,
+	})
 }
 
 func (status *AzureDeploymentStatus) AddResourceURI(uri string) {
@@ -66,6 +81,24 @@ func ReportAzureStatus(status AzureDeploymentStatus, environment string) {
 		// the JSON status.
 		ocdStatus := fmt.Sprintf("ie_us%sie_ue\n", statusJson)
 		fmt.Println(ui.OcdStatusUpdateStyle.Render(ocdStatus))
+	}
+}
+
+// Same as ReportAzureStatus, but returns the status string instead of printing it.
+func GetAzureStatus(status AzureDeploymentStatus, environment string) string {
+	if !IsAzureEnvironment(environment) {
+		return ""
+	}
+
+	statusJson, err := status.AsJsonString()
+	if err != nil {
+		logging.GlobalLogger.Error("Failed to marshal status", err)
+		return ""
+	} else {
+		// We add these strings to the output so that the portal can find and parse
+		// the JSON status.
+		ocdStatus := fmt.Sprintf("ie_us%sie_ue", statusJson)
+		return ocdStatus
 	}
 }
 

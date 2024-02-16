@@ -48,6 +48,7 @@ type CodeBlock struct {
 	Language       string
 	Content        string
 	Header         string
+	Description    string
 	ExpectedOutput ExpectedOutputBlock
 }
 
@@ -75,7 +76,9 @@ func ExtractScenarioTitleFromAst(node ast.Node, source []byte) (string, error) {
 	return header, nil
 }
 
-var expectedSimilarityRegex = regexp.MustCompile(`<!--\s*expected_similarity=\s*(\d+\.?\d*)|"(.*)"\s*-->`)
+var expectedSimilarityRegex = regexp.MustCompile(
+	`<!--\s*expected_similarity=\s*(\d+\.?\d*)|"(.*)"\s*-->`,
+)
 
 // Extracts the code blocks from a provided markdown AST that match the
 // languagesToExtract.
@@ -89,6 +92,7 @@ func ExtractCodeBlocksFromAst(
 	var nextBlockIsExpectedOutput bool
 	var lastExpectedSimilarityScore float64
 	var lastExpectedRegex *regexp.Regexp
+	var lastNode ast.Node
 
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering {
@@ -96,6 +100,9 @@ func ExtractCodeBlocksFromAst(
 			// Set the last header when we encounter a heading.
 			case *ast.Heading:
 				lastHeader = string(extractTextFromMarkdown(&n.BaseBlock, source))
+				lastNode = node
+			case *ast.Paragraph:
+				lastNode = node
 			// Extract the code block if it matches the language.
 			case *ast.HTMLBlock:
 				content := extractTextFromMarkdown(&n.BaseBlock, source)
@@ -118,12 +125,12 @@ func ExtractCodeBlocksFromAst(
 					logging.GlobalLogger.Debugf("Regex %q found", match)
 
 					if match == "" {
-						return ast.WalkStop, errors.New("No regex found!")
+						return ast.WalkStop, errors.New("No regex found")
 					}
 
 					re, err := regexp.Compile(match)
 					if err != nil {
-						return ast.WalkStop, fmt.Errorf("Cannot compile the following regex: %q.", match)
+						return ast.WalkStop, fmt.Errorf("Cannot compile the following regex: %q", match)
 					}
 
 					lastExpectedRegex = re
@@ -132,12 +139,28 @@ func ExtractCodeBlocksFromAst(
 				nextBlockIsExpectedOutput = true
 			case *ast.FencedCodeBlock:
 				language := string(n.Language((source)))
+				content := extractTextFromMarkdown(&n.BaseBlock, source)
+				description := ""
+
+				if lastNode != nil {
+					switch n := lastNode.(type) {
+					case *ast.Paragraph:
+						description = string(extractTextFromMarkdown(&n.BaseBlock, source))
+					default:
+						logging.GlobalLogger.Warnf("The node before the codeblock `%s` is not a paragraph, it is a %s", content, n.Kind())
+					}
+				} else {
+					logging.GlobalLogger.Warnf("There are no markdown elements before the last codeblock `%s`", content)
+				}
+
+				lastNode = node
 				for _, desiredLanguage := range languagesToExtract {
 					if language == desiredLanguage {
 						command := CodeBlock{
-							Language: language,
-							Content:  extractTextFromMarkdown(&n.BaseBlock, source),
-							Header:   lastHeader,
+							Language:    language,
+							Content:     content,
+							Header:      lastHeader,
+							Description: description,
 						}
 						commands = append(commands, command)
 						break

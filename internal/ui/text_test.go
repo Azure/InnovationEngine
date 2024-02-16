@@ -8,10 +8,10 @@ import (
 
 func TestVerboseStyle(t *testing.T) {
 	text := `aaaa
-	b`
+  b`
 	styledText := VerboseStyle.Render(text)
 	expectedStyledText := `aaaa
-	b   `
+  b `
 	assert.Equal(t, expectedStyledText, styledText)
 	assert.Equal(t, text, RemoveHorizontalAlign(styledText))
 }
