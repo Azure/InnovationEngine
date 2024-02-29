@@ -324,17 +324,17 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		// render over the status update. For some reason, clearing the screen
 		// manually seems to cause the text produced by View() to not render
 		// properly if we don't trigger a window size event.
-		commands = append(commands,
-			tea.Sequence(
-				//tea.ClearScreen,
-				func() tea.Msg {
-					return tea.WindowSizeMsg{
-						Width:  model.width,
-						Height: model.height,
-					}
-				},
-			),
-		)
+		// commands = append(commands,
+		// 	tea.Sequence(
+		// 		// tea.ClearScreen,
+		// 		func() tea.Msg {
+		// 			return tea.WindowSizeMsg{
+		// 				Width:  model.width,
+		// 				Height: model.height,
+		// 			}
+		// 		},
+		// 	),
+		// )
 	}
 
 	// Update viewport content
