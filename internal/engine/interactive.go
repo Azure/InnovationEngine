@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Azure/InnovationEngine/internal/az"
@@ -62,6 +63,7 @@ type InteractiveModeModel struct {
 	scenarioCompleted bool
 	components        interactiveModeComponents
 	ready             bool
+	commandLines      []string
 }
 
 // Initialize the intractive mode model
@@ -255,9 +257,13 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.resourceGroupName = tmpResourceGroup
 			}
 		}
+		model.commandLines = append(model.commandLines, codeBlockState.StdOut)
 
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
+		nextCommand := model.codeBlockState[model.currentCodeBlock].CodeBlock.Content
+		nextLanguage := model.codeBlockState[model.currentCodeBlock].CodeBlock.Language
+		model.commandLines = append(model.commandLines, ui.CommandPrompt(nextLanguage)+nextCommand)
 
 		// Only increment the step for azure if the step name has changed.
 		nextCodeBlockState := model.codeBlockState[model.currentCodeBlock]
@@ -301,6 +307,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.Success = false
 
 		model.codeBlockState[step] = codeBlockState
+		model.commandLines = append(model.commandLines, codeBlockState.StdErr)
 
 		// Report the error
 		model.executingCommand = false
@@ -419,6 +426,10 @@ func (model InteractiveModeModel) helpView() string {
 
 // Renders the interactive mode model.
 func (model InteractiveModeModel) View() string {
+	if model.environment == "azure" {
+		return strings.Join(model.commandLines, "\n")
+	}
+
 	scenarioTitle := ui.ScenarioTitleStyle.Width(model.width).
 		Align(lipgloss.Center).
 		Render(model.scenarioTitle)
@@ -532,6 +543,11 @@ func NewInteractiveModeModel(
 		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name), azureCodeBlocks)
 	}
 
+	language := codeBlockState[0].CodeBlock.Language
+	commandLines := []string{
+		ui.CommandPrompt(language) + codeBlockState[0].CodeBlock.Content,
+	}
+
 	return InteractiveModeModel{
 		scenarioTitle: title,
 		commands: InteractiveModeCommands{
@@ -562,5 +578,6 @@ func NewInteractiveModeModel(
 		environment:       engine.Configuration.Environment,
 		scenarioCompleted: false,
 		ready:             false,
+		commandLines:      commandLines,
 	}, nil
 }

@@ -77,7 +77,14 @@ func (e *Engine) InteractWithScenario(scenario *Scenario) error {
 			return err
 		}
 
-		program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
+		teaOptions := []tea.ProgramOption{}
+
+		if e.Configuration.Environment != environments.EnvironmentsAzure {
+			teaOptions = append(teaOptions, tea.WithAltScreen())
+			teaOptions = append(teaOptions, tea.WithMouseCellMotion())
+		}
+
+		program = tea.NewProgram(model, teaOptions...)
 		_, err = program.Run()
 
 		switch e.Configuration.Environment {
