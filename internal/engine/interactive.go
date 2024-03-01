@@ -393,8 +393,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		model.components.outputViewport.SetContent(block.StdErr)
 	}
 
-
-		model.components.azureCLIViewport.SetContent(strings.Join(model.commandLines, "\n"))
+	model.components.azureCLIViewport.SetContent(strings.Join(model.commandLines, "\n"))
 
 	// Update all the viewports and append resulting commands.
 	var command tea.Cmd
@@ -438,7 +437,6 @@ func (model InteractiveModeModel) helpView() string {
 // Renders the interactive mode model.
 func (model InteractiveModeModel) View() string {
 	if model.environment == "azure" {
-
 		return model.components.azureCLIViewport.View()
 	}
 
@@ -457,29 +455,16 @@ func (model InteractiveModeModel) View() string {
 	)
 
 	border := lipgloss.NewStyle().
-		Width(model.components.stepViewport.Width - 2)
-		// 		Border(lipgloss.NormalBorder())
+		Width(model.components.stepViewport.Width - 2).
+		Border(lipgloss.NormalBorder())
 
 	stepView = border.Render(model.components.stepViewport.View())
 
-	if model.environment != "azure" {
-		stepSection = fmt.Sprintf("%s\n%s\n\n", stepTitle, stepView)
-	} else {
-		stepSection = fmt.Sprintf("%s\n%s\n", stepTitle, stepView)
-	}
+	stepSection = fmt.Sprintf("%s\n%s\n\n", stepTitle, stepView)
 
-	var outputTitle string
-	var outputView string
-	var outputSection string
-	if model.environment != "azure" {
-		outputTitle = ui.StepTitleStyle.Render("Output")
-		outputView = border.Render(model.components.outputViewport.View())
-		outputSection = fmt.Sprintf("%s\n%s\n\n", outputTitle, outputView)
-	} else {
-		outputTitle = ""
-		outputView = ""
-		outputSection = ""
-	}
+	outputTitle := ui.StepTitleStyle.Render("Output")
+	outputView := border.Render(model.components.outputViewport.View())
+	outputSection := fmt.Sprintf("%s\n%s\n\n", outputTitle, outputView)
 
 	paginator := lipgloss.NewStyle().
 		Width(model.width).
