@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/az"
 	"github.com/Azure/InnovationEngine/internal/engine/environments"
@@ -77,14 +78,22 @@ func (e *Engine) InteractWithScenario(scenario *Scenario) error {
 			return err
 		}
 
-		teaOptions := []tea.ProgramOption{}
-		teaOptions = append(teaOptions, tea.WithAltScreen())
-		teaOptions = append(teaOptions, tea.WithMouseCellMotion())
-		if e.Configuration.Environment != environments.EnvironmentsAzure {
-		}
+		program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
-		program = tea.NewProgram(model, teaOptions...)
-		_, err = program.Run()
+		var finalModel tea.Model
+		var ok bool
+		finalModel, err = program.Run()
+
+		model, ok = finalModel.(InteractiveModeModel)
+
+		if environments.EnvironmentsAzure == e.Configuration.Environment {
+			if !ok {
+				return fmt.Errorf("failed to cast tea.Model to InteractiveModeModel")
+			}
+
+			logging.GlobalLogger.Info("Writing session output to stdout")
+			fmt.Println(strings.Join(model.commandLines, "\n"))
+		}
 
 		switch e.Configuration.Environment {
 		case environments.EnvironmentsAzure, environments.EnvironmentsOCD:

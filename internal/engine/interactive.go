@@ -266,9 +266,13 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
-		nextCommand := model.codeBlockState[model.currentCodeBlock].CodeBlock.Content
-		nextLanguage := model.codeBlockState[model.currentCodeBlock].CodeBlock.Language
-		model.commandLines = append(model.commandLines, ui.CommandPrompt(nextLanguage)+nextCommand)
+
+		if model.currentCodeBlock < len(model.codeBlockState) {
+			nextCommand := model.codeBlockState[model.currentCodeBlock].CodeBlock.Content
+			nextLanguage := model.codeBlockState[model.currentCodeBlock].CodeBlock.Language
+
+			model.commandLines = append(model.commandLines, ui.CommandPrompt(nextLanguage)+nextCommand)
+		}
 
 		// Only increment the step for azure if the step name has changed.
 		nextCodeBlockState := model.codeBlockState[model.currentCodeBlock]
@@ -436,8 +440,8 @@ func (model InteractiveModeModel) helpView() string {
 
 // Renders the interactive mode model.
 func (model InteractiveModeModel) View() string {
-	// When running in the portal, we only want to show the Azure CLI viewport 
-  // which mimics a command line interface during execution.
+	// When running in the portal, we only want to show the Azure CLI viewport
+	// which mimics a command line interface during execution.
 	if model.environment == "azure" {
 		return model.components.azureCLIViewport.View()
 	}
