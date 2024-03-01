@@ -436,6 +436,8 @@ func (model InteractiveModeModel) helpView() string {
 
 // Renders the interactive mode model.
 func (model InteractiveModeModel) View() string {
+	// When running in the portal, we only want to show the Azure CLI viewport 
+  // which mimics a command line interface during execution.
 	if model.environment == "azure" {
 		return model.components.azureCLIViewport.View()
 	}
@@ -443,24 +445,20 @@ func (model InteractiveModeModel) View() string {
 	scenarioTitle := ui.ScenarioTitleStyle.Width(model.width).
 		Align(lipgloss.Center).
 		Render(model.scenarioTitle)
-	var stepTitle string
-	var stepView string
-	var stepSection string
-	stepTitle = ui.StepTitleStyle.Render(
+
+	border := lipgloss.NewStyle().
+		Width(model.components.stepViewport.Width - 2).
+		Border(lipgloss.NormalBorder())
+
+	stepTitle := ui.StepTitleStyle.Render(
 		fmt.Sprintf(
 			"Step %d - %s",
 			model.currentCodeBlock+1,
 			model.codeBlockState[model.currentCodeBlock].StepName,
 		),
 	)
-
-	border := lipgloss.NewStyle().
-		Width(model.components.stepViewport.Width - 2).
-		Border(lipgloss.NormalBorder())
-
-	stepView = border.Render(model.components.stepViewport.View())
-
-	stepSection = fmt.Sprintf("%s\n%s\n\n", stepTitle, stepView)
+	stepView := border.Render(model.components.stepViewport.View())
+	stepSection := fmt.Sprintf("%s\n%s\n\n", stepTitle, stepView)
 
 	outputTitle := ui.StepTitleStyle.Render("Output")
 	outputView := border.Render(model.components.outputViewport.View())
