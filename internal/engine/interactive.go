@@ -42,9 +42,10 @@ type CodeBlockState struct {
 }
 
 type interactiveModeComponents struct {
-	paginator      paginator.Model
-	stepViewport   viewport.Model
-	outputViewport viewport.Model
+	paginator        paginator.Model
+	stepViewport     viewport.Model
+	outputViewport   viewport.Model
+	azureCLIViewport viewport.Model
 }
 
 type InteractiveModeModel struct {
@@ -93,11 +94,13 @@ func initializeComponents(model InteractiveModeModel, width, height int) interac
 
 	stepViewport := viewport.New(width, 4)
 	outputViewport := viewport.New(width, 2)
+	azureCLIViewport := viewport.New(width, height)
 
 	components := interactiveModeComponents{
-		paginator:      p,
-		stepViewport:   stepViewport,
-		outputViewport: outputViewport,
+		paginator:        p,
+		stepViewport:     stepViewport,
+		outputViewport:   outputViewport,
+		azureCLIViewport: azureCLIViewport,
 	}
 
 	components.updateViewportHeight(height)
@@ -209,6 +212,7 @@ func (components *interactiveModeComponents) updateViewportHeight(terminalHeight
 
 	components.stepViewport.Height = stepViewportHeight
 	components.outputViewport.Height = outputViewportHeight
+	components.azureCLIViewport.Height = terminalHeight - 1
 }
 
 // Updates the intractive mode model
@@ -227,6 +231,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			model.components.stepViewport.Width = message.Width
 			model.components.outputViewport.Width = message.Width
+			model.components.azureCLIViewport.Width = message.Width
 			model.components.updateViewportHeight(message.Height)
 		}
 
@@ -324,17 +329,17 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		// render over the status update. For some reason, clearing the screen
 		// manually seems to cause the text produced by View() to not render
 		// properly if we don't trigger a window size event.
-		// commands = append(commands,
-		// 	tea.Sequence(
-		// 		// tea.ClearScreen,
-		// 		func() tea.Msg {
-		// 			return tea.WindowSizeMsg{
-		// 				Width:  model.width,
-		// 				Height: model.height,
-		// 			}
-		// 		},
-		// 	),
-		// )
+		commands = append(commands,
+			tea.Sequence(
+				tea.ClearScreen,
+				func() tea.Msg {
+					return tea.WindowSizeMsg{
+						Width:  model.width,
+						Height: model.height,
+					}
+				},
+			),
+		)
 	}
 
 	// Update viewport content
@@ -388,6 +393,9 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		model.components.outputViewport.SetContent(block.StdErr)
 	}
 
+
+		model.components.azureCLIViewport.SetContent(strings.Join(model.commandLines, "\n"))
+
 	// Update all the viewports and append resulting commands.
 	var command tea.Cmd
 
@@ -397,6 +405,9 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	commands = append(commands, command)
 
 	model.components.outputViewport, command = model.components.outputViewport.Update(message)
+	commands = append(commands, command)
+
+	model.components.azureCLIViewport, command = model.components.azureCLIViewport.Update(message)
 	commands = append(commands, command)
 
 	return model, tea.Batch(commands...)
@@ -427,7 +438,8 @@ func (model InteractiveModeModel) helpView() string {
 // Renders the interactive mode model.
 func (model InteractiveModeModel) View() string {
 	if model.environment == "azure" {
-		return strings.Join(model.commandLines, "\n")
+
+		return model.components.azureCLIViewport.View()
 	}
 
 	scenarioTitle := ui.ScenarioTitleStyle.Width(model.width).
