@@ -14,7 +14,7 @@ fi
 SCENARIOS="https://github.com/MicrosoftDocs/executable-docs/releases/download/v1.0.1/scenarios.zip"
 
 # If the LANG parameter was set, download appropriate script
-if [-n "$LANG" ]; then
+if [ -n "$LANG" ]; then
   # Map the language parameter to the corresponding scenarios file
   # If no parameter, download the scenarios from IE
   MAIN_LANG_PREFIX="$(echo "$LANG" | head -c2 | tr '[:upper:]' '[:lower:]')"
