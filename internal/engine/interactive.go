@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Azure/InnovationEngine/internal/az"
@@ -41,9 +42,10 @@ type CodeBlockState struct {
 }
 
 type interactiveModeComponents struct {
-	paginator      paginator.Model
-	stepViewport   viewport.Model
-	outputViewport viewport.Model
+	paginator        paginator.Model
+	stepViewport     viewport.Model
+	outputViewport   viewport.Model
+	azureCLIViewport viewport.Model
 }
 
 type InteractiveModeModel struct {
@@ -62,6 +64,7 @@ type InteractiveModeModel struct {
 	scenarioCompleted bool
 	components        interactiveModeComponents
 	ready             bool
+	commandLines      []string
 }
 
 // Initialize the intractive mode model
@@ -91,11 +94,13 @@ func initializeComponents(model InteractiveModeModel, width, height int) interac
 
 	stepViewport := viewport.New(width, 4)
 	outputViewport := viewport.New(width, 2)
+	azureCLIViewport := viewport.New(width, height)
 
 	components := interactiveModeComponents{
-		paginator:      p,
-		stepViewport:   stepViewport,
-		outputViewport: outputViewport,
+		paginator:        p,
+		stepViewport:     stepViewport,
+		outputViewport:   outputViewport,
+		azureCLIViewport: azureCLIViewport,
 	}
 
 	components.updateViewportHeight(height)
@@ -207,6 +212,7 @@ func (components *interactiveModeComponents) updateViewportHeight(terminalHeight
 
 	components.stepViewport.Height = stepViewportHeight
 	components.outputViewport.Height = outputViewportHeight
+	components.azureCLIViewport.Height = terminalHeight - 1
 }
 
 // Updates the intractive mode model
@@ -225,6 +231,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			model.components.stepViewport.Width = message.Width
 			model.components.outputViewport.Width = message.Width
+			model.components.azureCLIViewport.Width = message.Width
 			model.components.updateViewportHeight(message.Height)
 		}
 
@@ -255,9 +262,17 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.resourceGroupName = tmpResourceGroup
 			}
 		}
+		model.commandLines = append(model.commandLines, codeBlockState.StdOut)
 
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
+
+		if model.currentCodeBlock < len(model.codeBlockState) {
+			nextCommand := model.codeBlockState[model.currentCodeBlock].CodeBlock.Content
+			nextLanguage := model.codeBlockState[model.currentCodeBlock].CodeBlock.Language
+
+			model.commandLines = append(model.commandLines, ui.CommandPrompt(nextLanguage)+nextCommand)
+		}
 
 		// Only increment the step for azure if the step name has changed.
 		nextCodeBlockState := model.codeBlockState[model.currentCodeBlock]
@@ -301,6 +316,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.Success = false
 
 		model.codeBlockState[step] = codeBlockState
+		model.commandLines = append(model.commandLines, codeBlockState.StdErr)
 
 		// Report the error
 		model.executingCommand = false
@@ -381,6 +397,8 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		model.components.outputViewport.SetContent(block.StdErr)
 	}
 
+	model.components.azureCLIViewport.SetContent(strings.Join(model.commandLines, "\n"))
+
 	// Update all the viewports and append resulting commands.
 	var command tea.Cmd
 
@@ -390,6 +408,9 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	commands = append(commands, command)
 
 	model.components.outputViewport, command = model.components.outputViewport.Update(message)
+	commands = append(commands, command)
+
+	model.components.azureCLIViewport, command = model.components.azureCLIViewport.Update(message)
 	commands = append(commands, command)
 
 	return model, tea.Batch(commands...)
@@ -419,44 +440,33 @@ func (model InteractiveModeModel) helpView() string {
 
 // Renders the interactive mode model.
 func (model InteractiveModeModel) View() string {
+	// When running in the portal, we only want to show the Azure CLI viewport
+	// which mimics a command line interface during execution.
+	if model.environment == "azure" {
+		return model.components.azureCLIViewport.View()
+	}
+
 	scenarioTitle := ui.ScenarioTitleStyle.Width(model.width).
 		Align(lipgloss.Center).
 		Render(model.scenarioTitle)
-	var stepTitle string
-	var stepView string
-	var stepSection string
-	stepTitle = ui.StepTitleStyle.Render(
+
+	border := lipgloss.NewStyle().
+		Width(model.components.stepViewport.Width - 2).
+		Border(lipgloss.NormalBorder())
+
+	stepTitle := ui.StepTitleStyle.Render(
 		fmt.Sprintf(
 			"Step %d - %s",
 			model.currentCodeBlock+1,
 			model.codeBlockState[model.currentCodeBlock].StepName,
 		),
 	)
+	stepView := border.Render(model.components.stepViewport.View())
+	stepSection := fmt.Sprintf("%s\n%s\n\n", stepTitle, stepView)
 
-	border := lipgloss.NewStyle().
-		Width(model.components.stepViewport.Width - 2)
-		// 		Border(lipgloss.NormalBorder())
-
-	stepView = border.Render(model.components.stepViewport.View())
-
-	if model.environment != "azure" {
-		stepSection = fmt.Sprintf("%s\n%s\n\n", stepTitle, stepView)
-	} else {
-		stepSection = fmt.Sprintf("%s\n%s\n", stepTitle, stepView)
-	}
-
-	var outputTitle string
-	var outputView string
-	var outputSection string
-	if model.environment != "azure" {
-		outputTitle = ui.StepTitleStyle.Render("Output")
-		outputView = border.Render(model.components.outputViewport.View())
-		outputSection = fmt.Sprintf("%s\n%s\n\n", outputTitle, outputView)
-	} else {
-		outputTitle = ""
-		outputView = ""
-		outputSection = ""
-	}
+	outputTitle := ui.StepTitleStyle.Render("Output")
+	outputView := border.Render(model.components.outputViewport.View())
+	outputSection := fmt.Sprintf("%s\n%s\n\n", outputTitle, outputView)
 
 	paginator := lipgloss.NewStyle().
 		Width(model.width).
@@ -532,6 +542,11 @@ func NewInteractiveModeModel(
 		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name), azureCodeBlocks)
 	}
 
+	language := codeBlockState[0].CodeBlock.Language
+	commandLines := []string{
+		ui.CommandPrompt(language) + codeBlockState[0].CodeBlock.Content,
+	}
+
 	return InteractiveModeModel{
 		scenarioTitle: title,
 		commands: InteractiveModeCommands{
@@ -562,5 +577,6 @@ func NewInteractiveModeModel(
 		environment:       engine.Configuration.Environment,
 		scenarioCompleted: false,
 		ready:             false,
+		commandLines:      commandLines,
 	}, nil
 }
