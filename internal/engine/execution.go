@@ -216,6 +216,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 								if tmpResourceGroup != "" {
 									logging.GlobalLogger.WithField("resourceGroup", tmpResourceGroup).Info("Found resource group")
 									resourceGroupName = tmpResourceGroup
+									azureStatus.AddResourceURI(az.BuildResourceGroupId(e.Configuration.Subscription, resourceGroupName))
 								}
 							}
 
