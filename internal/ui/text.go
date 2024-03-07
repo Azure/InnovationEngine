@@ -44,7 +44,17 @@ var (
 		b.Left = "┤"
 		return InteractiveModeStepTitleStyle.Copy().BorderStyle(b)
 	}().Foreground(lipgloss.Color("#fff"))
+
+	promptTextStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#6CB6FF"))
+	promptDollarStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#32CD32"))
 )
+
+// Command prompt for interactive environments
+func CommandPrompt(language string) string {
+	promptText := promptTextStyle.Render(language)
+	promptDollar := promptDollarStyle.Render("$")
+	return promptText + ":" + promptDollar + " "
+}
 
 // Indents a multi-line command to be nested under the first line of the
 // command.
@@ -56,7 +66,6 @@ func IndentMultiLineCommand(content string, indentation int) string {
 		} else if strings.TrimSpace(lines[i]) != "" {
 			lines[i] = strings.Repeat(" ", indentation) + lines[i]
 		}
-
 	}
 	return strings.Join(lines, "\n")
 }
