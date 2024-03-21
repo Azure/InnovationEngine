@@ -57,11 +57,20 @@ func CreateScenarioFromMarkdown(
 	languagesToExecute []string,
 	environmentVariableOverrides map[string]string,
 ) (*Scenario, error) {
-	if !fs.FileExists(path) {
+	scenarioPath := path
+	if isUrl(path) {
+		scenarioPath = "scenario.md"
+		err := downloadFile(path, scenarioPath)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if !fs.FileExists(scenarioPath) {
 		return nil, fmt.Errorf("markdown file '%s' does not exist", path)
 	}
 
-	source, err := os.ReadFile(path)
+	source, err := os.ReadFile(scenarioPath)
 	if err != nil {
 		panic(err)
 	}
@@ -169,7 +178,6 @@ func CreateScenarioFromMarkdown(
 		MarkdownAst: markdown,
 	}, nil
 }
-
 
 // Convert a scenario into a shell script
 func (s *Scenario) ToShellScript() string {
