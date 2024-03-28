@@ -2,6 +2,8 @@ package engine
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -32,7 +34,7 @@ type Scenario struct {
 // This organizes the codeblocks into steps that can be executed linearly.
 func groupCodeBlocksIntoSteps(blocks []parsers.CodeBlock) []Step {
 	var groupedSteps []Step
-	var headerIndex = make(map[string]int)
+	headerIndex := make(map[string]int)
 
 	for _, block := range blocks {
 		if index, ok := headerIndex[block.Header]; ok {
@@ -49,6 +51,37 @@ func groupCodeBlocksIntoSteps(blocks []parsers.CodeBlock) []Step {
 	return groupedSteps
 }
 
+// Download the scenario markdown over http
+func downloadScenarioMarkdown(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
+// Given either a local or remote path to a markdown file, resolve the path to 
+// the markdown file and return the contents of the file.
+func resolveMarkdownSource(path string) ([]byte, error) {
+	if strings.HasPrefix(path, "https://") || strings.HasPrefix(path, "http://") {
+		return downloadScenarioMarkdown(path)
+	}
+
+	if !fs.FileExists(path) {
+		return nil, fmt.Errorf("markdown file '%s' does not exist", path)
+	}
+
+	return os.ReadFile(path)
+}
+
 // Creates a scenario object from a given markdown file. languagesToExecute is
 // used to filter out code blocks that should not be parsed out of the markdown
 // file.
@@ -57,13 +90,9 @@ func CreateScenarioFromMarkdown(
 	languagesToExecute []string,
 	environmentVariableOverrides map[string]string,
 ) (*Scenario, error) {
-	if !fs.FileExists(path) {
-		return nil, fmt.Errorf("markdown file '%s' does not exist", path)
-	}
-
-	source, err := os.ReadFile(path)
+	source, err := resolveMarkdownSource(path)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Load environment variables
@@ -76,7 +105,6 @@ func CreateScenarioFromMarkdown(
 	} else {
 		logging.GlobalLogger.Infof("INI file '%s' exists, loading...", markdownINI)
 		environmentVariables, err = parsers.ParseINIFile(markdownINI)
-
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +197,6 @@ func CreateScenarioFromMarkdown(
 		MarkdownAst: markdown,
 	}, nil
 }
-
 
 // Convert a scenario into a shell script
 func (s *Scenario) ToShellScript() string {

@@ -38,7 +38,6 @@ func compareCommandOutputs(
 			actualOutput,
 		)
 		results, err := lib.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
-
 		if err != nil {
 			return err
 		}
