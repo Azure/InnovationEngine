@@ -69,7 +69,7 @@ func downloadScenarioMarkdown(url string) ([]byte, error) {
 }
 
 func resolveMarkdownSource(path string) ([]byte, error) {
-	if strings.HasPrefix(path, "https://") {
+	if strings.HasPrefix(path, "https://") || strings.HasPrefix(path, "http://"){
 		return downloadScenarioMarkdown(path)
 	}
 
@@ -89,10 +89,9 @@ func CreateScenarioFromMarkdown(
 	environmentVariableOverrides map[string]string,
 ) (*Scenario, error) {
 	source, err := resolveMarkdownSource(path)
-
-  if err != nil {
-    return nil, err
-  }
+	if err != nil {
+		return nil, err
+	}
 
 	// Load environment variables
 	markdownINI := strings.TrimSuffix(path, filepath.Ext(path)) + ".ini"
