@@ -21,10 +21,17 @@ install-ie:
 
 # ------------------------------ Test targets ----------------------------------
 
+WITH_COVERAGE:=false
 test-all:
-	@echo "Running all tests..."
 	@go clean -testcache
-	@go test -v ./...
+	ifeq ($(WITH_COVERAGE), true)
+		@echo "Running all tests with coverage..."
+		@go test -v -coverprofile=coverage.out ./...
+		@go tool cover -html=coverage.out -o coverage.html
+	else
+		@echo "Running all tests..."
+		@go test -v ./...
+
 
 SUBSCRIPTION ?= 00000000-0000-0000-0000-000000000000
 SCENARIO ?= ./README.md
