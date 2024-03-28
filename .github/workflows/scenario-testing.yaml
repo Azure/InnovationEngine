@@ -26,7 +26,7 @@ jobs:
             exit 1
           fi
 
-          cat scripts/install_docs_from_release.sh | /bin/bash -- en-us v1.0.1
+          bash scripts/install_docs_from_release.sh en-us v1.0.1
           if [ ! -d "${HOME}/scenarios" ]
           then
             echo "scenarios not found"
