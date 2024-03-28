@@ -9,3 +9,7 @@ bin/
 
 # Ignore ie logs
 ie.log
+
+# Ignore test coverage
+coverage.html
+coverage.out
