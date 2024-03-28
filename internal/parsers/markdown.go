@@ -38,6 +38,7 @@ func ExtractYamlMetadataFromAst(node ast.Node) map[string]interface{} {
 	return node.OwnerDocument().Meta()
 }
 
+// The representation of an expected output block in a markdown file. This is
 // for scenarios that have expected output that should be validated against the
 // actual output.
 type ExpectedOutputBlock struct {
