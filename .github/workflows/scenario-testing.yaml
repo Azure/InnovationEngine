@@ -24,6 +24,8 @@ jobs:
             echo "ie not found"
             exit 1
           fi
+
+          cat scripts/install_docs_from_release.sh en-us v1.0.1 | /bin/bash
           if [ ! -d "${HOME}/scenarios" ]
           then
             echo "scenarios not found"
