@@ -68,8 +68,10 @@ func downloadScenarioMarkdown(url string) ([]byte, error) {
 	return body, nil
 }
 
+// Given either a local or remote path to a markdown file, resolve the path to 
+// the markdown file and return the contents of the file.
 func resolveMarkdownSource(path string) ([]byte, error) {
-	if strings.HasPrefix(path, "https://") || strings.HasPrefix(path, "http://"){
+	if strings.HasPrefix(path, "https://") || strings.HasPrefix(path, "http://") {
 		return downloadScenarioMarkdown(path)
 	}
 
