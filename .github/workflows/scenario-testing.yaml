@@ -45,7 +45,7 @@ jobs:
         if: github.event_name == 'pull_request'
         with:
           name: coverage
-          path: coverage.out
+          path: coverage.html
       - name: Sign into Azure
         uses: azure/login@v1
         if: github.event_name != 'pull_request'
