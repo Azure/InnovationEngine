@@ -10,7 +10,6 @@ func TestParsingMarkdownHeaders(t *testing.T) {
 		markdown := []byte(`# Hello World`)
 		document := ParseMarkdownIntoAst(markdown)
 		title, err := ExtractScenarioTitleFromAst(document, markdown)
-
 		if err != nil {
 			t.Errorf("Error parsing title: %s", err)
 		}
@@ -24,7 +23,6 @@ func TestParsingMarkdownHeaders(t *testing.T) {
 		markdown := []byte("# Hello World \n # Hello again")
 		document := ParseMarkdownIntoAst(markdown)
 		title, err := ExtractScenarioTitleFromAst(document, markdown)
-
 		if err != nil {
 			t.Errorf("Error parsing title: %s", err)
 		}
@@ -50,8 +48,60 @@ func TestParsingMarkdownHeaders(t *testing.T) {
 	})
 }
 
-func TestParsingMarkdownCodeBlocks(t *testing.T) {
+func TestParsingYamlMetadata(t *testing.T) {
+	t.Run("Markdown with valid yaml metadata", func(t *testing.T) {
+		markdown := []byte(`---
+    key: value
+    array: [1, 2, 3]
+    ---
+    `)
 
+		document := ParseMarkdownIntoAst(markdown)
+		metadata := ExtractYamlMetadataFromAst(document)
+
+		if metadata["key"] != "value" {
+			t.Errorf("Metadata is wrong: %v", metadata)
+		}
+
+		array := metadata["array"].([]interface{})
+		if array[0] != 1 || array[1] != 2 || array[2] != 3 {
+			t.Errorf("Metadata is wrong: %v", metadata)
+		}
+	})
+
+	t.Run("Markdown without yaml metadata", func(t *testing.T) {
+		markdown := []byte(`# Hello World.`)
+		document := ParseMarkdownIntoAst(markdown)
+		metadata := ExtractYamlMetadataFromAst(document)
+
+		if len(metadata) != 0 {
+			t.Errorf("Metadata should be empty")
+		}
+	})
+
+	t.Run("yaml with nested properties", func(t *testing.T) {
+		markdown := []byte(`---
+    nested:
+      key: value
+    key.value: otherValue
+    ---
+    `)
+
+		document := ParseMarkdownIntoAst(markdown)
+		metadata := ExtractYamlMetadataFromAst(document)
+
+		nested := metadata["nested"].(map[interface{}]interface{})
+		if nested["key"] != "value" {
+			t.Errorf("Metadata is wrong: %v", metadata)
+		}
+
+		if metadata["key.value"] != "otherValue" {
+			t.Errorf("Metadata is wrong: %v", metadata)
+		}
+	})
+}
+
+func TestParsingMarkdownCodeBlocks(t *testing.T) {
 	t.Run("Markdown with a valid bash code block", func(t *testing.T) {
 		markdown := []byte(fmt.Sprintf("# Hello World\n ```bash\n%s\n```", "echo Hello"))
 
@@ -74,13 +124,16 @@ func TestParsingMarkdownCodeBlocks(t *testing.T) {
 			)
 		}
 	})
-
 }
 
 func TestParsingMarkdownExpectedSimilarty(t *testing.T) {
-
 	t.Run("Markdown with a expected_similarty tag using float", func(t *testing.T) {
-		markdown := []byte(fmt.Sprintf("```bash\n%s\n```\n<!--expected_similarity=0.8-->\n```\nHello\n```\n", "echo Hello"))
+		markdown := []byte(
+			fmt.Sprintf(
+				"```bash\n%s\n```\n<!--expected_similarity=0.8-->\n```\nHello\n```\n",
+				"echo Hello",
+			),
+		)
 
 		document := ParseMarkdownIntoAst(markdown)
 		codeBlocks := ExtractCodeBlocksFromAst(document, markdown, []string{"bash"})
@@ -92,16 +145,23 @@ func TestParsingMarkdownExpectedSimilarty(t *testing.T) {
 		block := codeBlocks[0].ExpectedOutput
 		expectedFloat := .8
 		if block.ExpectedSimilarity != expectedFloat {
-			t.Errorf("ExpectedSimilarity is wrong, got %f, expected %f", block.ExpectedSimilarity, expectedFloat)
+			t.Errorf(
+				"ExpectedSimilarity is wrong, got %f, expected %f",
+				block.ExpectedSimilarity,
+				expectedFloat,
+			)
 		}
 	})
-
 }
 
 func TestParsingMarkdownExpectedRegex(t *testing.T) {
-
 	t.Run("Markdown with a expected_similarty tag using regex", func(t *testing.T) {
-		markdown := []byte(fmt.Sprintf("```bash\n%s\n```\n<!--expected_similarity=\"Foo \\w+\"-->\n```\nFoo Bar\n```\n", "echo 'Foo Bar'"))
+		markdown := []byte(
+			fmt.Sprintf(
+				"```bash\n%s\n```\n<!--expected_similarity=\"Foo \\w+\"-->\n```\nFoo Bar\n```\n",
+				"echo 'Foo Bar'",
+			),
+		)
 
 		document := ParseMarkdownIntoAst(markdown)
 		codeBlocks := ExtractCodeBlocksFromAst(document, markdown, []string{"bash"})
@@ -121,5 +181,4 @@ func TestParsingMarkdownExpectedRegex(t *testing.T) {
 			t.Errorf("ExpectedRegex is wrong, got %q, expected %q", stringRegex, expectedRegex)
 		}
 	})
-
 }
