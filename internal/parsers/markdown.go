@@ -9,6 +9,7 @@ import (
 
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/yuin/goldmark"
+	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -17,7 +18,7 @@ import (
 )
 
 var markdownParser = goldmark.New(
-	goldmark.WithExtensions(extension.GFM),
+	goldmark.WithExtensions(extension.GFM, meta.New(meta.WithStoresInDocument())),
 	goldmark.WithParserOptions(
 		parser.WithAutoHeadingID(),
 		parser.WithBlockParsers(),
@@ -31,6 +32,10 @@ var markdownParser = goldmark.New(
 func ParseMarkdownIntoAst(source []byte) ast.Node {
 	document := markdownParser.Parser().Parse(text.NewReader(source))
 	return document
+}
+
+func ExtractYamlMetadataFromAst(node ast.Node) map[string]interface{} {
+	return node.OwnerDocument().Meta()
 }
 
 // The representation of an expected output block in a markdown file. This is
@@ -237,7 +242,6 @@ func convertScenarioVariablesToMap(variableBlock string) map[string]string {
 				variableMap[key] = value
 			}
 		}
-
 	}
 
 	return variableMap
