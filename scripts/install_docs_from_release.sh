@@ -19,7 +19,6 @@ if [ "$LANG" != "" ]; then
 	# Map the language parameter to the corresponding scenarios file
 	# If no parameter, download the scenarios from IE
 	MAIN_LANG_PREFIX="$(echo "$LANG" | head -c2 | tr '[:upper:]' '[:lower:]')"
-  echo $MAIN_LANG_PREFIX
 	LANG_ARRAY=("de" "es" "fr" "it" "nl" "pt" "zh" "cs" "hu" "id" "ja" "ko" "pl" "pt" "ru" "sv" "tr")
 
 	if [[ "${LANG_ARRAY[*]}" =~ "$MAIN_LANG_PREFIX" ]]; then
