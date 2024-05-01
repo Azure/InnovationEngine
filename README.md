@@ -176,6 +176,12 @@ As it is written the code will pause and wait for input on any header or code
 block. Any document written in standard markdown can be run as an interactive 
 document.
 
+## Use Innovation Engine with any URL
+
+Documentation does not need to be stored locally in order to run IE with it. With v0.1.3 and greater, you can run `ie execute`, `ie interactive`, and `ie test` with any URL that points to a public markdown file, including raw GitHub URLs. See the below demo:
+
+https://github.com/Azure/InnovationEngine/assets/55719566/ce37f53c-9876-42b9-a033-1e4acaeb9d50
+
 ## Contributing
 
 This is an open source project. Don't keep your code improvements,
