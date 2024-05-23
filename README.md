@@ -1,39 +1,36 @@
 # Overview
 
-Innovation Engine is a tool for rapid innovation and simplification.
+Innovation Engine is a tool for rapid innovation and simplification. Innovation Engine contains 
+a CLI known as ie that enables execution and testing of Executable Documentation.
 
-# Executable Documentation 
+## What is Executable Documentation? 
 Executable documentation takes standard markdown language and amplifies it by 
-allowing it to be executed step by step in an educational manner, and tested 
+allowing the code commands within the document to be executed in full or step by step in an educational manner, and tested 
 via automated CI/CD pipelines.
 
-# Try Out Executable Documentation 
-Azure Cloud Shell provides an environment with all of the prerequisites 
-installed to run Executable Documentation. This is the recommended method for 
-new users to try and develop tutorials for Innovation Engine. 
-
-Open [Azure Cloud Shell](https://ms.portal.azure.com/#cloudshell/) and select 
-Bash as the environment. Paste the following commands into the shell, this will 
-clone the Innovation Engine repo, install the requirements, and build out the 
-innovation engine executable.
+## Install Innovation Engine CLI
+To install the Innovation Engine CLI, run the following commands. To install a specific version, set VERSION to the desired release number, such as "v0.1.3".
 
 ```bash
-git clone https://github.com/Azure/InnovationEngine;
-cd InnovationEngine;
-make build-ie;
+VERSION="latest"
+wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/$VERSION/ie >/dev/null
+
+# Setup permissions & move to the local bin
+chmod +x ie >/dev/null
+mkdir -p ~/.local/bin >/dev/null
+mv ie ~/.local/bin >/dev/null
+
+# Export the path to IE if it's not already available
+if [[ !"$PATH" =~ "~/.local/bin" || !"$PATH" =~ "$HOME/.local/bin" ]]; then
+	export PATH="$PATH:~/.local/bin"
+fi
 ```
 
-Now you can run the Innovation Engine tutorial with the following 
-command:
-
-```bash
-./bin/ie execute tutorial.md
-```
-
+# How to Use Innovation Engine
 The general format to run an executable document is: 
 `ie <MODE_OF_OPERATION> <MARKDOWN_FILE>`
 
-### Modes of Operation
+## Modes of Operation
 Today, executable documentation can be run in 3 modes of operation:
 
 Interactive: Displays the descriptive text of the tutorial and pauses at code 
@@ -120,10 +117,13 @@ markdown. For example:
     export MY_ADMIN_USERNAME=azureuser
     ```
     -->
+<!--TODO: 3. Pass in variable names as a paramter to ie CLI command. passed in vars are highest pri-->
 
 Variables set in comments will override variables set in a .ini file. 
 Consequently, locally declared variables in code samples will override 
 variables set in comments. 
+
+
 
 ### Setting Up GitHub Actions to use Innovation Engine
 
@@ -168,19 +168,6 @@ jobs:
         cp ../../articles/quick-create-cli.md README.md
         python3 main.py test README.md
 ```
-
-
-## Use Executable Documentation for Interactive Documentation 
-
-Innovation Engine can also be used for interactive tutorials via a local or 
-remote shell environment. After cloning the project and running 
-`make build-ie`, Innovation Engine can be used for 
-interactive tutorials by simply using the interactive flag when executing the 
-program. For example, `./bin/ie interactive tutorial.md`
-
-As it is written the code will pause and wait for input on any header or code 
-block. Any document written in standard markdown can be run as an interactive 
-document.
 
 ## Contributing
 
