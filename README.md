@@ -19,11 +19,6 @@ wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/$VERSI
 chmod +x ie >/dev/null
 mkdir -p ~/.local/bin >/dev/null
 mv ie ~/.local/bin >/dev/null
-
-# Export the path to IE if it's not already available
-if [[ !"$PATH" =~ "~/.local/bin" || !"$PATH" =~ "$HOME/.local/bin" ]]; then
-	export PATH="$PATH:~/.local/bin"
-fi
 ```
 
 # How to Use Innovation Engine
@@ -85,7 +80,7 @@ similarity, 1 being an exact match.
 
 Another barrier to automated testing is setting default values for test cases 
 to use in running. This problem can be solved with command line variables in 
-Executable documentation Syntax. 
+Executable documentation Syntax.
 
 Default environment variables can be set for executable documentation in a few 
 different ways. 
@@ -111,18 +106,24 @@ markdown. For example:
     <!!-- 
     ```variables
     export MY_RESOURCE_GROUP_NAME=myResourceGroup22323
-    export MY_LOCATION=eastus
+    export REGIONN=eastus
     export MY_VM_NAME=myVM
     export MY_VM_IMAGE=debian
     export MY_ADMIN_USERNAME=azureuser
     ```
     -->
-<!--TODO: 3. Pass in variable names as a paramter to ie CLI command. passed in vars are highest pri-->
+3. Pass in variable declarations as an argument to the ie CLI command using the 'var' parameter. For example:
+   ```bash
+	ie execute tutorial.md --var REGION=eastus
+   ```
 
-Variables set in comments will override variables set in a .ini file. 
-Consequently, locally declared variables in code samples will override 
-variables set in comments. 
+CLI argument variables override environment variables declared within the markdown document,
+which override variables set in a .ini file, which override preexisting environment variables.
 
+Local variables declared within the markdown document will override CLI argument variables.
+
+Local variables (ex: `REGION=eastus`) will not persist across code blocks. It is recommended
+to instead use environment variables (ex: `export REGION=eastus`).
 
 
 ### Setting Up GitHub Actions to use Innovation Engine
