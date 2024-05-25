@@ -10,15 +10,16 @@ via automated CI/CD pipelines.
 
 ## Install Innovation Engine CLI
 To install the Innovation Engine CLI, run the following commands. To install a specific version, set VERSION to the desired release number, such as "v0.1.3".
+You can find all releases [here](https://github.com/Azure/InnovationEngine/releases).
 
 ```bash
 VERSION="latest"
-wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/$VERSION/ie >/dev/null
+wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/$VERSION/ie
 
 # Setup permissions & move to the local bin
-chmod +x ie >/dev/null
-mkdir -p ~/.local/bin >/dev/null
-mv ie ~/.local/bin >/dev/null
+chmod +x ie
+mkdir -p ~/.local/bin
+mv ie ~/.local/bin
 ```
 
 # How to Use Innovation Engine
@@ -78,53 +79,18 @@ similarity, 1 being an exact match.
 
 ### Environment Variables
 
-Another barrier to automated testing is setting default values for test cases 
-to use in running. This problem can be solved with command line variables in 
-Executable documentation Syntax.
-
-Default environment variables can be set for executable documentation in a few 
-different ways. 
-
-1. A matching .ini file to the markdown
-  - Upon running any document executable documentation will look for a 
-  corresponding .ini file. For example if my markdown file is named tutorial.md 
-  the corresponding ini file would be tutorial.ini. 
-  - This file is a simple key value match for environment variable and value. 
-  For example:
-    ```ini
-    MY_RESOURCE_GROUP_NAME = myResourceGroup
-    MY_LOCATION = eastus
-    MY_VM_NAME = myVM
-    MY_VM_IMAGE = debian
-    MY_ADMIN_USERNAME = azureuser
-    ```
-2. A comment at the beginning of the document containing a code blog with the 
-tag 'variables'. This will be invisible to users unless they look at the raw 
-markdown. For example:
-    >**Note** The below example intentionally has broken comment syntax w/ two !'s.
-  
-    <!!-- 
-    ```variables
-    export MY_RESOURCE_GROUP_NAME=myResourceGroup22323
-    export REGIONN=eastus
-    export MY_VM_NAME=myVM
-    export MY_VM_IMAGE=debian
-    export MY_ADMIN_USERNAME=azureuser
-    ```
-    -->
-3. Pass in variable declarations as an argument to the ie CLI command using the 'var' parameter. For example:
-   ```bash
-	ie execute tutorial.md --var REGION=eastus
-   ```
+You can pass in variable declarations as an argument to the ie CLI command using the 'var' parameter. For example:
+```bash
+ie execute tutorial.md --var REGION=eastus
+```
 
 CLI argument variables override environment variables declared within the markdown document,
-which override variables set in a .ini file, which override preexisting environment variables.
+which override preexisting environment variables.
 
 Local variables declared within the markdown document will override CLI argument variables.
 
 Local variables (ex: `REGION=eastus`) will not persist across code blocks. It is recommended
 to instead use environment variables (ex: `export REGION=eastus`).
-
 
 ### Setting Up GitHub Actions to use Innovation Engine
 
