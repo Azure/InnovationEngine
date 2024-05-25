@@ -22,6 +22,24 @@ mkdir -p ~/.local/bin
 mv ie ~/.local/bin
 ```
 
+## Build Innovation Engine from Source
+Paste the following commands into the shell. This will 
+clone the Innovation Engine repo, install the requirements, and build out the 
+Innovation Engine executable.
+
+```bash
+git clone https://github.com/Azure/InnovationEngine;
+cd InnovationEngine;
+make build-ie;
+```
+
+Now you can run the Innovation Engine tutorial with the following 
+command:
+
+```bash
+./bin/ie execute tutorial.md
+```
+
 # How to Use Innovation Engine
 The general format to run an executable document is: 
 `ie <MODE_OF_OPERATION> <MARKDOWN_FILE>`
