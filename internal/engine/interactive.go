@@ -9,7 +9,6 @@ import (
 	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
-	"github.com/Azure/InnovationEngine/internal/parsers"
 	"github.com/Azure/InnovationEngine/internal/patterns"
 	"github.com/Azure/InnovationEngine/internal/ui"
 	"github.com/charmbracelet/bubbles/help"
@@ -28,19 +27,6 @@ type InteractiveModeCommands struct {
 	next     key.Binding
 }
 
-// State for the codeblock in interactive mode. Used to keep track of the
-// state of each codeblock.
-type CodeBlockState struct {
-	CodeBlock       parsers.CodeBlock
-	CodeBlockNumber int
-	Error           error
-	StdErr          string
-	StdOut          string
-	StepName        string
-	StepNumber      int
-	Success         bool
-}
-
 type interactiveModeComponents struct {
 	paginator        paginator.Model
 	stepViewport     viewport.Model
@@ -50,7 +36,7 @@ type interactiveModeComponents struct {
 
 type InteractiveModeModel struct {
 	azureStatus       environments.AzureDeploymentStatus
-	codeBlockState    map[int]CodeBlockState
+	codeBlockState    map[int]StatefulCodeBlock
 	commands          InteractiveModeCommands
 	currentCodeBlock  int
 	env               map[string]string
@@ -508,7 +494,7 @@ func NewInteractiveModeModel(
 	azureStatus := environments.NewAzureDeploymentStatus()
 	azureStatus.CurrentStep = 1
 	totalCodeBlocks := 0
-	codeBlockState := make(map[int]CodeBlockState)
+	codeBlockState := make(map[int]StatefulCodeBlock)
 
 	err := az.SetSubscription(engine.Configuration.Subscription)
 	if err != nil {
@@ -526,7 +512,7 @@ func NewInteractiveModeModel(
 				Description: block.Description,
 			})
 
-			codeBlockState[totalCodeBlocks] = CodeBlockState{
+			codeBlockState[totalCodeBlocks] = StatefulCodeBlock{
 				StepName:        step.Name,
 				CodeBlock:       block,
 				StepNumber:      stepNumber,

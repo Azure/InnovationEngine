@@ -54,7 +54,7 @@ func (e *Engine) TestScenario(scenario *Scenario) error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 
 		// Test the steps
-		fmt.Println(ui.ScenarioTitleStyle.Render(scenario.Name))
+		fmt.Println(ui.ScenarioTitleStyle.Render("Now testing " + scenario.Name))
 		err := e.TestSteps(scenario.Steps, lib.CopyMap(scenario.Environment))
 		return err
 	})

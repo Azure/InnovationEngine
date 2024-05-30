@@ -88,12 +88,15 @@ func ExecuteCodeBlockSync(codeBlock parsers.CodeBlock, env map[string]string) te
 	logging.GlobalLogger.Info("Executing command synchronously: ", codeBlock.Content)
 	program.ReleaseTerminal()
 
-	output, err := shells.ExecuteBashCommand(codeBlock.Content, shells.BashCommandConfiguration{
-		EnvironmentVariables: env,
-		InheritEnvironment:   true,
-		InteractiveCommand:   true,
-		WriteToHistory:       true,
-	})
+	output, err := shells.ExecuteBashCommand(
+		codeBlock.Content,
+		shells.BashCommandConfiguration{
+			EnvironmentVariables: env,
+			InheritEnvironment:   true,
+			InteractiveCommand:   true,
+			WriteToHistory:       true,
+		},
+	)
 
 	program.RestoreTerminal()
 
