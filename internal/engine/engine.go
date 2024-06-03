@@ -81,6 +81,7 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 		if !ok {
 			return fmt.Errorf("failed to cast tea.Model to TestModeModel")
 		}
+		fmt.Println(strings.Join(model.CommandLines, "\n"))
 
 		return err
 	})

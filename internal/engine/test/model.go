@@ -1,12 +1,15 @@
 package test
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/az"
 	"github.com/Azure/InnovationEngine/internal/engine/common"
+	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/patterns"
+	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/ui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -25,7 +28,6 @@ type TestModeModel struct {
 	currentCodeBlock  int
 	env               map[string]string
 	environment       string
-	executingCommand  bool
 	height            int
 	help              help.Model
 	resourceGroupName string
@@ -34,10 +36,10 @@ type TestModeModel struct {
 	scenarioCompleted bool
 	components        testModeComponents
 	ready             bool
-	commandLines      []string
+	CommandLines      []string
 }
 
-// Init the test mode model.
+// Init the test mode model by executing the first code block.
 func (model TestModeModel) Init() tea.Cmd {
 	return common.ExecuteCodeBlockAsync(
 		model.codeBlockState[model.currentCodeBlock].CodeBlock,
@@ -67,7 +69,6 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	case common.SuccessfulCommandMessage:
 		// Handle successful command executions
-		model.executingCommand = false
 		step := model.currentCodeBlock
 
 		// Update the state of the codeblock which finished executing.
@@ -89,7 +90,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.resourceGroupName = tmpResourceGroup
 			}
 		}
-		model.commandLines = append(model.commandLines, codeBlockState.StdOut)
+		model.CommandLines = append(model.CommandLines, codeBlockState.StdOut)
 
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
@@ -98,17 +99,11 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			nextCommand := model.codeBlockState[model.currentCodeBlock].CodeBlock.Content
 			nextLanguage := model.codeBlockState[model.currentCodeBlock].CodeBlock.Language
 
-			model.commandLines = append(model.commandLines, ui.CommandPrompt(nextLanguage)+nextCommand)
+			model.CommandLines = append(model.CommandLines, ui.CommandPrompt(nextLanguage)+nextCommand)
 		}
 
 		// Only increment the step for azure if the step name has changed.
 		nextCodeBlockState := model.codeBlockState[model.currentCodeBlock]
-
-		if codeBlockState.StepName != nextCodeBlockState.StepName {
-			logging.GlobalLogger.Debugf("Step name has changed, incrementing step for Azure")
-		} else {
-			logging.GlobalLogger.Debugf("Step name has not changed, not incrementing step for Azure")
-		}
 
 		// If the scenario has been completed, we need to update the azure
 		// status and quit the program. else,
@@ -137,14 +132,38 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.Success = false
 
 		model.codeBlockState[step] = codeBlockState
-		model.commandLines = append(model.commandLines, codeBlockState.StdErr)
+		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr)
 
-		// Report the error
-		model.executingCommand = false
 		commands = append(commands, tea.Quit)
+
+	case tea.QuitMsg:
+		// TODO: Generate test report
+
+		// Delete any found resource groups.
+		if model.resourceGroupName != "" {
+			logging.GlobalLogger.Infof("Attempting to delete the deployed resource group with the name: %s", model.resourceGroupName)
+			command := fmt.Sprintf("az group delete --name %s --yes --no-wait", model.resourceGroupName)
+			_, err := shells.ExecuteBashCommand(
+				command,
+				shells.BashCommandConfiguration{
+					EnvironmentVariables: lib.CopyMap(model.env),
+					InheritEnvironment:   true,
+					InteractiveCommand:   false,
+					WriteToHistory:       true,
+				},
+			)
+			if err != nil {
+				model.CommandLines = append(model.CommandLines, ui.ErrorStyle.Render("Error deleting resource group: %s\n", err.Error()))
+				logging.GlobalLogger.Errorf("Error deleting resource group: %s", err.Error())
+			} else {
+				model.CommandLines = append(model.CommandLines, "Resource group deleted successfully.")
+			}
+
+		}
+
 	}
 
-	model.components.commandViewport.SetContent(strings.Join(model.commandLines, "\n"))
+	model.components.commandViewport.SetContent(strings.Join(model.CommandLines, "\n"))
 
 	// Update all the viewports and append resulting commands.
 	var command tea.Cmd
@@ -213,12 +232,11 @@ func NewTestModeModel(
 		env:               env,
 		resourceGroupName: "",
 		codeBlockState:    codeBlockState,
-		executingCommand:  false,
 		currentCodeBlock:  0,
 		help:              help.New(),
 		environment:       environment,
 		scenarioCompleted: false,
 		ready:             false,
-		commandLines:      commandLines,
+		CommandLines:      commandLines,
 	}, nil
 }
