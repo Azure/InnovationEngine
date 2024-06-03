@@ -1,4 +1,4 @@
-package engine
+package common
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 )
 
 // Compares the actual output of a command to the expected output of a command.
-func compareCommandOutputs(
+func CompareCommandOutputs(
 	actualOutput string,
 	expectedOutput string,
 	expectedSimilarity float64,

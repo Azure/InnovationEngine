@@ -1,4 +1,4 @@
-package engine
+package common
 
 import "github.com/Azure/InnovationEngine/internal/parsers"
 

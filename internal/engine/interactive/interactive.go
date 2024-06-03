@@ -1,4 +1,4 @@
-package engine
+package interactive
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Azure/InnovationEngine/internal/az"
+	"github.com/Azure/InnovationEngine/internal/engine/common"
 	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
@@ -36,7 +37,7 @@ type interactiveModeComponents struct {
 
 type InteractiveModeModel struct {
 	azureStatus       environments.AzureDeploymentStatus
-	codeBlockState    map[int]StatefulCodeBlock
+	codeBlockState    map[int]common.StatefulCodeBlock
 	commands          InteractiveModeCommands
 	currentCodeBlock  int
 	env               map[string]string
@@ -50,13 +51,13 @@ type InteractiveModeModel struct {
 	scenarioCompleted bool
 	components        interactiveModeComponents
 	ready             bool
-	commandLines      []string
+	CommandLines      []string
 }
 
 // Initialize the intractive mode model
 func (model InteractiveModeModel) Init() tea.Cmd {
 	environments.ReportAzureStatus(model.azureStatus, model.environment)
-	return tea.Batch(clearScreen(), tea.Tick(time.Millisecond*10, func(t time.Time) tea.Msg {
+	return tea.Batch(common.ClearScreen(), tea.Tick(time.Millisecond*10, func(t time.Time) tea.Msg {
 		return tea.KeyMsg{Type: tea.KeyCtrlL} // This is to force a repaint
 	}))
 }
@@ -146,13 +147,13 @@ func handleUserInput(
 			)
 
 			commands = append(commands, tea.Sequence(
-				updateAzureStatus(model),
+				common.UpdateAzureStatus(model.azureStatus, model.environment),
 				func() tea.Msg {
-					return ExecuteCodeBlockSync(codeBlock, lib.CopyMap(model.env))
+					return common.ExecuteCodeBlockSync(codeBlock, lib.CopyMap(model.env))
 				}))
 
 		} else {
-			commands = append(commands, ExecuteCodeBlockAsync(
+			commands = append(commands, common.ExecuteCodeBlockAsync(
 				codeBlock,
 				lib.CopyMap(model.env),
 			))
@@ -224,7 +225,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		model, commands = handleUserInput(model, message)
 
-	case SuccessfulCommandMessage:
+	case common.SuccessfulCommandMessage:
 		// Handle successful command executions
 		model.executingCommand = false
 		step := model.currentCodeBlock
@@ -248,7 +249,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.resourceGroupName = tmpResourceGroup
 			}
 		}
-		model.commandLines = append(model.commandLines, codeBlockState.StdOut)
+		model.CommandLines = append(model.CommandLines, codeBlockState.StdOut)
 
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
@@ -257,7 +258,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			nextCommand := model.codeBlockState[model.currentCodeBlock].CodeBlock.Content
 			nextLanguage := model.codeBlockState[model.currentCodeBlock].CodeBlock.Language
 
-			model.commandLines = append(model.commandLines, ui.CommandPrompt(nextLanguage)+nextCommand)
+			model.CommandLines = append(model.CommandLines, ui.CommandPrompt(nextLanguage)+nextCommand)
 		}
 
 		// Only increment the step for azure if the step name has changed.
@@ -283,15 +284,15 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			commands = append(
 				commands,
 				tea.Sequence(
-					updateAzureStatus(model),
+					common.UpdateAzureStatus(model.azureStatus, model.environment),
 					tea.Quit,
 				),
 			)
 		} else {
-			commands = append(commands, updateAzureStatus(model))
+			commands = append(commands, common.UpdateAzureStatus(model.azureStatus, model.environment))
 		}
 
-	case FailedCommandMessage:
+	case common.FailedCommandMessage:
 		// Handle failed command executions
 
 		// Update the state of the codeblock which finished executing.
@@ -302,7 +303,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.Success = false
 
 		model.codeBlockState[step] = codeBlockState
-		model.commandLines = append(model.commandLines, codeBlockState.StdErr)
+		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr)
 
 		// Report the error
 		model.executingCommand = false
@@ -312,9 +313,15 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.resourceGroupName,
 			model.environment,
 		)
-		commands = append(commands, tea.Sequence(updateAzureStatus(model), tea.Quit))
+		commands = append(
+			commands,
+			tea.Sequence(
+				common.UpdateAzureStatus(model.azureStatus, model.environment),
+				tea.Quit,
+			),
+		)
 
-	case AzureStatusUpdatedMessage:
+	case common.AzureStatusUpdatedMessage:
 		// After the status has been updated, we force a window resize to
 		// render over the status update. For some reason, clearing the screen
 		// manually seems to cause the text produced by View() to not render
@@ -383,7 +390,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		model.components.outputViewport.SetContent(block.StdErr)
 	}
 
-	model.components.azureCLIViewport.SetContent(strings.Join(model.commandLines, "\n"))
+	model.components.azureCLIViewport.SetContent(strings.Join(model.CommandLines, "\n"))
 
 	// Update all the viewports and append resulting commands.
 	var command tea.Cmd
@@ -476,17 +483,12 @@ func (model InteractiveModeModel) View() string {
 		("\n" + executing)
 }
 
-// TODO: Ideally we won't need a global program variable. We should
-// refactor this in the future such that each tea program is localized to the
-// function that creates it and ExecuteCodeBlockSync doesn't mutate the global
-// program variable.
-var program *tea.Program = nil
-
 // Create a new interactive mode model.
 func NewInteractiveModeModel(
 	title string,
-	engine *Engine,
-	steps []Step,
+	subscription string,
+	environment string,
+	steps []common.Step,
 	env map[string]string,
 ) (InteractiveModeModel, error) {
 	// TODO: In the future we should just set the current step for the azure status
@@ -494,13 +496,13 @@ func NewInteractiveModeModel(
 	azureStatus := environments.NewAzureDeploymentStatus()
 	azureStatus.CurrentStep = 1
 	totalCodeBlocks := 0
-	codeBlockState := make(map[int]StatefulCodeBlock)
+	codeBlockState := make(map[int]common.StatefulCodeBlock)
 
-	err := az.SetSubscription(engine.Configuration.Subscription)
+	err := az.SetSubscription(subscription)
 	if err != nil {
 		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
 		azureStatus.SetError(err)
-		environments.ReportAzureStatus(azureStatus, engine.Configuration.Environment)
+		environments.ReportAzureStatus(azureStatus, environment)
 		return InteractiveModeModel{}, err
 	}
 
@@ -512,7 +514,7 @@ func NewInteractiveModeModel(
 				Description: block.Description,
 			})
 
-			codeBlockState[totalCodeBlocks] = StatefulCodeBlock{
+			codeBlockState[totalCodeBlocks] = common.StatefulCodeBlock{
 				StepName:        step.Name,
 				CodeBlock:       block,
 				StepNumber:      stepNumber,
@@ -560,9 +562,9 @@ func NewInteractiveModeModel(
 		executingCommand:  false,
 		currentCodeBlock:  0,
 		help:              help.New(),
-		environment:       engine.Configuration.Environment,
+		environment:       environment,
 		scenarioCompleted: false,
 		ready:             false,
-		commandLines:      commandLines,
+		CommandLines:      commandLines,
 	}, nil
 }

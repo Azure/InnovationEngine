@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/InnovationEngine/internal/engine"
+	"github.com/Azure/InnovationEngine/internal/engine/common"
 	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
@@ -50,11 +50,10 @@ var toBashCommand = &cobra.Command{
 		}
 
 		// Parse the markdown file and create a scenario
-		scenario, err := engine.CreateScenarioFromMarkdown(
+		scenario, err := common.CreateScenarioFromMarkdown(
 			markdownFile,
 			[]string{"bash", "azurecli", "azurecli-interactive", "terraform"},
 			cliEnvironmentVariables)
-
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating scenario: %s", err)
 			fmt.Printf("Error creating scenario: %s", err)
@@ -66,7 +65,6 @@ var toBashCommand = &cobra.Command{
 		if environments.IsAzureEnvironment(environment) {
 			script := AzureScript{Script: scenario.ToShellScript()}
 			scriptJson, err := json.Marshal(script)
-
 			if err != nil {
 				logging.GlobalLogger.Errorf("Error converting to json: %s", err)
 				fmt.Printf("Error converting to json: %s", err)
@@ -79,7 +77,6 @@ var toBashCommand = &cobra.Command{
 		}
 
 		return nil
-
 	},
 }
 

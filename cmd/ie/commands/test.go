@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Azure/InnovationEngine/internal/engine"
+	"github.com/Azure/InnovationEngine/internal/engine/common"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,6 @@ var testCommand = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Short: "Test document commands against it's expected outputs.",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		markdownFile := args[0]
 		if markdownFile == "" {
 			cmd.Help()
@@ -43,14 +43,13 @@ var testCommand = &cobra.Command{
 			CorrelationId:    "",
 			WorkingDirectory: workingDirectory,
 		})
-
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating engine %s", err)
 			fmt.Printf("Error creating engine %s", err)
 			os.Exit(1)
 		}
 
-		scenario, err := engine.CreateScenarioFromMarkdown(
+		scenario, err := common.CreateScenarioFromMarkdown(
 			markdownFile,
 			[]string{"bash", "azurecli", "azurecli-interactive", "terraform"},
 			nil,

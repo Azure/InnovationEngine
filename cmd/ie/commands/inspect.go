@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Azure/InnovationEngine/internal/engine"
+	"github.com/Azure/InnovationEngine/internal/engine/common"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/ui"
 	"github.com/spf13/cobra"
@@ -59,7 +59,7 @@ var inspectCommand = &cobra.Command{
 			cliEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
 		}
 		// Parse the markdown file and create a scenario
-		scenario, err := engine.CreateScenarioFromMarkdown(
+		scenario, err := common.CreateScenarioFromMarkdown(
 			markdownFile,
 			[]string{"bash", "azurecli", "azurecli-inspect", "terraform"},
 			cliEnvironmentVariables,
@@ -104,6 +104,5 @@ var inspectCommand = &cobra.Command{
 				fmt.Println()
 			}
 		}
-
 	},
 }
