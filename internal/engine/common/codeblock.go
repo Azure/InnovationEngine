@@ -14,3 +14,9 @@ type StatefulCodeBlock struct {
 	StepNumber      int
 	Success         bool
 }
+
+// Checks if a codeblock was executed by looking at the
+// output, errors, and if success is true.
+func (s StatefulCodeBlock) WasExecuted() bool {
+	return s.StdOut != "" || s.StdErr != "" || s.Error != nil || s.Success
+}

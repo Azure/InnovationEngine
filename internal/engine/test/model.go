@@ -196,6 +196,11 @@ func NewTestModeModel(
 		return TestModeModel{}, err
 	}
 
+	// If the environment variables are not set, set it to an empty map.
+	if len(env) == 0 || env == nil {
+		env = make(map[string]string)
+	}
+
 	// TODO(vmarcella): The codeblock state building should be reused across
 	// Interactive mode and test mode in the future.
 	for stepNumber, step := range steps {
