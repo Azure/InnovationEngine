@@ -1,12 +1,10 @@
 package test
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/az"
 	"github.com/Azure/InnovationEngine/internal/engine/common"
-	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/patterns"
 	"github.com/Azure/InnovationEngine/internal/ui"
@@ -22,7 +20,6 @@ type TestModeCommands struct {
 
 // The state required for testing scenarios.
 type TestModeModel struct {
-	azureStatus       environments.AzureDeploymentStatus
 	codeBlockState    map[int]common.StatefulCodeBlock
 	commands          TestModeCommands
 	currentCodeBlock  int
@@ -42,7 +39,10 @@ type TestModeModel struct {
 
 // Init the test mode model.
 func (model TestModeModel) Init() tea.Cmd {
-	return nil
+	return common.ExecuteCodeBlockAsync(
+		model.codeBlockState[model.currentCodeBlock].CodeBlock,
+		model.env,
+	)
 }
 
 // Update the test mode model.
@@ -106,7 +106,6 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		if codeBlockState.StepName != nextCodeBlockState.StepName {
 			logging.GlobalLogger.Debugf("Step name has changed, incrementing step for Azure")
-			model.azureStatus.CurrentStep++
 		} else {
 			logging.GlobalLogger.Debugf("Step name has not changed, not incrementing step for Azure")
 		}
@@ -115,7 +114,6 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		// status and quit the program. else,
 		if model.currentCodeBlock == len(model.codeBlockState) {
 			model.scenarioCompleted = true
-			model.azureStatus.Status = "Succeeded"
 			commands = append(
 				commands,
 				tea.Quit,
@@ -143,12 +141,6 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Report the error
 		model.executingCommand = false
-		model.azureStatus.SetError(message.Error)
-		environments.AttachResourceURIsToAzureStatus(
-			&model.azureStatus,
-			model.resourceGroupName,
-			model.environment,
-		)
 		commands = append(commands, tea.Quit)
 	}
 
@@ -176,30 +168,19 @@ func NewTestModeModel(
 	steps []common.Step,
 	env map[string]string,
 ) (TestModeModel, error) {
-	// TODO: In the future we should just set the current step for the azure status
-	// to one as the default.
-	azureStatus := environments.NewAzureDeploymentStatus()
-	azureStatus.CurrentStep = 1
 	totalCodeBlocks := 0
 	codeBlockState := make(map[int]common.StatefulCodeBlock)
 
 	err := az.SetSubscription(subscription)
 	if err != nil {
 		logging.GlobalLogger.Errorf("Invalid Config: Failed to set subscription: %s", err)
-		azureStatus.SetError(err)
-		environments.ReportAzureStatus(azureStatus, environment)
 		return TestModeModel{}, err
 	}
 
 	// TODO(vmarcella): The codeblock state building should be reused across
 	// Interactive mode and test mode in the future.
 	for stepNumber, step := range steps {
-		azureCodeBlocks := []environments.AzureCodeBlock{}
 		for blockNumber, block := range step.CodeBlocks {
-			azureCodeBlocks = append(azureCodeBlocks, environments.AzureCodeBlock{
-				Command:     block.Content,
-				Description: block.Description,
-			})
 
 			codeBlockState[totalCodeBlocks] = common.StatefulCodeBlock{
 				StepName:        step.Name,
@@ -214,7 +195,6 @@ func NewTestModeModel(
 
 			totalCodeBlocks += 1
 		}
-		azureStatus.AddStep(fmt.Sprintf("%d. %s", stepNumber+1, step.Name), azureCodeBlocks)
 	}
 
 	language := codeBlockState[0].CodeBlock.Language
@@ -232,7 +212,6 @@ func NewTestModeModel(
 		},
 		env:               env,
 		resourceGroupName: "",
-		azureStatus:       azureStatus,
 		codeBlockState:    codeBlockState,
 		executingCommand:  false,
 		currentCodeBlock:  0,
