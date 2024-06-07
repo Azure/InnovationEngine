@@ -82,6 +82,13 @@ func TestTestModeModel(t *testing.T) {
 
 			if model, ok := m.(TestModeModel); ok {
 				assert.Equal(t, 1, model.currentCodeBlock)
+
+				executedBlock := model.codeBlockState[0]
+
+				// Assert outputs of the executed block.
+				assert.Equal(t, "hello world\n", executedBlock.StdOut)
+				assert.Equal(t, "", executedBlock.StdErr)
+				assert.Equal(t, true, executedBlock.Success)
 			}
 		},
 	)
