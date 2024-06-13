@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // Mock HTTP server for testing downloading markdown from URL
@@ -74,5 +76,101 @@ func TestResolveMarkdownSource(t *testing.T) {
 		if !strings.Contains(err.Error(), expectedErrorMsg) {
 			t.Errorf("Expected error message to contain %q, got %q", expectedErrorMsg, err.Error())
 		}
+	})
+}
+
+func TestVariableOverrides(t *testing.T) {
+	// Test overriding environment variables
+	t.Run("Override a standard variable declaration", func(t *testing.T) {
+		scenario, err := CreateScenarioFromMarkdown(
+			"../../scenarios/testing/variables.md",
+			[]string{"bash"},
+			map[string]string{
+				"MY_VAR": "my_value",
+			},
+		)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "my_value", scenario.Environment["MY_VAR"])
+		assert.Contains(t, scenario.Steps[0].CodeBlocks[0].Content, "export MY_VAR=my_value")
+	})
+
+	t.Run(
+		"Override a variable that is declared on the same line as another variable, separated by &&",
+		func(t *testing.T) {
+			scenario, err := CreateScenarioFromMarkdown(
+				"../../scenarios/testing/variables.md",
+				[]string{"bash"},
+				map[string]string{
+					"NEXT_VAR": "next_value",
+				},
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "next_value", scenario.Environment["NEXT_VAR"])
+			assert.Contains(
+				t,
+				scenario.Steps[1].CodeBlocks[0].Content,
+				`export NEXT_VAR=next_value && export OTHER_VAR="Hello, World!"`,
+			)
+		},
+	)
+
+	t.Run(
+		"Override a variable that is declared on the same line as another variable, separated by ;",
+		func(t *testing.T) {
+			scenario, err := CreateScenarioFromMarkdown(
+				"../../scenarios/testing/variables.md",
+				[]string{"bash"},
+				map[string]string{
+					"THIS_VAR": "this_value",
+					"THAT_VAR": "that_value",
+				},
+			)
+
+			assert.NoError(t, err)
+			assert.Equal(t, "this_value", scenario.Environment["THIS_VAR"])
+			assert.Equal(t, "that_value", scenario.Environment["THAT_VAR"])
+			assert.Contains(
+				t,
+				scenario.Steps[2].CodeBlocks[0].Content,
+				`export THIS_VAR=this_value ; export THAT_VAR=that_value`,
+			)
+		})
+
+	t.Run("Override a variable that has a subshell command as it's value", func(t *testing.T) {
+		scenario, err := CreateScenarioFromMarkdown(
+			"../../scenarios/testing/variables.md",
+			[]string{"bash"},
+			map[string]string{
+				"SUBSHELL_VARIABLE": "subshell_value",
+			},
+		)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "subshell_value", scenario.Environment["SUBSHELL_VARIABLE"])
+		assert.Contains(
+			t,
+			scenario.Steps[3].CodeBlocks[0].Content,
+			`export SUBSHELL_VARIABLE=subshell_value`,
+		)
+	})
+
+	t.Run("Override a variable that references another variable", func(t *testing.T) {
+		scenario, err := CreateScenarioFromMarkdown(
+			"../../scenarios/testing/variables.md",
+			[]string{"bash"},
+			map[string]string{
+				"VAR2": "var2_value",
+			},
+		)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "var2_value", scenario.Environment["VAR2"])
+		assert.Contains(
+			t,
+			scenario.Steps[4].CodeBlocks[0].Content,
+			`export VAR2=var2_value`,
+		)
 	})
 }
