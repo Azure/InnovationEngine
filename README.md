@@ -1,21 +1,31 @@
 # Overview
 
-Innovation Engine is a tool for rapid innovation and simplification.
+Innovation Engine is a tool for rapid innovation and simplification. Innovation Engine contains 
+a CLI known as ie that enables execution and testing of Executable Documentation.
 
-# Executable Documentation 
+## What is Executable Documentation? 
 Executable documentation takes standard markdown language and amplifies it by 
-allowing it to be executed step by step in an educational manner, and tested 
+allowing the code commands within the document to be executed in full or step by step in an educational manner, and tested 
 via automated CI/CD pipelines.
 
-# Try Out Executable Documentation 
-Azure Cloud Shell provides an environment with all of the prerequisites 
-installed to run Executable Documentation. This is the recommended method for 
-new users to try and develop tutorials for Innovation Engine. 
+## Install Innovation Engine CLI
+To install the Innovation Engine CLI, run the following commands. To install a specific version, set VERSION to the desired release number, such as "v0.1.3".
+You can find all releases [here](https://github.com/Azure/InnovationEngine/releases).
 
-Open [Azure Cloud Shell](https://ms.portal.azure.com/#cloudshell/) and select 
-Bash as the environment. Paste the following commands into the shell, this will 
+```bash
+VERSION="latest"
+wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/$VERSION/ie
+
+# Setup permissions & move to the local bin
+chmod +x ie
+mkdir -p ~/.local/bin
+mv ie ~/.local/bin
+```
+
+## Build Innovation Engine from Source
+Paste the following commands into the shell. This will 
 clone the Innovation Engine repo, install the requirements, and build out the 
-innovation engine executable.
+Innovation Engine executable.
 
 ```bash
 git clone https://github.com/Azure/InnovationEngine;
@@ -30,10 +40,11 @@ command:
 ./bin/ie execute tutorial.md
 ```
 
+# How to Use Innovation Engine
 The general format to run an executable document is: 
 `ie <MODE_OF_OPERATION> <MARKDOWN_FILE>`
 
-### Modes of Operation
+## Modes of Operation
 Today, executable documentation can be run in 3 modes of operation:
 
 Interactive: Displays the descriptive text of the tutorial and pauses at code 
@@ -86,44 +97,18 @@ similarity, 1 being an exact match.
 
 ### Environment Variables
 
-Another barrier to automated testing is setting default values for test cases 
-to use in running. This problem can be solved with command line variables in 
-Executable documentation Syntax. 
+You can pass in variable declarations as an argument to the ie CLI command using the 'var' parameter. For example:
+```bash
+ie execute tutorial.md --var REGION=eastus
+```
 
-Default environment variables can be set for executable documentation in a few 
-different ways. 
+CLI argument variables override environment variables declared within the markdown document,
+which override preexisting environment variables.
 
-1. A matching .ini file to the markdown
-  - Upon running any document executable documentation will look for a 
-  corresponding .ini file. For example if my markdown file is named tutorial.md 
-  the corresponding ini file would be tutorial.ini. 
-  - This file is a simple key value match for environment variable and value. 
-  For example:
-    ```ini
-    MY_RESOURCE_GROUP_NAME = myResourceGroup
-    MY_LOCATION = eastus
-    MY_VM_NAME = myVM
-    MY_VM_IMAGE = debian
-    MY_ADMIN_USERNAME = azureuser
-    ```
-2. A comment at the beginning of the document containing a code blog with the 
-tag 'variables'. This will be invisible to users unless they look at the raw 
-markdown. For example:
-    >**Note** The below example intentionally has broken comment syntax w/ two !'s.
-  
-    <!!-- 
-    ```variables
-    export MY_RESOURCE_GROUP_NAME=myResourceGroup22323
-    export MY_LOCATION=eastus
-    export MY_VM_NAME=myVM
-    export MY_VM_IMAGE=debian
-    export MY_ADMIN_USERNAME=azureuser
-    ```
-    -->
+Local variables declared within the markdown document will override CLI argument variables.
 
-Variables set in comments will override variables set in a .ini file. 
-Consequently, locally declared variables in code samples will override 
-variables set in comments. 
+Local variables (ex: `REGION=eastus`) will not persist across code blocks. It is recommended
+to instead use environment variables (ex: `export REGION=eastus`).
 
 ### Setting Up GitHub Actions to use Innovation Engine
 
@@ -168,19 +153,6 @@ jobs:
         cp ../../articles/quick-create-cli.md README.md
         python3 main.py test README.md
 ```
-
-
-## Use Executable Documentation for Interactive Documentation 
-
-Innovation Engine can also be used for interactive tutorials via a local or 
-remote shell environment. After cloning the project and running 
-`make build-ie`, Innovation Engine can be used for 
-interactive tutorials by simply using the interactive flag when executing the 
-program. For example, `./bin/ie interactive tutorial.md`
-
-As it is written the code will pause and wait for input on any header or code 
-block. Any document written in standard markdown can be run as an interactive 
-document.
 
 ## Contributing
 

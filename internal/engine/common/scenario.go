@@ -128,8 +128,9 @@ func CreateScenarioFromMarkdown(
 
 	varsToExport := lib.CopyMap(environmentVariableOverrides)
 	for key, value := range environmentVariableOverrides {
+		environmentVariables[key] = value
 		logging.GlobalLogger.Debugf("Attempting to override %s with %s", key, value)
-		exportRegex := regexp.MustCompile(fmt.Sprintf(`export %s=["']?([a-z-A-Z0-9_]+)["']?`, key))
+		exportRegex := regexp.MustCompile(fmt.Sprintf(`(?m)export %s\s*=\s*(.*?)(;|&&|$)`, key))
 
 		for index, codeBlock := range codeBlocks {
 			matches := exportRegex.FindAllStringSubmatch(codeBlock.Content, -1)
@@ -150,7 +151,7 @@ func CreateScenarioFromMarkdown(
 				oldValue := match[1]
 
 				// Replace the old export with the new export statement
-				newLine := strings.Replace(oldLine, oldValue, value, 1)
+				newLine := strings.Replace(oldLine, oldValue, value+" ", 1)
 				logging.GlobalLogger.Debugf("Replacing '%s' with '%s'", oldLine, newLine)
 
 				// Update the code block with the new export statement
