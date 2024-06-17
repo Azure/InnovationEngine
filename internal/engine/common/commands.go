@@ -23,6 +23,16 @@ type FailedCommandMessage struct {
 	Error  error
 }
 
+type ExitMessage struct {
+	EncounteredFailure bool
+}
+
+func Exit(encounteredFailure bool) tea.Cmd {
+	return func() tea.Msg {
+		return ExitMessage{EncounteredFailure: encounteredFailure}
+	}
+}
+
 // Executes a bash command and returns a tea message with the output. This function
 // will be executed asycnhronously.
 func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) tea.Cmd {

@@ -80,10 +80,11 @@ func TestResolveMarkdownSource(t *testing.T) {
 }
 
 func TestVariableOverrides(t *testing.T) {
+	variableScenarioPath := "../../../scenarios/testing/variables.md"
 	// Test overriding environment variables
 	t.Run("Override a standard variable declaration", func(t *testing.T) {
 		scenario, err := CreateScenarioFromMarkdown(
-			"../../scenarios/testing/variables.md",
+			variableScenarioPath,
 			[]string{"bash"},
 			map[string]string{
 				"MY_VAR": "my_value",
@@ -99,7 +100,7 @@ func TestVariableOverrides(t *testing.T) {
 		"Override a variable that is declared on the same line as another variable, separated by &&",
 		func(t *testing.T) {
 			scenario, err := CreateScenarioFromMarkdown(
-				"../../scenarios/testing/variables.md",
+				variableScenarioPath,
 				[]string{"bash"},
 				map[string]string{
 					"NEXT_VAR": "next_value",
@@ -120,7 +121,7 @@ func TestVariableOverrides(t *testing.T) {
 		"Override a variable that is declared on the same line as another variable, separated by ;",
 		func(t *testing.T) {
 			scenario, err := CreateScenarioFromMarkdown(
-				"../../scenarios/testing/variables.md",
+				variableScenarioPath,
 				[]string{"bash"},
 				map[string]string{
 					"THIS_VAR": "this_value",
@@ -140,7 +141,7 @@ func TestVariableOverrides(t *testing.T) {
 
 	t.Run("Override a variable that has a subshell command as it's value", func(t *testing.T) {
 		scenario, err := CreateScenarioFromMarkdown(
-			"../../scenarios/testing/variables.md",
+			variableScenarioPath,
 			[]string{"bash"},
 			map[string]string{
 				"SUBSHELL_VARIABLE": "subshell_value",
@@ -158,7 +159,7 @@ func TestVariableOverrides(t *testing.T) {
 
 	t.Run("Override a variable that references another variable", func(t *testing.T) {
 		scenario, err := CreateScenarioFromMarkdown(
-			"../../scenarios/testing/variables.md",
+			variableScenarioPath,
 			[]string{"bash"},
 			map[string]string{
 				"VAR2": "var2_value",

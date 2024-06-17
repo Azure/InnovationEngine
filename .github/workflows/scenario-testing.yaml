@@ -39,10 +39,11 @@ jobs:
     environment: ScenarioTesting
     steps:
       - uses: actions/checkout@v2
-      - name: Build all targets.
+      - name: Build & test all targets.
         run: |
           make build-all
           make test-all WITH_COVERAGE=true
+          make test-local-scenarios
       - name: Upload test coverage
         uses: actions/upload-artifact@v2
         if: github.event_name == 'pull_request'

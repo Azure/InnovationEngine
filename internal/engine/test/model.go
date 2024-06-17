@@ -21,29 +21,32 @@ type TestModeCommands struct {
 	quit key.Binding
 }
 
+// Creating an alias to make it easier to test the execution of bash commands.
+// TODO(vmarcella): We should abstract this behind some sort of generic
+// interface in the future.
+var executeBashCommand = shells.ExecuteBashCommand
+
 // The state required for testing scenarios.
 type TestModeModel struct {
-	codeBlockState    map[int]common.StatefulCodeBlock
-	commands          TestModeCommands
-	currentCodeBlock  int
-	env               map[string]string
-	environment       string
-	height            int
-	help              help.Model
-	resourceGroupName string
-	scenarioTitle     string
-	width             int
-	scenarioCompleted bool
-	components        testModeComponents
-	ready             bool
-	CommandLines      []string
+	codeBlockState       map[int]common.StatefulCodeBlock
+	commands             TestModeCommands
+	currentCodeBlock     int
+	environmentVariables map[string]string
+	environment          string
+	help                 help.Model
+	resourceGroupName    string
+	scenarioTitle        string
+	scenarioCompleted    bool
+	components           testModeComponents
+	ready                bool
+	CommandLines         []string
 }
 
 // Init the test mode model by executing the first code block.
 func (model TestModeModel) Init() tea.Cmd {
 	return common.ExecuteCodeBlockAsync(
 		model.codeBlockState[model.currentCodeBlock].CodeBlock,
-		model.env,
+		model.environmentVariables,
 	)
 }
 
@@ -54,8 +57,6 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch message := message.(type) {
 
 	case tea.WindowSizeMsg:
-		model.width = message.Width
-		model.height = message.Height
 		logging.GlobalLogger.Debugf("Window size changed to: %d x %d", message.Width, message.Height)
 		if !model.ready {
 			model.components = initializeComponents(model, message.Width, message.Height)
@@ -108,16 +109,17 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		// If the scenario has been completed, we need to update the azure
 		// status and quit the program. else,
 		if model.currentCodeBlock == len(model.codeBlockState) {
-			model.scenarioCompleted = true
+			logging.GlobalLogger.Infof("The last codeblock was executed. Requesting to exit test mode...")
 			commands = append(
 				commands,
-				tea.Quit,
+				common.Exit(false),
 			)
+
 		} else {
 			// If the scenario has not been completed, we need to execute the next command
 			commands = append(
 				commands,
-				common.ExecuteCodeBlockAsync(nextCodeBlockState.CodeBlock, model.env),
+				common.ExecuteCodeBlockAsync(nextCodeBlockState.CodeBlock, model.environmentVariables),
 			)
 		}
 
@@ -134,19 +136,19 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		model.codeBlockState[step] = codeBlockState
 		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr)
 
-		commands = append(commands, tea.Quit)
+		commands = append(commands, common.Exit(true))
 
-	case tea.QuitMsg:
+	case common.ExitMessage:
 		// TODO: Generate test report
 
 		// Delete any found resource groups.
 		if model.resourceGroupName != "" {
 			logging.GlobalLogger.Infof("Attempting to delete the deployed resource group with the name: %s", model.resourceGroupName)
 			command := fmt.Sprintf("az group delete --name %s --yes --no-wait", model.resourceGroupName)
-			_, err := shells.ExecuteBashCommand(
+			_, err := executeBashCommand(
 				command,
 				shells.BashCommandConfiguration{
-					EnvironmentVariables: lib.CopyMap(model.env),
+					EnvironmentVariables: lib.CopyMap(model.environmentVariables),
 					InheritEnvironment:   true,
 					InteractiveCommand:   false,
 					WriteToHistory:       true,
@@ -160,6 +162,12 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		}
+
+		// If the model didn't encounter a failure, then the scenario was scenario
+		// was completed successfully.
+		model.scenarioCompleted = !message.EncounteredFailure
+
+		commands = append(commands, tea.Quit)
 
 	}
 
@@ -234,14 +242,14 @@ func NewTestModeModel(
 				key.WithHelp("q", "Quit the scenario."),
 			),
 		},
-		env:               env,
-		resourceGroupName: "",
-		codeBlockState:    codeBlockState,
-		currentCodeBlock:  0,
-		help:              help.New(),
-		environment:       environment,
-		scenarioCompleted: false,
-		ready:             false,
-		CommandLines:      commandLines,
+		environmentVariables: env,
+		resourceGroupName:    "",
+		codeBlockState:       codeBlockState,
+		currentCodeBlock:     0,
+		help:                 help.New(),
+		environment:          environment,
+		scenarioCompleted:    false,
+		ready:                false,
+		CommandLines:         commandLines,
 	}, nil
 }

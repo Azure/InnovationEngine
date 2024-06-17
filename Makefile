@@ -40,12 +40,22 @@ SCENARIO ?= ./README.md
 WORKING_DIRECTORY ?= $(PWD)
 test-scenario:
 	@echo "Running scenario $(SCENARIO)"
+ifeq ($(SUBSCRIPTION), 00000000-0000-0000-0000-000000000000)
+	$(IE_BINARY) test $(SCENARIO) --working-directory $(WORKING_DIRECTORY)
+else
 	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY)
+endif
 
 test-scenarios:
 	@echo "Testing out the scenarios"
 	for dir in ./scenarios/ocd/*/; do \
 		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)") || exit $$?; \
+	done
+
+test-local-scenarios:
+	@echo "Testing out the local scenarios"
+	for file in ./scenarios/testing/*.md; do \
+		($(MAKE) test-scenario SCENARIO="$${file}") || exit $$?; \
 	done
 
 test-upstream-scenarios:
