@@ -133,9 +133,13 @@ func TestTestModeModel(t *testing.T) {
 			// the resource group name is empty.
 			m, _ = model.Update(common.Exit(false)())
 			counter := 0
+
 			// We create a mock function to replace the shells.ExecuteBashCommand function
 			// to make sure that the function is not called.
-			executeBashCommand = func(
+			original := shells.ExecuteBashCommand
+			defer func() { shells.ExecuteBashCommand = original }()
+
+			shells.ExecuteBashCommand = func(
 				command string,
 				config shells.BashCommandConfiguration,
 			) (shells.CommandOutput, error) {
@@ -194,9 +198,13 @@ func TestTestModeModel(t *testing.T) {
 			// the resource group name is not empty.
 			counter := 0
 			recordedCommand := ""
+
 			// We create a mock function to replace the shells.ExecuteBashCommand function
 			// to make sure that the function is called.
-			executeBashCommand = func(
+			original := shells.ExecuteBashCommand
+			defer func() { shells.ExecuteBashCommand = original }()
+
+			shells.ExecuteBashCommand = func(
 				command string,
 				config shells.BashCommandConfiguration,
 			) (shells.CommandOutput, error) {

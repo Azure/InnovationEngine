@@ -21,11 +21,6 @@ type TestModeCommands struct {
 	quit key.Binding
 }
 
-// Creating an alias to make it easier to test the execution of bash commands.
-// TODO(vmarcella): We should abstract this behind some sort of generic
-// interface in the future.
-var executeBashCommand = shells.ExecuteBashCommand
-
 // The state required for testing scenarios.
 type TestModeModel struct {
 	codeBlockState       map[int]common.StatefulCodeBlock
@@ -145,7 +140,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		if model.resourceGroupName != "" {
 			logging.GlobalLogger.Infof("Attempting to delete the deployed resource group with the name: %s", model.resourceGroupName)
 			command := fmt.Sprintf("az group delete --name %s --yes --no-wait", model.resourceGroupName)
-			_, err := executeBashCommand(
+			_, err := shells.ExecuteBashCommand(
 				command,
 				shells.BashCommandConfiguration{
 					EnvironmentVariables: lib.CopyMap(model.environmentVariables),
