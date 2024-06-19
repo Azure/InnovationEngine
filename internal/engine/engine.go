@@ -72,15 +72,15 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 
 		var finalModel tea.Model
 		finalModel, err = common.Program.Run()
-		var ok bool
 
 		// TODO(vmarcella): After testing is complete, we should generate a report.
 
-		model, ok = finalModel.(test.TestModeModel)
+		model, ok := finalModel.(test.TestModeModel)
 
 		if !ok {
 			return fmt.Errorf("failed to cast tea.Model to TestModeModel")
 		}
+
 		fmt.Println(strings.Join(model.CommandLines, "\n"))
 
 		return err

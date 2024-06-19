@@ -129,7 +129,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.Success = false
 
 		model.codeBlockState[step] = codeBlockState
-		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr)
+		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr+message.Error.Error())
 
 		commands = append(commands, common.Exit(true))
 
