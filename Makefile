@@ -27,7 +27,7 @@ test-all:
 	@go clean -testcache
 ifeq ($(WITH_COVERAGE), true)
 	@echo "Running all tests with coverage..."
-	@go test -v -coverprofile=coverage.out ./...
+	@go test -v -coverpkg=./... -coverprofile=coverage.out ./...
 	@go tool cover -html=coverage.out -o coverage.html
 else
 	@echo "Running all tests..."
