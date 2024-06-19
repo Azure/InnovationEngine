@@ -49,6 +49,8 @@ func (model TestModeModel) Init() tea.Cmd {
 func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	var commands []tea.Cmd
 
+	viewportContentUpdated := false
+
 	switch message := message.(type) {
 
 	case tea.WindowSizeMsg:
@@ -87,6 +89,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		model.CommandLines = append(model.CommandLines, codeBlockState.StdOut)
+		viewportContentUpdated = true
 
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
@@ -130,6 +133,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		model.codeBlockState[step] = codeBlockState
 		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr+message.Error.Error())
+		viewportContentUpdated = true
 
 		commands = append(commands, common.Exit(true))
 
@@ -167,6 +171,10 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	model.components.commandViewport.SetContent(strings.Join(model.CommandLines, "\n"))
+
+	if viewportContentUpdated {
+		model.components.commandViewport.GotoBottom()
+	}
 
 	// Update all the viewports and append resulting commands.
 	var command tea.Cmd
