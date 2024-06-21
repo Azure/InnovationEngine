@@ -72,7 +72,7 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 		}
 
 		var flags []tea.ProgramOption
-		if environments.EnvironmentsGithubActions == e.Configuration.Environment {
+		if environments.EnvironmentsGithubAction == e.Configuration.Environment {
 			flags = append(
 				flags,
 				tea.WithoutRenderer(),
