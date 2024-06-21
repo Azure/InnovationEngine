@@ -72,7 +72,12 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 
 		var flags []tea.ProgramOption
 		if environments.EnvironmentsCI == e.Configuration.Environment {
-			flags = append(flags, tea.WithOutput(os.Stdout), tea.WithInput(os.Stdin))
+			flags = append(
+				flags,
+				tea.WithoutRenderer(),
+				tea.WithOutput(os.Stdout),
+				tea.WithInput(os.Stdin),
+			)
 		} else {
 			flags = append(flags, tea.WithAltScreen(), tea.WithMouseCellMotion())
 		}
