@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/az"
@@ -71,7 +72,7 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 
 		var flags []tea.ProgramOption
 		if environments.EnvironmentsCI == e.Configuration.Environment {
-			flags = append(flags, tea.WithoutRenderer())
+			flags = append(flags, tea.WithOutput(os.Stdout), tea.WithInput(os.Stdin))
 		} else {
 			flags = append(flags, tea.WithAltScreen(), tea.WithMouseCellMotion())
 		}
