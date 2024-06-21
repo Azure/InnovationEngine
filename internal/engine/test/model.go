@@ -37,6 +37,23 @@ type TestModeModel struct {
 	CommandLines         []string
 }
 
+// Obtains the last codeblock that the scenario was on before it failed.
+// If the scenario was completed successfully, then it returns nil.
+func (model TestModeModel) GetFailure() error {
+	if model.scenarioCompleted {
+		return nil
+	}
+
+	failedCodeBlock := model.codeBlockState[model.currentCodeBlock]
+	return fmt.Errorf(
+		"failed to execute code block %d on step %d.\nError: %s\nStdErr: %s",
+		failedCodeBlock.CodeBlockNumber,
+		failedCodeBlock.StepNumber,
+		failedCodeBlock.StdErr,
+		failedCodeBlock.Error,
+	)
+}
+
 // Init the test mode model by executing the first code block.
 func (model TestModeModel) Init() tea.Cmd {
 	return common.ExecuteCodeBlockAsync(

@@ -153,7 +153,6 @@ func executeBashCommandImpl(
 	} else {
 		commandToExecute.Stdout = &stdoutBuffer
 		commandToExecute.Stderr = &stderrBuffer
-		commandToExecute.Stdin = nil
 	}
 
 	if config.InheritEnvironment {

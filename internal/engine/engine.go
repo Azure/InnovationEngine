@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -82,9 +83,6 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 			flags = append(flags, tea.WithAltScreen(), tea.WithMouseCellMotion())
 		}
 
-		fmt.Println(e.Configuration.Environment)
-		fmt.Println(flags)
-
 		common.Program = tea.NewProgram(model, flags...)
 
 		var finalModel tea.Model
@@ -95,8 +93,11 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 		model, ok := finalModel.(test.TestModeModel)
 
 		if !ok {
-			return fmt.Errorf("failed to cast tea.Model to TestModeModel")
+			err = errors.Join(err, fmt.Errorf("failed to cast tea.Model to TestModeModel"))
+			return err
+
 		}
+		err = errors.Join(err, model.GetFailure())
 
 		fmt.Println(strings.Join(model.CommandLines, "\n"))
 
