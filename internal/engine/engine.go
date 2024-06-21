@@ -39,7 +39,7 @@ func NewEngine(configuration EngineConfiguration) (*Engine, error) {
 	}, nil
 }
 
-// Executes a deployment scenario.
+// Executes a markdown scenario.
 func (e *Engine) ExecuteScenario(scenario *common.Scenario) error {
 	return fs.UsingDirectory(e.Configuration.WorkingDirectory, func() error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
@@ -51,7 +51,8 @@ func (e *Engine) ExecuteScenario(scenario *common.Scenario) error {
 	})
 }
 
-// Validates a deployment scenario.
+// Executes a scenario in testing moe. This mode goes over each code block
+// and executes it without user interaction.
 func (e *Engine) TestScenario(scenario *common.Scenario) error {
 	return fs.UsingDirectory(e.Configuration.WorkingDirectory, func() error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
@@ -68,7 +69,17 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 			return err
 		}
 
-		common.Program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
+		var flags []tea.ProgramOption
+		if environments.EnvironmentsCI == e.Configuration.Environment {
+			flags = append(flags, tea.WithoutRenderer())
+		} else {
+			flags = append(flags, tea.WithAltScreen(), tea.WithMouseCellMotion())
+		}
+
+		fmt.Println(e.Configuration.Environment)
+		fmt.Println(flags)
+
+		common.Program = tea.NewProgram(model, flags...)
 
 		var finalModel tea.Model
 		finalModel, err = common.Program.Run()

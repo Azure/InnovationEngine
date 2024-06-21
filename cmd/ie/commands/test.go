@@ -35,6 +35,7 @@ var testCommand = &cobra.Command{
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		subscription, _ := cmd.Flags().GetString("subscription")
 		workingDirectory, _ := cmd.Flags().GetString("working-directory")
+		environment, _ := cmd.Flags().GetString("environment")
 
 		innovationEngine, err := engine.NewEngine(engine.EngineConfiguration{
 			Verbose:          verbose,
@@ -42,6 +43,7 @@ var testCommand = &cobra.Command{
 			Subscription:     subscription,
 			CorrelationId:    "",
 			WorkingDirectory: workingDirectory,
+			Environment:      environment,
 		})
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating engine %s", err)
