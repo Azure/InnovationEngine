@@ -49,8 +49,8 @@ func (model TestModeModel) GetFailure() error {
 		"failed to execute code block %d on step %d.\nError: %s\nStdErr: %s",
 		failedCodeBlock.CodeBlockNumber,
 		failedCodeBlock.StepNumber,
-		failedCodeBlock.StdErr,
 		failedCodeBlock.Error,
+		failedCodeBlock.StdErr,
 	)
 }
 
@@ -146,6 +146,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState := model.codeBlockState[step]
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
+		codeBlockState.Error = message.Error
 		codeBlockState.Success = false
 
 		model.codeBlockState[step] = codeBlockState
