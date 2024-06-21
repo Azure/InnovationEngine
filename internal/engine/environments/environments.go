@@ -1,19 +1,17 @@
 package environments
 
 const (
-	EnvironmentsLocal         = "local"
-	EnvironmentsCI            = "ci"
-	EnvironmentsGithubActions = "github-actions"
-	EnvironmentsOCD           = "ocd"
-	EnvironmentsAzure         = "azure"
+	EnvironmentsLocal        = "local"
+	EnvironmentsGithubAction = "github-action"
+	EnvironmentsOCD          = "ocd"
+	EnvironmentsAzure        = "azure"
 )
 
 // Check if the environment is valid.
 func IsValidEnvironment(environment string) bool {
 	switch environment {
 	case EnvironmentsLocal,
-		EnvironmentsCI,
-		EnvironmentsGithubActions,
+		EnvironmentsGithubAction,
 		EnvironmentsOCD,
 		EnvironmentsAzure:
 		return true

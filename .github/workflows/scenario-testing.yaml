@@ -43,7 +43,7 @@ jobs:
         run: |
           make build-all
           make test-all WITH_COVERAGE=true
-          make test-local-scenarios ENVIRONMENT=ci
+          make test-local-scenarios ENVIRONMENT=github-action
       - name: Upload test coverage
         uses: actions/upload-artifact@v2
         if: github.event_name == 'pull_request'
