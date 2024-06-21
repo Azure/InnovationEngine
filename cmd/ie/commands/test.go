@@ -24,7 +24,7 @@ func init() {
 var testCommand = &cobra.Command{
 	Use:   "test",
 	Args:  cobra.MinimumNArgs(1),
-	Short: "Test document commands against it's expected outputs.",
+	Short: "Test document commands against their expected outputs.",
 	Run: func(cmd *cobra.Command, args []string) {
 		markdownFile := args[0]
 		if markdownFile == "" {
