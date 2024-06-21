@@ -22,7 +22,6 @@ install-ie:
 # ------------------------------ Test targets ----------------------------------
 
 WITH_COVERAGE := false
-
 test-all:
 	@go clean -testcache
 ifeq ($(WITH_COVERAGE), true)
@@ -38,12 +37,13 @@ endif
 SUBSCRIPTION ?= 00000000-0000-0000-0000-000000000000
 SCENARIO ?= ./README.md
 WORKING_DIRECTORY ?= $(PWD)
+ENVIRONMENT ?= local
 test-scenario:
 	@echo "Running scenario $(SCENARIO)"
 ifeq ($(SUBSCRIPTION), 00000000-0000-0000-0000-000000000000)
-	$(IE_BINARY) test $(SCENARIO) --working-directory $(WORKING_DIRECTORY)
+	$(IE_BINARY) test $(SCENARIO) --working-directory $(WORKING_DIRECTORY) --environment $(ENVIRONMENT)
 else
-	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY)
+	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY) --enviroment $(ENVIRONMENT)
 endif
 
 test-scenarios:
