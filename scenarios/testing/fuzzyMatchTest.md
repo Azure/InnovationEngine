@@ -24,7 +24,7 @@ world"
 <!--expected_similarity=0.9-->
 
 ```text
-world Hello
+Hello world
 ```
 
 # Code block
