@@ -22,12 +22,11 @@ install-ie:
 # ------------------------------ Test targets ----------------------------------
 
 WITH_COVERAGE := false
-
 test-all:
 	@go clean -testcache
 ifeq ($(WITH_COVERAGE), true)
 	@echo "Running all tests with coverage..."
-	@go test -v -coverprofile=coverage.out ./...
+	@go test -v -coverpkg=./... -coverprofile=coverage.out ./...
 	@go tool cover -html=coverage.out -o coverage.html
 else
 	@echo "Running all tests..."
@@ -38,14 +37,25 @@ endif
 SUBSCRIPTION ?= 00000000-0000-0000-0000-000000000000
 SCENARIO ?= ./README.md
 WORKING_DIRECTORY ?= $(PWD)
+ENVIRONMENT ?= local
 test-scenario:
 	@echo "Running scenario $(SCENARIO)"
-	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY)
+ifeq ($(SUBSCRIPTION), 00000000-0000-0000-0000-000000000000)
+	$(IE_BINARY) test $(SCENARIO) --working-directory $(WORKING_DIRECTORY) --environment $(ENVIRONMENT)
+else
+	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY) --enviroment $(ENVIRONMENT)
+endif
 
 test-scenarios:
 	@echo "Testing out the scenarios"
 	for dir in ./scenarios/ocd/*/; do \
 		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)") || exit $$?; \
+	done
+
+test-local-scenarios:
+	@echo "Testing out the local scenarios"
+	for file in ./scenarios/testing/*.md; do \
+		($(MAKE) test-scenario SCENARIO="$${file}") || exit $$?; \
 	done
 
 test-upstream-scenarios:

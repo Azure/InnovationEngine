@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Azure/InnovationEngine/internal/az"
+	"github.com/Azure/InnovationEngine/internal/engine/common"
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
@@ -15,7 +16,7 @@ import (
 	"github.com/Azure/InnovationEngine/internal/ui"
 )
 
-func (e *Engine) TestSteps(steps []Step, env map[string]string) error {
+func (e *Engine) TestSteps(steps []common.Step, env map[string]string) error {
 	var resourceGroupName string
 	stepsToExecute := filterDeletionCommands(steps, true)
 	err := az.SetSubscription(e.Configuration.Subscription)
@@ -63,7 +64,7 @@ testRunner:
 						expectedRegex := block.ExpectedOutput.ExpectedRegex
 						expectedOutputLanguage := block.ExpectedOutput.Language
 
-						err := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
+						err := common.CompareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
 						if err != nil {
 							logging.GlobalLogger.Errorf("Error comparing command outputs: %s", err.Error())
 							fmt.Print(ui.ErrorStyle.Render("Error when comparing the command outputs: %s\n", err.Error()))

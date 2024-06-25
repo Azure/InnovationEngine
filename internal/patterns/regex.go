@@ -17,5 +17,5 @@ var (
 
 	// ARM regex
 	AzResourceURI       = regexp.MustCompile(`\"id\": \"(/subscriptions/[^\"]+)\"`)
-	AzResourceGroupName = regexp.MustCompile(`resourceGroups/([^\"]+)`)
+	AzResourceGroupName = regexp.MustCompile(`resourceGroups/([^\"\\/\ ]+)`)
 )

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Azure/InnovationEngine/internal/engine"
+	"github.com/Azure/InnovationEngine/internal/engine/common"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
@@ -23,9 +24,8 @@ func init() {
 var testCommand = &cobra.Command{
 	Use:   "test",
 	Args:  cobra.MinimumNArgs(1),
-	Short: "Test document commands against it's expected outputs.",
+	Short: "Test document commands against their expected outputs.",
 	Run: func(cmd *cobra.Command, args []string) {
-
 		markdownFile := args[0]
 		if markdownFile == "" {
 			cmd.Help()
@@ -35,6 +35,7 @@ var testCommand = &cobra.Command{
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		subscription, _ := cmd.Flags().GetString("subscription")
 		workingDirectory, _ := cmd.Flags().GetString("working-directory")
+		environment, _ := cmd.Flags().GetString("environment")
 
 		innovationEngine, err := engine.NewEngine(engine.EngineConfiguration{
 			Verbose:          verbose,
@@ -42,15 +43,15 @@ var testCommand = &cobra.Command{
 			Subscription:     subscription,
 			CorrelationId:    "",
 			WorkingDirectory: workingDirectory,
+			Environment:      environment,
 		})
-
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating engine %s", err)
 			fmt.Printf("Error creating engine %s", err)
 			os.Exit(1)
 		}
 
-		scenario, err := engine.CreateScenarioFromMarkdown(
+		scenario, err := common.CreateScenarioFromMarkdown(
 			markdownFile,
 			[]string{"bash", "azurecli", "azurecli-interactive", "terraform"},
 			nil,

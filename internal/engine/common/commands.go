@@ -1,4 +1,4 @@
-package engine
+package common
 
 import (
 	"fmt"
@@ -21,6 +21,16 @@ type FailedCommandMessage struct {
 	StdOut string
 	StdErr string
 	Error  error
+}
+
+type ExitMessage struct {
+	EncounteredFailure bool
+}
+
+func Exit(encounteredFailure bool) tea.Cmd {
+	return func() tea.Msg {
+		return ExitMessage{EncounteredFailure: encounteredFailure}
+	}
 }
 
 // Executes a bash command and returns a tea message with the output. This function
@@ -52,7 +62,7 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 		expectedRegex := codeBlock.ExpectedOutput.ExpectedRegex
 		expectedOutputLanguage := codeBlock.ExpectedOutput.Language
 
-		outputComparisonError := compareCommandOutputs(
+		outputComparisonError := CompareCommandOutputs(
 			actualOutput,
 			expectedOutput,
 			expectedSimilarity,
@@ -86,16 +96,19 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 // finishes executing.
 func ExecuteCodeBlockSync(codeBlock parsers.CodeBlock, env map[string]string) tea.Msg {
 	logging.GlobalLogger.Info("Executing command synchronously: ", codeBlock.Content)
-	program.ReleaseTerminal()
+	Program.ReleaseTerminal()
 
-	output, err := shells.ExecuteBashCommand(codeBlock.Content, shells.BashCommandConfiguration{
-		EnvironmentVariables: env,
-		InheritEnvironment:   true,
-		InteractiveCommand:   true,
-		WriteToHistory:       true,
-	})
+	output, err := shells.ExecuteBashCommand(
+		codeBlock.Content,
+		shells.BashCommandConfiguration{
+			EnvironmentVariables: env,
+			InheritEnvironment:   true,
+			InteractiveCommand:   true,
+			WriteToHistory:       true,
+		},
+	)
 
-	program.RestoreTerminal()
+	Program.RestoreTerminal()
 
 	if err != nil {
 		return FailedCommandMessage{
@@ -113,7 +126,7 @@ func ExecuteCodeBlockSync(codeBlock parsers.CodeBlock, env map[string]string) te
 }
 
 // clearScreen returns a command that clears the terminal screen and positions the cursor at the top-left corner
-func clearScreen() tea.Cmd {
+func ClearScreen() tea.Cmd {
 	return func() tea.Msg {
 		fmt.Print(
 			"\033[H\033[2J",
@@ -124,13 +137,13 @@ func clearScreen() tea.Cmd {
 
 // Updates the azure status with the current state of the interactive mode
 // model.
-func updateAzureStatus(model InteractiveModeModel) tea.Cmd {
+func UpdateAzureStatus(azureStatus environments.AzureDeploymentStatus, environment string) tea.Cmd {
 	return func() tea.Msg {
 		logging.GlobalLogger.Tracef(
 			"Attempting to update the azure status: %+v",
-			model.azureStatus,
+			azureStatus,
 		)
-		environments.ReportAzureStatus(model.azureStatus, model.environment)
+		environments.ReportAzureStatus(azureStatus, environment)
 		return AzureStatusUpdatedMessage{}
 	}
 }
