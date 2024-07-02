@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Azure/InnovationEngine/internal/az"
+	"github.com/Azure/InnovationEngine/internal/engine/common"
 	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
@@ -25,8 +26,8 @@ const (
 
 // If a scenario has an `az group delete` command and the `--do-not-delete`
 // flag is set, we remove it from the steps.
-func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
-	filteredSteps := []Step{}
+func filterDeletionCommands(steps []common.Step, preserveResources bool) []common.Step {
+	filteredSteps := []common.Step{}
 	if preserveResources {
 		for _, step := range steps {
 			newBlocks := []parsers.CodeBlock{}
@@ -38,7 +39,7 @@ func filterDeletionCommands(steps []Step, preserveResources bool) []Step {
 				}
 			}
 			if len(newBlocks) > -1 {
-				filteredSteps = append(filteredSteps, Step{
+				filteredSteps = append(filteredSteps, common.Step{
 					Name:       step.Name,
 					CodeBlocks: newBlocks,
 				})
@@ -68,10 +69,9 @@ func renderCommand(blockContent string) (shells.CommandOutput, error) {
 }
 
 // Executes the steps from a scenario and renders the output to the terminal.
-func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) error {
-
+func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]string) error {
 	var resourceGroupName string = ""
-	var azureStatus = environments.NewAzureDeploymentStatus()
+	azureStatus := environments.NewAzureDeploymentStatus()
 
 	err := az.SetSubscription(e.Configuration.Subscription)
 	if err != nil {
@@ -183,7 +183,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 							expectedRegex := block.ExpectedOutput.ExpectedRegex
 							expectedOutputLanguage := block.ExpectedOutput.Language
 
-							outputComparisonError := compareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
+							outputComparisonError := common.CompareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
 
 							if outputComparisonError != nil {
 								logging.GlobalLogger.Errorf("Error comparing command outputs: %s", outputComparisonError.Error())
@@ -310,7 +310,6 @@ func (e *Engine) ExecuteAndRenderSteps(steps []Step, env map[string]string) erro
 			"Cleaning environment variable file located at /tmp/env-vars",
 		)
 		err := shells.CleanEnvironmentStateFile()
-
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
 			return err

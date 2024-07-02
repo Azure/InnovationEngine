@@ -1,4 +1,4 @@
-package engine
+package common
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 )
 
 // Compares the actual output of a command to the expected output of a command.
-func compareCommandOutputs(
+func CompareCommandOutputs(
 	actualOutput string,
 	expectedOutput string,
 	expectedSimilarity float64,
@@ -42,17 +42,20 @@ func compareCommandOutputs(
 			return err
 		}
 
-		if !results.AboveThreshold {
-			return fmt.Errorf(
-				ui.ErrorMessageStyle.Render("Expected output does not match actual output."),
-			)
-		}
-
 		logging.GlobalLogger.Debugf(
 			"Expected Similarity: %f, Actual Similarity: %f",
 			expectedSimilarity,
 			results.Score,
 		)
+
+		if !results.AboveThreshold {
+			return fmt.Errorf(
+				ui.ErrorMessageStyle.Render(
+					"Expected output does not match actual output. Got: %s\n Expected: %s"),
+				actualOutput,
+				expectedOutput,
+			)
+		}
 
 		return nil
 	}
@@ -62,7 +65,13 @@ func compareCommandOutputs(
 
 	if expectedSimilarity > score {
 		return fmt.Errorf(
-			ui.ErrorMessageStyle.Render("Expected output does not match actual output."),
+			ui.ErrorMessageStyle.Render(
+				"Expected output does not match actual output.\nGot:\n%s\nExpected:\n%s\nExpected Score:%s\nActualScore:%s",
+			),
+			ui.VerboseStyle.Render(actualOutput),
+			ui.VerboseStyle.Render(expectedOutput),
+			ui.VerboseStyle.Render(fmt.Sprintf("%f", expectedSimilarity)),
+			ui.VerboseStyle.Render(fmt.Sprintf("%f", score)),
 		)
 	}
 

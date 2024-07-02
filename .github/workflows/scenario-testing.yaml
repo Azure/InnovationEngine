@@ -39,10 +39,11 @@ jobs:
     environment: ScenarioTesting
     steps:
       - uses: actions/checkout@v2
-      - name: Build all targets.
+      - name: Build & test all targets.
         run: |
           make build-all
           make test-all WITH_COVERAGE=true
+          make test-local-scenarios ENVIRONMENT=github-action
       - name: Upload test coverage
         uses: actions/upload-artifact@v2
         if: github.event_name == 'pull_request'
@@ -65,6 +66,6 @@ jobs:
             apk add --no-cache make git openssh openssl helm curl jq
             make test-upstream-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
       - name: Display ie.log file
-        if: (success() || failure()) && github.event_name != 'pull_request'
+        if: (success() || failure())
         run: |
           cat ie.log
