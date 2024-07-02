@@ -70,7 +70,6 @@ func appendToBashHistory(command string, filePath string) error {
 	}
 
 	return nil
-
 }
 
 // Resets the stored environment variables file.
@@ -92,7 +91,6 @@ func filterInvalidKeys(envMap map[string]string) map[string]string {
 
 func CleanEnvironmentStateFile() error {
 	env, err := loadEnvFile(environmentStateFile)
-
 	if err != nil {
 		return err
 	}
@@ -126,9 +124,14 @@ type BashCommandConfiguration struct {
 	WriteToHistory       bool
 }
 
+var ExecuteBashCommand = executeBashCommandImpl
+
 // Executes a bash command and returns the output or error.
-func ExecuteBashCommand(command string, config BashCommandConfiguration) (CommandOutput, error) {
-	var commandWithStateSaved = []string{
+func executeBashCommandImpl(
+	command string,
+	config BashCommandConfiguration,
+) (CommandOutput, error) {
+	commandWithStateSaved := []string{
 		"set -e",
 		command,
 		"IE_LAST_COMMAND_EXIT_CODE=\"$?\"",
@@ -176,13 +179,11 @@ func ExecuteBashCommand(command string, config BashCommandConfiguration) (Comman
 	if config.WriteToHistory {
 
 		homeDir, err := lib.GetHomeDirectory()
-
 		if err != nil {
 			return CommandOutput{}, fmt.Errorf("failed to get home directory: %w", err)
 		}
 
 		err = appendToBashHistory(command, homeDir+"/.bash_history")
-
 		if err != nil {
 			return CommandOutput{}, fmt.Errorf("failed to write command to history: %w", err)
 		}

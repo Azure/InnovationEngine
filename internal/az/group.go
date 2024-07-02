@@ -17,7 +17,6 @@ func FindAllDeployedResourceURIs(resourceGroup string) []string {
 			WriteToHistory:       true,
 		},
 	)
-
 	if err != nil {
 		logging.GlobalLogger.Error("Failed to list deployments", err)
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/engine"
+	"github.com/Azure/InnovationEngine/internal/engine/common"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/spf13/cobra"
 )
@@ -92,7 +93,7 @@ var executeCommand = &cobra.Command{
 		}
 
 		// Parse the markdown file and create a scenario
-		scenario, err := engine.CreateScenarioFromMarkdown(
+		scenario, err := common.CreateScenarioFromMarkdown(
 			markdownFile,
 			[]string{"bash", "azurecli", "azurecli-interactive", "terraform"},
 			cliEnvironmentVariables,
@@ -112,7 +113,6 @@ var executeCommand = &cobra.Command{
 			WorkingDirectory: workingDirectory,
 			RenderValues:     renderValues,
 		})
-
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating engine: %s", err)
 			fmt.Printf("Error creating engine: %s", err)
