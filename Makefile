@@ -43,7 +43,7 @@ test-scenario:
 ifeq ($(SUBSCRIPTION), 00000000-0000-0000-0000-000000000000)
 	$(IE_BINARY) test $(SCENARIO) --working-directory $(WORKING_DIRECTORY) --environment $(ENVIRONMENT)
 else
-	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY) --enviroment $(ENVIRONMENT)
+	$(IE_BINARY) test $(SCENARIO) --subscription $(SUBSCRIPTION) --working-directory $(WORKING_DIRECTORY) --environment $(ENVIRONMENT)
 endif
 
 test-scenarios:
