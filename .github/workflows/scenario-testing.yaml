@@ -64,7 +64,7 @@ jobs:
           azcliversion: 2.53.0
           inlineScript: |
             apk add --no-cache make git openssh openssl helm curl jq
-            make test-upstream-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }}
+            make test-upstream-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }} ENVIRONMENT=gitub-action
       - name: Display ie.log file
         if: (success() || failure())
         run: |

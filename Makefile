@@ -70,7 +70,7 @@ test-upstream-scenarios:
 		if echo "$${dir}" | grep -q "CreateContainerAppDeploymentFromSource"; then \
 			continue; \
 		fi; \
-		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)" WORKING_DIRECTORY="$${dir}") || exit $$?; \
+		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)" WORKING_DIRECTORY="$${dir}" ENVIRONMENT="$(ENVIRONMENT)") || exit $$?; \
 	done
 
 # ------------------------------- Run targets ----------------------------------
