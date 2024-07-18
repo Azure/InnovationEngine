@@ -105,6 +105,31 @@ func TestScenarioParsing(t *testing.T) {
 		fmt.Println(scenario)
 		assert.Equal(t, filepath.Base(path), scenario.Name)
 	})
+
+	// Test parsing a scenario from markdown
+	t.Run("Parse scenario that does have an h1 tag to use for it's title", func(t *testing.T) {
+		content := "# Scenario-title\nTest content from local file"
+		temporaryFile, err := os.CreateTemp("", "example")
+		if err != nil {
+			t.Fatalf("Error creating temporary file: %v", err)
+		}
+		defer os.Remove(temporaryFile.Name())
+
+		if _, err := temporaryFile.Write([]byte(content)); err != nil {
+			t.Fatalf("Error writing to temporary file: %v", err)
+		}
+		if err := temporaryFile.Close(); err != nil {
+			t.Fatalf("Error closing temporary file: %v", err)
+		}
+
+		path := temporaryFile.Name()
+
+		scenario, err := CreateScenarioFromMarkdown(path, []string{"bash"}, nil)
+
+		assert.NoError(t, err)
+		fmt.Println(scenario)
+		assert.Equal(t, "Scenario-title", scenario.Name)
+	})
 }
 
 func TestVariableOverrides(t *testing.T) {
