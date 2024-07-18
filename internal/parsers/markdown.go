@@ -75,7 +75,7 @@ func ExtractScenarioTitleFromAst(node ast.Node, source []byte) (string, error) {
 	})
 
 	if header == "" {
-		return "", fmt.Errorf("no header found")
+		return "", fmt.Errorf("no h1 header found to use as the scenario title")
 	}
 
 	return header, nil

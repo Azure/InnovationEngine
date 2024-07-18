@@ -184,9 +184,16 @@ func CreateScenarioFromMarkdown(
 
 	// Group the code blocks into steps.
 	steps := groupCodeBlocksIntoSteps(codeBlocks)
+
+	// If no title is found, we simply use the name of the markdown file as
+	// the title of the scenario.
 	title, err := parsers.ExtractScenarioTitleFromAst(markdown, source)
 	if err != nil {
-		return nil, err
+		logging.GlobalLogger.Warnf(
+			"Failed to extract scenario title: '%s'. Using the name of the markdown as the scenario title",
+			err,
+		)
+		title = filepath.Base(path)
 	}
 
 	logging.GlobalLogger.Infof("Successfully built out the scenario: %s", title)
