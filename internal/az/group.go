@@ -1,6 +1,8 @@
 package az
 
 import (
+	"fmt"
+
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/patterns"
 	"github.com/Azure/InnovationEngine/internal/shells"
@@ -36,4 +38,8 @@ func FindResourceGroupName(commandOutput string) string {
 		return matches[1]
 	}
 	return ""
+}
+
+func BuildResourceGroupId(subscription string, resourceGroup string) string {
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s", subscription, resourceGroup)
 }

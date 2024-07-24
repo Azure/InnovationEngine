@@ -126,7 +126,7 @@ func AttachResourceURIsToAzureStatus(
 	if len(resourceURIs) > 0 {
 		logging.GlobalLogger.WithField("resourceURIs", resourceURIs).
 			Info("Found deployed resources.")
-		status.ResourceURIs = resourceURIs
+		status.ResourceURIs = append(status.ResourceURIs, resourceURIs...)
 	} else {
 		logging.GlobalLogger.Warn("No deployed resources found.")
 	}
