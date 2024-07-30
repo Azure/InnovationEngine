@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/engine"
 	"github.com/Azure/InnovationEngine/internal/engine/common"
@@ -19,6 +20,9 @@ func init() {
 		String("subscription", "", "Sets the subscription ID used by a scenarios azure-cli commands. Will rely on the default subscription if not set.")
 	testCommand.PersistentFlags().
 		String("working-directory", ".", "Sets the working directory for innovation engine to operate out of. Restores the current working directory when finished.")
+
+	testCommand.PersistentFlags().
+		StringArray("var", []string{}, "Sets an environment variable for the scenario. Format: --var <key>=<value>")
 }
 
 var testCommand = &cobra.Command{
@@ -37,6 +41,25 @@ var testCommand = &cobra.Command{
 		workingDirectory, _ := cmd.Flags().GetString("working-directory")
 		environment, _ := cmd.Flags().GetString("environment")
 
+		environmentVariables, _ := cmd.Flags().GetStringArray("var")
+
+		// Parse the environment variables from the command line into a map
+		cliEnvironmentVariables := make(map[string]string)
+		for _, environmentVariable := range environmentVariables {
+			keyValuePair := strings.SplitN(environmentVariable, "=", 2)
+			if len(keyValuePair) != 2 {
+				logging.GlobalLogger.Errorf(
+					"Error: Invalid environment variable format: %s",
+					environmentVariable,
+				)
+				fmt.Printf("Error: Invalid environment variable format: %s", environmentVariable)
+				cmd.Help()
+				os.Exit(1)
+			}
+
+			cliEnvironmentVariables[keyValuePair[0]] = keyValuePair[1]
+		}
+
 		innovationEngine, err := engine.NewEngine(engine.EngineConfiguration{
 			Verbose:          verbose,
 			DoNotDelete:      false,
@@ -54,7 +77,7 @@ var testCommand = &cobra.Command{
 		scenario, err := common.CreateScenarioFromMarkdown(
 			markdownFile,
 			[]string{"bash", "azurecli", "azurecli-interactive", "terraform"},
-			nil,
+			cliEnvironmentVariables,
 		)
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating scenario %s", err)
