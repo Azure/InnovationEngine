@@ -41,16 +41,28 @@ var rootCommand = &cobra.Command{
 // Entrypoint into the Innovation Engine CLI.
 func ExecuteCLI() {
 	rootCommand.PersistentFlags().
-		String("log-level", string(logging.Debug), "Configure the log level")
+		String(
+			"log-level",
+			string(logging.Debug),
+			"Configure the log level for statements written to ie.log. Valid options are 'trace', 'debug', 'info', 'warn', 'error', 'fatal'",
+		)
 	rootCommand.PersistentFlags().
-		String("environment", environments.EnvironmentsLocal, "The environment that the CLI is running in. (local, ci, ocd)")
+		String(
+			"environment",
+			environments.EnvironmentsLocal,
+			"The environment that the CLI is running in. Valid options are 'local', 'github-actions'. For running ie in your standard terminal, local will work just fine. If using IE inside a github action, use github-actions.",
+		)
 
 	rootCommand.PersistentFlags().
-		StringArray("feature", []string{}, "Enables the specified feature. Format: --feature <feature>")
+		StringArray(
+			"feature",
+			[]string{},
+			"Enables the specified feature. Format: --feature <feature>",
+		)
 
 	if err := rootCommand.Execute(); err != nil {
 		fmt.Println(err)
-		logging.GlobalLogger.Errorf("Error executing command: %s", err)
+		logging.GlobalLogger.Errorf("Failed to execute ie: %s", err)
 		os.Exit(1)
 	}
 }

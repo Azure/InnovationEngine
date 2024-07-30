@@ -46,6 +46,7 @@ type InteractiveModeModel struct {
 	height            int
 	help              help.Model
 	resourceGroupName string
+	subscription      string
 	scenarioTitle     string
 	width             int
 	scenarioCompleted bool
@@ -247,6 +248,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			if tmpResourceGroup != "" {
 				logging.GlobalLogger.Infof("Found resource group named: %s", tmpResourceGroup)
 				model.resourceGroupName = tmpResourceGroup
+				model.azureStatus.AddResourceURI(az.BuildResourceGroupId(model.subscription, model.resourceGroupName))
 			}
 		}
 		model.CommandLines = append(model.CommandLines, codeBlockState.StdOut)
@@ -556,6 +558,7 @@ func NewInteractiveModeModel(
 			),
 		},
 		env:               env,
+		subscription:      subscription,
 		resourceGroupName: "",
 		azureStatus:       azureStatus,
 		codeBlockState:    codeBlockState,
