@@ -160,6 +160,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Delete any found resource groups.
 		if model.resourceGroupName != "" {
+			model.CommandLines = append(model.CommandLines, "Attempting to delete the deployed resource group with the name: %s", model.resourceGroupName)
 			logging.GlobalLogger.Infof("Attempting to delete the deployed resource group with the name: %s", model.resourceGroupName)
 			command := fmt.Sprintf("az group delete --name %s --yes --no-wait", model.resourceGroupName)
 			_, err := shells.ExecuteBashCommand(
