@@ -65,10 +65,11 @@ func (model TestModeModel) GetEnvironment() string {
 
 // Get the code blocks that were executed in the scenario.
 func (model TestModeModel) GetCodeBlocks() []common.StatefulCodeBlock {
-	codeBlocks := make([]common.StatefulCodeBlock, len(model.codeBlockState))
+	var codeBlocks []common.StatefulCodeBlock
 	for _, codeBlock := range model.codeBlockState {
 		codeBlocks = append(codeBlocks, codeBlock)
 	}
+	fmt.Println(codeBlocks)
 	return codeBlocks
 }
 

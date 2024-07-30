@@ -16,7 +16,7 @@ type Report struct {
 	Success              bool                   `json:"success"`
 	Error                string                 `json:"error"`
 	FailedAtStep         int                    `json:"failedAtStep"`
-	codeBlocks           []StatefulCodeBlock    `json:"codeBlocks"`
+	CodeBlocks           []StatefulCodeBlock    `json:"codeBlocks"`
 }
 
 func (report *Report) WithProperties(properties map[string]interface{}) *Report {
@@ -30,11 +30,15 @@ func (report *Report) WithEnvironmentVariables(envVars map[string]string) *Repor
 }
 
 func (report *Report) WithCodeBlocks(codeBlocks []StatefulCodeBlock) *Report {
-	report.codeBlocks = codeBlocks
+	report.CodeBlocks = codeBlocks
 	return report
 }
 
 func (report *Report) WithError(err error) *Report {
+	if err == nil {
+		return report
+	}
+
 	report.Error = err.Error()
 	report.Success = false
 	return report

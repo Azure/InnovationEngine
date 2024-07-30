@@ -107,16 +107,18 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 			return err
 		}
 
-		variablesDeclaredByScenario := lib.DiffMaps(
-			allEnvironmentVariables,
-			initialEnvironmentVariables,
-		)
-
 		if e.Configuration.GenerateReport != "" {
+			variablesDeclaredByScenario := lib.DiffMapsByKey(
+				allEnvironmentVariables,
+				initialEnvironmentVariables,
+			)
+
 			report := common.BuildReport(scenario.Name)
 			report.
 				WithProperties(scenario.Properties).
 				WithEnvironmentVariables(variablesDeclaredByScenario).
+				WithError(model.GetFailure()).
+				WithCodeBlocks(model.GetCodeBlocks()).
 				WriteToJSONFile(e.Configuration.GenerateReport)
 		}
 
