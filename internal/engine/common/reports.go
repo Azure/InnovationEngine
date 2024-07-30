@@ -10,7 +10,7 @@ type Report struct {
 	EnvironmentVariables map[string]string      `json:"environmentVariables"`
 	Success              bool                   `json:"success"`
 	Error                string                 `json:"error"`
-	FailedAt             int                    `json:"failedAt"`
+	FailedAtStep         int                    `json:"failedAtStep"`
 	codeBlocks           []StatefulCodeBlock    `json:"codeBlocks"`
 }
 
@@ -29,6 +29,12 @@ func (report *Report) WithCodeBlocks(codeBlocks []StatefulCodeBlock) *Report {
 	return report
 }
 
+func (report *Report) WithError(err error) *Report {
+	report.Error = err.Error()
+	report.Success = false
+	return report
+}
+
 // TODO(vmarcella): Implement this to write the report to JSON.
 func (report *Report) WriteToJSONFile(outputPath string) error {
 	return nil
@@ -39,5 +45,8 @@ func BuildReport(name string) Report {
 		Name:                 name,
 		Properties:           make(map[string]interface{}),
 		EnvironmentVariables: make(map[string]string),
+		Success:              true,
+		Error:                "",
+		FailedAtStep:         -1,
 	}
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/lib/fs"
 	"github.com/Azure/InnovationEngine/internal/logging"
-	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/ui"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -28,7 +27,7 @@ type EngineConfiguration struct {
 	Environment      string
 	WorkingDirectory string
 	RenderValues     bool
-	GenerateReport   bool
+	GenerateReport   string
 }
 
 type Engine struct {
@@ -98,7 +97,7 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 			return err
 		}
 
-		if e.Configuration.GenerateReport {
+		if e.Configuration.GenerateReport != "" {
 			report := common.BuildReport(scenario.Name)
 			report.
 				WithProperties(scenario.Properties).
@@ -135,6 +134,8 @@ func (e *Engine) InteractWithScenario(scenario *common.Scenario) error {
 
 		common.Program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
+		// initialEnvironmentVariables := lib.GetEnvironmentVariables()
+
 		var finalModel tea.Model
 		var ok bool
 		finalModel, err = common.Program.Run()
@@ -155,14 +156,14 @@ func (e *Engine) InteractWithScenario(scenario *common.Scenario) error {
 			logging.GlobalLogger.Info(
 				"Cleaning environment variable file located at /tmp/env-vars",
 			)
-			err := shells.CleanEnvironmentStateFile()
+			err := lib.CleanEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 			if err != nil {
 				logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
 				return err
 			}
 
 		default:
-			shells.ResetStoredEnvironmentVariables()
+			lib.DeleteEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 		}
 
 		if err != nil {

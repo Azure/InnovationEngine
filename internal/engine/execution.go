@@ -310,14 +310,14 @@ func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]strin
 		logging.GlobalLogger.Info(
 			"Cleaning environment variable file located at /tmp/env-vars",
 		)
-		err := shells.CleanEnvironmentStateFile()
+		err := lib.CleanEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
 			return err
 		}
 
 	default:
-		shells.ResetStoredEnvironmentVariables()
+		lib.DeleteEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 	}
 
 	return nil
