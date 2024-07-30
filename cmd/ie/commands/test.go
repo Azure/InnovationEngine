@@ -20,6 +20,8 @@ func init() {
 		String("subscription", "", "Sets the subscription ID used by a scenarios azure-cli commands. Will rely on the default subscription if not set.")
 	testCommand.PersistentFlags().
 		String("working-directory", ".", "Sets the working directory for innovation engine to operate out of. Restores the current working directory when finished.")
+	testCommand.PersistentFlags().
+		String("generate-report", "", "The path to generate a report of the scenario execution. The contents of the report are in JSON and will only be generated when this flag is set.")
 
 	testCommand.PersistentFlags().
 		StringArray("var", []string{}, "Sets an environment variable for the scenario. Format: --var <key>=<value>")
@@ -40,6 +42,7 @@ var testCommand = &cobra.Command{
 		subscription, _ := cmd.Flags().GetString("subscription")
 		workingDirectory, _ := cmd.Flags().GetString("working-directory")
 		environment, _ := cmd.Flags().GetString("environment")
+		generateReport, _ := cmd.Flags().GetString("generate-report")
 
 		environmentVariables, _ := cmd.Flags().GetStringArray("var")
 
@@ -67,6 +70,7 @@ var testCommand = &cobra.Command{
 			CorrelationId:    "",
 			WorkingDirectory: workingDirectory,
 			Environment:      environment,
+			GenerateReport:   generateReport,
 		})
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating engine %s", err)

@@ -60,6 +60,8 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 		stepsToExecute := filterDeletionCommands(scenario.Steps, e.Configuration.DoNotDelete)
 
+		initialEnvironmentVariables := lib.GetEnvironmentVariables()
+
 		model, err := test.NewTestModeModel(
 			scenario.Name,
 			e.Configuration.Subscription,
@@ -97,12 +99,25 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 			return err
 		}
 
+		allEnvironmentVariables, err := lib.LoadEnvironmentStateFile(
+			lib.DefaultEnvironmentStateFile,
+		)
+		if err != nil {
+			logging.GlobalLogger.Errorf("Failed to load environment state file: %s", err)
+			return err
+		}
+
+		variablesDeclaredByScenario := lib.DiffMaps(
+			allEnvironmentVariables,
+			initialEnvironmentVariables,
+		)
+
 		if e.Configuration.GenerateReport != "" {
 			report := common.BuildReport(scenario.Name)
 			report.
 				WithProperties(scenario.Properties).
-				WithEnvironmentVariables(model.GetEnvironmentVariables()).
-				WriteToJSONFile("/tmp/report.json")
+				WithEnvironmentVariables(variablesDeclaredByScenario).
+				WriteToJSONFile(e.Configuration.GenerateReport)
 		}
 
 		err = errors.Join(err, model.GetFailure())
@@ -133,8 +148,6 @@ func (e *Engine) InteractWithScenario(scenario *common.Scenario) error {
 		}
 
 		common.Program = tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
-
-		// initialEnvironmentVariables := lib.GetEnvironmentVariables()
 
 		var finalModel tea.Model
 		var ok bool

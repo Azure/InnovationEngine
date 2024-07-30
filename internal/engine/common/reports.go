@@ -1,5 +1,10 @@
 package common
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 // Reports are summaries of the execution of a markdown document. They will
 // include the name of the document, the properties found in the yaml header of
 // the document, the environment variables set by the document, and general
@@ -37,6 +42,13 @@ func (report *Report) WithError(err error) *Report {
 
 // TODO(vmarcella): Implement this to write the report to JSON.
 func (report *Report) WriteToJSONFile(outputPath string) error {
+	jsonReport, err := json.MarshalIndent(report, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(jsonReport))
+
 	return nil
 }
 
