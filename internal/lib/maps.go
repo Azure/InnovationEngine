@@ -18,3 +18,15 @@ func MergeMaps(a, b map[string]string) map[string]string {
 
 	return merged
 }
+
+// Returns the difference between two maps.
+func DiffMaps(a, b map[string]string) map[string]string {
+	diff := make(map[string]string)
+	for k, v := range a {
+		if b[k] != v {
+			diff[k] = v
+		}
+	}
+
+	return diff
+}

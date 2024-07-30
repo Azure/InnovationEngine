@@ -54,6 +54,32 @@ func (model TestModeModel) GetFailure() error {
 	)
 }
 
+func (model TestModeModel) GetScenarioTitle() string {
+	return model.scenarioTitle
+}
+
+// Get the environment that the scenario is running in.
+func (model TestModeModel) GetEnvironment() string {
+	return model.environment
+}
+
+// Get the code blocks that were executed in the scenario.
+func (model TestModeModel) GetCodeBlocks() []common.StatefulCodeBlock {
+	codeBlocks := make([]common.StatefulCodeBlock, len(model.codeBlockState))
+	for _, codeBlock := range model.codeBlockState {
+		codeBlocks = append(codeBlocks, codeBlock)
+	}
+	return codeBlocks
+}
+
+func (model TestModeModel) GetEnvironmentVariables() map[string]string {
+	return model.environmentVariables
+}
+
+func (model TestModeModel) GetDeclaredEnvironmentVariables() map[string]string {
+	return model.environmentVariables
+}
+
 // Init the test mode model by executing the first code block.
 func (model TestModeModel) Init() tea.Cmd {
 	return common.ExecuteCodeBlockAsync(

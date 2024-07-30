@@ -28,6 +28,7 @@ type EngineConfiguration struct {
 	Environment      string
 	WorkingDirectory string
 	RenderValues     bool
+	GenerateReport   bool
 }
 
 type Engine struct {
@@ -95,8 +96,16 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 		if !ok {
 			err = errors.Join(err, fmt.Errorf("failed to cast tea.Model to TestModeModel"))
 			return err
-
 		}
+
+		if e.Configuration.GenerateReport {
+			report := common.BuildReport(scenario.Name)
+			report.
+				WithProperties(scenario.Properties).
+				WithEnvironmentVariables(model.GetEnvironmentVariables()).
+				WriteToJSONFile("/tmp/report.json")
+		}
+
 		err = errors.Join(err, model.GetFailure())
 
 		fmt.Println(strings.Join(model.CommandLines, "\n"))
