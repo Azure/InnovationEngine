@@ -8,7 +8,7 @@ RELEASE="$2"
 
 # If no release is specified, download the latest release
 if [ "$RELEASE" == "" ]; then
-	RELEASE=curl -s "https://api.github.com/repos/MicrosoftDocs/executable-docs/releases/latest" | jq -r '.tag_name'
+	RELEASE=$(curl -s "https://api.github.com/repos/MicrosoftDocs/executable-docs/releases/latest" | jq -r '.tag_name')
 fi
 
 # Set a default scenarios file
