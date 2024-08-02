@@ -51,9 +51,12 @@ func CompareCommandOutputs(
 		if !results.AboveThreshold {
 			return results.Score, fmt.Errorf(
 				ui.ErrorMessageStyle.Render(
-					"Expected output does not match actual output. Got: %s\n Expected: %s"),
-				actualOutput,
-				expectedOutput,
+					"Expected output does not match actual output.\nGot:\n%s\nExpected:\n%s\nExpected Score:%s\nActual Score:%s",
+				),
+				ui.VerboseStyle.Render(actualOutput),
+				ui.VerboseStyle.Render(expectedOutput),
+				ui.VerboseStyle.Render(fmt.Sprintf("%f", expectedSimilarity)),
+				ui.VerboseStyle.Render(fmt.Sprintf("%f", results.Score)),
 			)
 		}
 
@@ -66,7 +69,7 @@ func CompareCommandOutputs(
 	if expectedSimilarity > score {
 		return score, fmt.Errorf(
 			ui.ErrorMessageStyle.Render(
-				"Expected output does not match actual output.\nGot:\n%s\nExpected:\n%s\nExpected Score:%s\nActualScore:%s",
+				"Expected output does not match actual output.\nGot:\n%s\nExpected:\n%s\nExpected Score:%s\nActual Score:%s",
 			),
 			ui.VerboseStyle.Render(actualOutput),
 			ui.VerboseStyle.Render(expectedOutput),

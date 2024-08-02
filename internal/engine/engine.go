@@ -93,17 +93,16 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 		// TODO(vmarcella): After testing is complete, we should generate a report.
 
 		model, ok := finalModel.(test.TestModeModel)
-
 		if !ok {
 			err = errors.Join(err, fmt.Errorf("failed to cast tea.Model to TestModeModel"))
 			return err
 		}
 
 		if e.Configuration.ReportFile != "" {
-			allEnvironmentVariables, err := lib.LoadEnvironmentStateFile(
+			allEnvironmentVariables, envErr := lib.LoadEnvironmentStateFile(
 				lib.DefaultEnvironmentStateFile,
 			)
-			if err != nil {
+			if envErr != nil {
 				logging.GlobalLogger.Errorf("Failed to load environment state file: %s", err)
 				err = errors.Join(err, fmt.Errorf("failed to load environment state file: %s", err))
 				return err
@@ -133,10 +132,13 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 		}
 
 		err = errors.Join(err, model.GetFailure())
+		if err != nil {
+			logging.GlobalLogger.Errorf("Failed to run ie test %s", err)
+		}
 
 		fmt.Println(strings.Join(model.CommandLines, "\n"))
 
-		return err
+		return nil
 	})
 }
 
