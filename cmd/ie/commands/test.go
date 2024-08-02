@@ -21,7 +21,7 @@ func init() {
 	testCommand.PersistentFlags().
 		String("working-directory", ".", "Sets the working directory for innovation engine to operate out of. Restores the current working directory when finished.")
 	testCommand.PersistentFlags().
-		String("generate-report", "", "The path to generate a report of the scenario execution. The contents of the report are in JSON and will only be generated when this flag is set.")
+		String("report", "", "The path to generate a report of the scenario execution. The contents of the report are in JSON and will only be generated when this flag is set.")
 
 	testCommand.PersistentFlags().
 		StringArray("var", []string{}, "Sets an environment variable for the scenario. Format: --var <key>=<value>")
