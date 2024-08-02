@@ -183,7 +183,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]strin
 							expectedRegex := block.ExpectedOutput.ExpectedRegex
 							expectedOutputLanguage := block.ExpectedOutput.Language
 
-							outputComparisonError := common.CompareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
+							_, outputComparisonError := common.CompareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
 
 							if outputComparisonError != nil {
 								logging.GlobalLogger.Errorf("Error comparing command outputs: %s", outputComparisonError.Error())

@@ -117,6 +117,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
 		codeBlockState.Success = true
+		codeBlockState.SimilarityScore = message.SimilarityScore
 		model.codeBlockState[step] = codeBlockState
 
 		logging.GlobalLogger.Infof("Finished executing:\n %s", codeBlockState.CodeBlock.Content)
@@ -174,6 +175,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.StdErr = message.StdErr
 		codeBlockState.Error = message.Error
 		codeBlockState.Success = false
+		codeBlockState.SimilarityScore = message.SimilarityScore
 
 		model.codeBlockState[step] = codeBlockState
 		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr+message.Error.Error())
