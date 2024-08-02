@@ -42,7 +42,7 @@ var testCommand = &cobra.Command{
 		subscription, _ := cmd.Flags().GetString("subscription")
 		workingDirectory, _ := cmd.Flags().GetString("working-directory")
 		environment, _ := cmd.Flags().GetString("environment")
-		generateReport, _ := cmd.Flags().GetString("generate-report")
+		generateReport, _ := cmd.Flags().GetString("report")
 
 		environmentVariables, _ := cmd.Flags().GetStringArray("var")
 
@@ -70,7 +70,7 @@ var testCommand = &cobra.Command{
 			CorrelationId:    "",
 			WorkingDirectory: workingDirectory,
 			Environment:      environment,
-			GenerateReport:   generateReport,
+			ReportFile:       generateReport,
 		})
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error creating engine %s", err)
