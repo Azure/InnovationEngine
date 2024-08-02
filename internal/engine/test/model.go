@@ -69,7 +69,6 @@ func (model TestModeModel) GetCodeBlocks() []common.StatefulCodeBlock {
 	for _, codeBlock := range model.codeBlockState {
 		codeBlocks = append(codeBlocks, codeBlock)
 	}
-	fmt.Println(codeBlocks)
 	return codeBlocks
 }
 

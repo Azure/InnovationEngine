@@ -2,13 +2,11 @@ package common
 
 import (
 	"encoding/json"
-	"fmt"
+	"os"
+
+	"github.com/Azure/InnovationEngine/internal/logging"
 )
 
-// Reports are summaries of the execution of a markdown document. They will
-// include the name of the document, the properties found in the yaml header of
-// the document, the environment variables set by the document, and general
-// information about the execution.
 type Report struct {
 	Name                 string                 `json:"name"`
 	Properties           map[string]interface{} `json:"properties"`
@@ -16,7 +14,7 @@ type Report struct {
 	Success              bool                   `json:"success"`
 	Error                string                 `json:"error"`
 	FailedAtStep         int                    `json:"failedAtStep"`
-	CodeBlocks           []StatefulCodeBlock    `json:"codeBlocks"`
+	CodeBlocks           []StatefulCodeBlock    `json:"steps"`
 }
 
 func (report *Report) WithProperties(properties map[string]interface{}) *Report {
@@ -50,8 +48,21 @@ func (report *Report) WriteToJSONFile(outputPath string) error {
 	if err != nil {
 		return err
 	}
+	logging.GlobalLogger.Infof("Generated the test report:\n %s", jsonReport)
 
-	fmt.Println(string(jsonReport))
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	_, err = file.Write(jsonReport)
+	if err != nil {
+		return err
+	}
+
+	logging.GlobalLogger.Infof("Wrote the test report to %s", outputPath)
 
 	return nil
 }

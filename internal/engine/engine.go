@@ -27,7 +27,7 @@ type EngineConfiguration struct {
 	Environment      string
 	WorkingDirectory string
 	RenderValues     bool
-	GenerateReport   string
+	ReportFile       string
 }
 
 type Engine struct {
@@ -99,27 +99,37 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 			return err
 		}
 
-		allEnvironmentVariables, err := lib.LoadEnvironmentStateFile(
-			lib.DefaultEnvironmentStateFile,
-		)
-		if err != nil {
-			logging.GlobalLogger.Errorf("Failed to load environment state file: %s", err)
-			return err
-		}
+		if e.Configuration.ReportFile != "" {
+			allEnvironmentVariables, err := lib.LoadEnvironmentStateFile(
+				lib.DefaultEnvironmentStateFile,
+			)
+			if err != nil {
+				logging.GlobalLogger.Errorf("Failed to load environment state file: %s", err)
+				err = errors.Join(err, fmt.Errorf("failed to load environment state file: %s", err))
+				return err
+			}
 
-		if e.Configuration.GenerateReport != "" {
 			variablesDeclaredByScenario := lib.DiffMapsByKey(
 				allEnvironmentVariables,
 				initialEnvironmentVariables,
 			)
 
 			report := common.BuildReport(scenario.Name)
-			report.
+			err = report.
 				WithProperties(scenario.Properties).
 				WithEnvironmentVariables(variablesDeclaredByScenario).
 				WithError(model.GetFailure()).
 				WithCodeBlocks(model.GetCodeBlocks()).
-				WriteToJSONFile(e.Configuration.GenerateReport)
+				WriteToJSONFile(e.Configuration.ReportFile)
+			if err != nil {
+				err = errors.Join(err, fmt.Errorf("failed to write report to file: %s", err))
+				return err
+			}
+
+			model.CommandLines = append(
+				model.CommandLines,
+				"Report written to "+e.Configuration.ReportFile,
+			)
 		}
 
 		err = errors.Join(err, model.GetFailure())

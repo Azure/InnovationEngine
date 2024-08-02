@@ -13,6 +13,7 @@ type StatefulCodeBlock struct {
 	StepName        string            `json:"stepName"`
 	StepNumber      int               `json:"stepNumber"`
 	Success         bool              `json:"success"`
+	SimilarityScore float64           `json:"similarityScore"`
 }
 
 // Checks if a codeblock was executed by looking at the
