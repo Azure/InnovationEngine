@@ -27,6 +27,7 @@ type Scenario struct {
 	Name        string
 	MarkdownAst ast.Node
 	Steps       []Step
+	Properties  map[string]interface{}
 	Environment map[string]string
 }
 
@@ -116,6 +117,7 @@ func CreateScenarioFromMarkdown(
 
 	// Convert the markdonw into an AST and extract the scenario variables.
 	markdown := parsers.ParseMarkdownIntoAst(source)
+	properties := parsers.ExtractYamlMetadataFromAst(markdown)
 	scenarioVariables := parsers.ExtractScenarioVariablesFromAst(markdown, source)
 	for key, value := range scenarioVariables {
 		environmentVariables[key] = value
@@ -202,6 +204,7 @@ func CreateScenarioFromMarkdown(
 		Name:        title,
 		Environment: environmentVariables,
 		Steps:       steps,
+		Properties:  properties,
 		MarkdownAst: markdown,
 	}, nil
 }

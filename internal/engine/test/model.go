@@ -54,6 +54,32 @@ func (model TestModeModel) GetFailure() error {
 	)
 }
 
+func (model TestModeModel) GetScenarioTitle() string {
+	return model.scenarioTitle
+}
+
+// Get the environment that the scenario is running in.
+func (model TestModeModel) GetEnvironment() string {
+	return model.environment
+}
+
+// Get the code blocks that were executed in the scenario.
+func (model TestModeModel) GetCodeBlocks() []common.StatefulCodeBlock {
+	var codeBlocks []common.StatefulCodeBlock
+	for _, codeBlock := range model.codeBlockState {
+		codeBlocks = append(codeBlocks, codeBlock)
+	}
+	return codeBlocks
+}
+
+func (model TestModeModel) GetEnvironmentVariables() map[string]string {
+	return model.environmentVariables
+}
+
+func (model TestModeModel) GetDeclaredEnvironmentVariables() map[string]string {
+	return model.environmentVariables
+}
+
 // Init the test mode model by executing the first code block.
 func (model TestModeModel) Init() tea.Cmd {
 	return common.ExecuteCodeBlockAsync(
@@ -91,6 +117,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
 		codeBlockState.Success = true
+		codeBlockState.SimilarityScore = message.SimilarityScore
 		model.codeBlockState[step] = codeBlockState
 
 		logging.GlobalLogger.Infof("Finished executing:\n %s", codeBlockState.CodeBlock.Content)
@@ -148,6 +175,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.StdErr = message.StdErr
 		codeBlockState.Error = message.Error
 		codeBlockState.Success = false
+		codeBlockState.SimilarityScore = message.SimilarityScore
 
 		model.codeBlockState[step] = codeBlockState
 		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr+message.Error.Error())

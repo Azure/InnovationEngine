@@ -18,17 +18,17 @@ func CompareCommandOutputs(
 	expectedSimilarity float64,
 	expectedRegex *regexp.Regexp,
 	expectedOutputLanguage string,
-) error {
+) (float64, error) {
 	if expectedRegex != nil {
 		if !expectedRegex.MatchString(actualOutput) {
-			return fmt.Errorf(
+			return 0.0, fmt.Errorf(
 				ui.ErrorMessageStyle.Render(
 					fmt.Sprintf("Expected output does not match: %q.", expectedRegex),
 				),
 			)
 		}
 
-		return nil
+		return 0.0, nil
 	}
 
 	if strings.ToLower(expectedOutputLanguage) == "json" {
@@ -39,7 +39,7 @@ func CompareCommandOutputs(
 		)
 		results, err := lib.CompareJsonStrings(actualOutput, expectedOutput, expectedSimilarity)
 		if err != nil {
-			return err
+			return results.Score, err
 		}
 
 		logging.GlobalLogger.Debugf(
@@ -49,24 +49,27 @@ func CompareCommandOutputs(
 		)
 
 		if !results.AboveThreshold {
-			return fmt.Errorf(
+			return results.Score, fmt.Errorf(
 				ui.ErrorMessageStyle.Render(
-					"Expected output does not match actual output. Got: %s\n Expected: %s"),
-				actualOutput,
-				expectedOutput,
+					"Expected output does not match actual output.\nGot:\n%s\nExpected:\n%s\nExpected Score:%s\nActual Score:%s",
+				),
+				ui.VerboseStyle.Render(actualOutput),
+				ui.VerboseStyle.Render(expectedOutput),
+				ui.VerboseStyle.Render(fmt.Sprintf("%f", expectedSimilarity)),
+				ui.VerboseStyle.Render(fmt.Sprintf("%f", results.Score)),
 			)
 		}
 
-		return nil
+		return results.Score, nil
 	}
 
 	// Default case, using similarity on non JSON block.
 	score := smetrics.JaroWinkler(expectedOutput, actualOutput, 0.7, 4)
 
 	if expectedSimilarity > score {
-		return fmt.Errorf(
+		return score, fmt.Errorf(
 			ui.ErrorMessageStyle.Render(
-				"Expected output does not match actual output.\nGot:\n%s\nExpected:\n%s\nExpected Score:%s\nActualScore:%s",
+				"Expected output does not match actual output.\nGot:\n%s\nExpected:\n%s\nExpected Score:%s\nActual Score:%s",
 			),
 			ui.VerboseStyle.Render(actualOutput),
 			ui.VerboseStyle.Render(expectedOutput),
@@ -75,5 +78,5 @@ func CompareCommandOutputs(
 		)
 	}
 
-	return nil
+	return score, nil
 }

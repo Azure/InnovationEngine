@@ -12,15 +12,17 @@ import (
 
 // Emitted when a command has been executed successfully.
 type SuccessfulCommandMessage struct {
-	StdOut string
-	StdErr string
+	StdOut          string
+	StdErr          string
+	SimilarityScore float64
 }
 
 // Emitted when a command has failed to execute.
 type FailedCommandMessage struct {
-	StdOut string
-	StdErr string
-	Error  error
+	StdOut          string
+	StdErr          string
+	Error           error
+	SimilarityScore float64
 }
 
 type ExitMessage struct {
@@ -49,9 +51,10 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error executing command:\n %s", err.Error())
 			return FailedCommandMessage{
-				StdOut: output.StdOut,
-				StdErr: output.StdErr,
-				Error:  err,
+				StdOut:          output.StdOut,
+				StdErr:          output.StdErr,
+				Error:           err,
+				SimilarityScore: 0,
 			}
 		}
 
@@ -62,7 +65,7 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 		expectedRegex := codeBlock.ExpectedOutput.ExpectedRegex
 		expectedOutputLanguage := codeBlock.ExpectedOutput.Language
 
-		outputComparisonError := CompareCommandOutputs(
+		score, outputComparisonError := CompareCommandOutputs(
 			actualOutput,
 			expectedOutput,
 			expectedSimilarity,
@@ -77,17 +80,19 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 			)
 
 			return FailedCommandMessage{
-				StdOut: output.StdOut,
-				StdErr: output.StdErr,
-				Error:  outputComparisonError,
+				StdOut:          output.StdOut,
+				StdErr:          output.StdErr,
+				Error:           outputComparisonError,
+				SimilarityScore: score,
 			}
 
 		}
 
 		logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
 		return SuccessfulCommandMessage{
-			StdOut: output.StdOut,
-			StdErr: output.StdErr,
+			StdOut:          output.StdOut,
+			StdErr:          output.StdErr,
+			SimilarityScore: score,
 		}
 	}
 }

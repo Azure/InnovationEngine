@@ -14,7 +14,6 @@ import (
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/lib/fs"
 	"github.com/Azure/InnovationEngine/internal/logging"
-	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/ui"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -28,6 +27,7 @@ type EngineConfiguration struct {
 	Environment      string
 	WorkingDirectory string
 	RenderValues     bool
+	ReportFile       string
 }
 
 type Engine struct {
@@ -60,6 +60,8 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 		az.SetCorrelationId(e.Configuration.CorrelationId, scenario.Environment)
 		stepsToExecute := filterDeletionCommands(scenario.Steps, e.Configuration.DoNotDelete)
 
+		initialEnvironmentVariables := lib.GetEnvironmentVariables()
+
 		model, err := test.NewTestModeModel(
 			scenario.Name,
 			e.Configuration.Subscription,
@@ -91,17 +93,52 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 		// TODO(vmarcella): After testing is complete, we should generate a report.
 
 		model, ok := finalModel.(test.TestModeModel)
-
 		if !ok {
 			err = errors.Join(err, fmt.Errorf("failed to cast tea.Model to TestModeModel"))
 			return err
-
 		}
+
+		if e.Configuration.ReportFile != "" {
+			allEnvironmentVariables, envErr := lib.LoadEnvironmentStateFile(
+				lib.DefaultEnvironmentStateFile,
+			)
+			if envErr != nil {
+				logging.GlobalLogger.Errorf("Failed to load environment state file: %s", err)
+				err = errors.Join(err, fmt.Errorf("failed to load environment state file: %s", err))
+				return err
+			}
+
+			variablesDeclaredByScenario := lib.DiffMapsByKey(
+				allEnvironmentVariables,
+				initialEnvironmentVariables,
+			)
+
+			report := common.BuildReport(scenario.Name)
+			err = report.
+				WithProperties(scenario.Properties).
+				WithEnvironmentVariables(variablesDeclaredByScenario).
+				WithError(model.GetFailure()).
+				WithCodeBlocks(model.GetCodeBlocks()).
+				WriteToJSONFile(e.Configuration.ReportFile)
+			if err != nil {
+				err = errors.Join(err, fmt.Errorf("failed to write report to file: %s", err))
+				return err
+			}
+
+			model.CommandLines = append(
+				model.CommandLines,
+				"Report written to "+e.Configuration.ReportFile,
+			)
+		}
+
 		err = errors.Join(err, model.GetFailure())
+		if err != nil {
+			logging.GlobalLogger.Errorf("Failed to run ie test %s", err)
+		}
 
 		fmt.Println(strings.Join(model.CommandLines, "\n"))
 
-		return err
+		return nil
 	})
 }
 
@@ -146,14 +183,14 @@ func (e *Engine) InteractWithScenario(scenario *common.Scenario) error {
 			logging.GlobalLogger.Info(
 				"Cleaning environment variable file located at /tmp/env-vars",
 			)
-			err := shells.CleanEnvironmentStateFile()
+			err := lib.CleanEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 			if err != nil {
 				logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
 				return err
 			}
 
 		default:
-			shells.ResetStoredEnvironmentVariables()
+			lib.DeleteEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 		}
 
 		if err != nil {

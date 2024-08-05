@@ -34,6 +34,7 @@ func ParseMarkdownIntoAst(source []byte) ast.Node {
 	return document
 }
 
+// Extract the metadata from the AST of a markdown document.
 func ExtractYamlMetadataFromAst(node ast.Node) map[string]interface{} {
 	return node.OwnerDocument().Meta()
 }
@@ -42,19 +43,19 @@ func ExtractYamlMetadataFromAst(node ast.Node) map[string]interface{} {
 // for scenarios that have expected output that should be validated against the
 // actual output.
 type ExpectedOutputBlock struct {
-	Language           string
-	Content            string
-	ExpectedSimilarity float64
-	ExpectedRegex      *regexp.Regexp
+	Language           string         `json:"language"`
+	Content            string         `json:"content"`
+	ExpectedSimilarity float64        `json:"expectedSimilarityScore"`
+	ExpectedRegex      *regexp.Regexp `json:"expectedRegexPattern"`
 }
 
 // The representation of a code block in a markdown file.
 type CodeBlock struct {
-	Language       string
-	Content        string
-	Header         string
-	Description    string
-	ExpectedOutput ExpectedOutputBlock
+	Language       string              `json:"language"`
+	Content        string              `json:"content"`
+	Header         string              `json:"header"`
+	Description    string              `json:"description"`
+	ExpectedOutput ExpectedOutputBlock `json:"resultBlock"`
 }
 
 // Assumes the title of the scenario is the first h1 header in the
