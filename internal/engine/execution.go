@@ -183,7 +183,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]strin
 							expectedRegex := block.ExpectedOutput.ExpectedRegex
 							expectedOutputLanguage := block.ExpectedOutput.Language
 
-							outputComparisonError := common.CompareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
+							_, outputComparisonError := common.CompareCommandOutputs(actualOutput, expectedOutput, expectedSimilarity, expectedRegex, expectedOutputLanguage)
 
 							if outputComparisonError != nil {
 								logging.GlobalLogger.Errorf("Error comparing command outputs: %s", outputComparisonError.Error())
@@ -310,14 +310,14 @@ func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]strin
 		logging.GlobalLogger.Info(
 			"Cleaning environment variable file located at /tmp/env-vars",
 		)
-		err := shells.CleanEnvironmentStateFile()
+		err := lib.CleanEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
 			return err
 		}
 
 	default:
-		shells.ResetStoredEnvironmentVariables()
+		lib.DeleteEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 	}
 
 	return nil
