@@ -131,12 +131,13 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 			)
 		}
 
+		fmt.Println(strings.Join(model.CommandLines, "\n"))
+
 		err = errors.Join(err, model.GetFailure())
 		if err != nil {
 			logging.GlobalLogger.Errorf("Failed to run ie test %s", err)
+			return err
 		}
-
-		fmt.Println(strings.Join(model.CommandLines, "\n"))
 
 		return nil
 	})

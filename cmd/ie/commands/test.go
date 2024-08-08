@@ -92,7 +92,7 @@ var testCommand = &cobra.Command{
 		err = innovationEngine.TestScenario(scenario)
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error testing scenario: %s", err)
-			fmt.Printf("Error testing scenario: %s\n", err)
+			fmt.Printf("Scenario did not finish successfully.")
 			os.Exit(1)
 		}
 	},
