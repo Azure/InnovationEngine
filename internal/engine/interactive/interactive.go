@@ -283,6 +283,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.resourceGroupName,
 				model.environment,
 			)
+			model.azureStatus.SetOutput(strings.Join(model.CommandLines, "\n"))
 			commands = append(
 				commands,
 				tea.Sequence(
@@ -315,6 +316,8 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			model.resourceGroupName,
 			model.environment,
 		)
+
+		model.azureStatus.SetOutput(strings.Join(model.CommandLines, "\n"))
 		commands = append(
 			commands,
 			tea.Sequence(
