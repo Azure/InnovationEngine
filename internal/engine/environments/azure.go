@@ -28,6 +28,7 @@ type AzureDeploymentStatus struct {
 	Status       string      `json:"status"`
 	ResourceURIs []string    `json:"resourceURIs"`
 	Error        string      `json:"error"`
+	Output       string      `json:"output"`
 }
 
 func NewAzureDeploymentStatus() AzureDeploymentStatus {
@@ -65,6 +66,10 @@ func (status *AzureDeploymentStatus) AddResourceURI(uri string) {
 func (status *AzureDeploymentStatus) SetError(err error) {
 	status.Status = "Failed"
 	status.Error = err.Error()
+}
+
+func (status *AzureDeploymentStatus) SetOutput(output string) {
+	status.Output = output
 }
 
 // Print out the status JSON for azure/cloudshell if in the correct environment.
@@ -109,7 +114,6 @@ func AttachResourceURIsToAzureStatus(
 	resourceGroupName string,
 	environment string,
 ) {
-
 	if !IsAzureEnvironment(environment) {
 		logging.GlobalLogger.Info(
 			"Not fetching resource URIs because we're not in the OCD environment.",
