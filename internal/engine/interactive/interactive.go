@@ -497,6 +497,8 @@ func (model InteractiveModeModel) helpView() string {
 		// Command related bindings
 		{
 			model.commands.execute,
+			model.commands.executeAll,
+			model.commands.executeMany,
 			model.commands.previous,
 			model.commands.next,
 		},
@@ -616,20 +618,16 @@ func NewInteractiveModeModel(
 	// Configure extra keybinds used for executing the many/all commands.
 	executeAllKeybind := key.NewBinding(
 		key.WithKeys("a"),
+		key.WithHelp("a", "Execute all remaining commands."),
 	)
 
 	executeManyKeybind := key.NewBinding(
 		key.WithKeys("m"),
+		key.WithHelp("m<number><enter>", "Execute the next <number> commands."),
 	)
 	pauseKeybind := key.NewBinding(
-		key.WithKeys("p"),
+		key.WithKeys("p", "Pause execution of commands."),
 	)
-
-	if environment != "azure" {
-		executeAllKeybind.SetEnabled(false)
-		executeManyKeybind.SetEnabled(false)
-		pauseKeybind.SetEnabled(false)
-	}
 
 	return InteractiveModeModel{
 		scenarioTitle: title,
