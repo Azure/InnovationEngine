@@ -2,6 +2,7 @@ package interactive
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,11 +22,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// All interactive mode inputs.
 type InteractiveModeCommands struct {
-	execute  key.Binding
-	quit     key.Binding
-	previous key.Binding
-	next     key.Binding
+	execute     key.Binding
+	executeAll  key.Binding
+	executeMany key.Binding
+	next        key.Binding
+	pause       key.Binding
+	previous    key.Binding
+	quit        key.Binding
 }
 
 type interactiveModeComponents struct {
@@ -43,6 +48,9 @@ type InteractiveModeModel struct {
 	env               map[string]string
 	environment       string
 	executingCommand  bool
+	stepsToBeExecuted int
+	recordingInput    bool
+	recordedInput     string
 	height            int
 	help              help.Model
 	resourceGroupName string
@@ -101,6 +109,41 @@ func handleUserInput(
 	message tea.KeyMsg,
 ) (InteractiveModeModel, []tea.Cmd) {
 	var commands []tea.Cmd
+
+	// If we're recording input for a multi-char command,
+	if model.recordingInput {
+		isNumber := lib.IsNumber(message.String())
+
+		// If the input is a number, append it to the recorded input.
+		if message.Type == tea.KeyRunes && isNumber {
+			model.recordedInput += message.String()
+			return model, commands
+		}
+
+		// If the input is not a number, we'll stop recording input and reset
+		// the commands remaining to the recorded input.
+		if message.Type == tea.KeyEnter || !isNumber {
+			commandsRemaining, _ := strconv.Atoi(model.recordedInput)
+
+			if commandsRemaining > len(model.codeBlockState)-model.currentCodeBlock {
+				commandsRemaining = len(model.codeBlockState) - model.currentCodeBlock
+			}
+
+			logging.GlobalLogger.Debugf("Will execute the next %d steps", commandsRemaining)
+			model.stepsToBeExecuted = commandsRemaining
+			commands = append(commands, func() tea.Msg {
+				return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+			})
+
+			model.recordingInput = false
+			model.recordedInput = ""
+			logging.GlobalLogger.Debugf(
+				"Recording input stopped and previously recorded input cleared.",
+			)
+			return model, commands
+		}
+	}
+
 	switch {
 	case key.Matches(message, model.commands.execute):
 		if model.executingCommand {
@@ -179,6 +222,22 @@ func handleUserInput(
 
 	case key.Matches(message, model.commands.quit):
 		commands = append(commands, tea.Quit)
+
+	case key.Matches(message, model.commands.executeAll):
+		model.stepsToBeExecuted = len(model.codeBlockState) - model.currentCodeBlock
+		commands = append(
+			commands,
+			func() tea.Msg {
+				return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+			},
+		)
+	case key.Matches(message, model.commands.executeMany):
+		model.recordingInput = true
+	case key.Matches(message, model.commands.pause):
+		if !model.executingCommand {
+			logging.GlobalLogger.Info("No command is currently executing, ignoring pause command")
+		}
+		model.stepsToBeExecuted = 0
 	}
 
 	return model, commands
@@ -273,6 +332,8 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			logging.GlobalLogger.Debugf("Step name has not changed, not incrementing step for Azure")
 		}
 
+		model.stepsToBeExecuted--
+
 		// If the scenario has been completed, we need to update the azure
 		// status and quit the program.
 		if model.currentCodeBlock == len(model.codeBlockState) {
@@ -292,7 +353,19 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				),
 			)
 		} else {
-			commands = append(commands, common.UpdateAzureStatus(model.azureStatus, model.environment))
+			commands = append(
+				commands,
+				tea.Sequence(
+					common.UpdateAzureStatus(model.azureStatus, model.environment),
+					// Send a key event to trigger
+					func() tea.Msg {
+						if model.stepsToBeExecuted <= 0 {
+							return nil
+						}
+						return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+					},
+				),
+			)
 		}
 
 	case common.FailedCommandMessage:
@@ -424,6 +497,8 @@ func (model InteractiveModeModel) helpView() string {
 		// Command related bindings
 		{
 			model.commands.execute,
+			model.commands.executeAll,
+			model.commands.executeMany,
 			model.commands.previous,
 			model.commands.next,
 		},
@@ -540,6 +615,20 @@ func NewInteractiveModeModel(
 		ui.CommandPrompt(language) + codeBlockState[0].CodeBlock.Content,
 	}
 
+	// Configure extra keybinds used for executing the many/all commands.
+	executeAllKeybind := key.NewBinding(
+		key.WithKeys("a"),
+		key.WithHelp("a", "Execute all remaining commands."),
+	)
+
+	executeManyKeybind := key.NewBinding(
+		key.WithKeys("m"),
+		key.WithHelp("m<number><enter>", "Execute the next <number> commands."),
+	)
+	pauseKeybind := key.NewBinding(
+		key.WithKeys("p", "Pause execution of commands."),
+	)
+
 	return InteractiveModeModel{
 		scenarioTitle: title,
 		commands: InteractiveModeCommands{
@@ -559,7 +648,13 @@ func NewInteractiveModeModel(
 				key.WithKeys("right"),
 				key.WithHelp("→", "Go to the next command."),
 			),
+			// Only enabled when in the azure environment.
+			executeAll:  executeAllKeybind,
+			executeMany: executeManyKeybind,
+			pause:       pauseKeybind,
 		},
+		stepsToBeExecuted: 0,
+
 		env:               env,
 		subscription:      subscription,
 		resourceGroupName: "",
