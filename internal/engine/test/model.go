@@ -116,7 +116,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState := model.codeBlockState[step]
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
-		codeBlockState.Success = true
+		codeBlockState.Status = common.STATUS_SUCCESS
 		codeBlockState.SimilarityScore = message.SimilarityScore
 		model.codeBlockState[step] = codeBlockState
 
@@ -174,7 +174,7 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
 		codeBlockState.Error = message.Error
-		codeBlockState.Success = false
+		codeBlockState.Status = common.STATUS_FAILURE
 		codeBlockState.SimilarityScore = message.SimilarityScore
 
 		model.codeBlockState[step] = codeBlockState
@@ -278,7 +278,7 @@ func NewTestModeModel(
 				StdOut:          "",
 				StdErr:          "",
 				Error:           nil,
-				Success:         false,
+				Status:          common.STATUS_PENDING,
 			}
 
 			totalCodeBlocks += 1

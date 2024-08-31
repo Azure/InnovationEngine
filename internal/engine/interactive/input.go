@@ -110,7 +110,7 @@ func handleUserInput(
 		previousCodeBlock := model.currentCodeBlock - 1
 		if previousCodeBlock >= 0 {
 			previousCodeBlockState := model.codeBlockState[previousCodeBlock]
-			if !previousCodeBlockState.Success {
+			if !previousCodeBlockState.Succeeded() {
 				logging.GlobalLogger.Info(
 					"Previous command has not been executed successfully, ignoring execute command",
 				)
@@ -121,7 +121,7 @@ func handleUserInput(
 		// Prevent the user from executing a command if the current command has
 		// already been executed successfully.
 		codeBlockState := model.codeBlockState[model.currentCodeBlock]
-		if codeBlockState.Success {
+		if codeBlockState.Succeeded() {
 			logging.GlobalLogger.Info(
 				"Command has already been executed successfully, ignoring execute command",
 			)

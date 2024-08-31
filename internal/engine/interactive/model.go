@@ -13,19 +13,10 @@ import (
 	"github.com/Azure/InnovationEngine/internal/ui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/paginator"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 )
-
-type interactiveModeComponents struct {
-	paginator        paginator.Model
-	stepViewport     viewport.Model
-	outputViewport   viewport.Model
-	azureCLIViewport viewport.Model
-}
 
 type InteractiveModeModel struct {
 	azureStatus       environments.AzureDeploymentStatus
@@ -58,57 +49,6 @@ func (model InteractiveModeModel) Init() tea.Cmd {
 	}))
 }
 
-// Initializes the viewports for the interactive mode model.
-func initializeComponents(model InteractiveModeModel, width, height int) interactiveModeComponents {
-	// paginator setup
-	p := paginator.New()
-	p.TotalPages = len(model.codeBlockState)
-	p.Type = paginator.Dots
-	// Dots
-	p.ActiveDot = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).
-		Render("•")
-	p.InactiveDot = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).
-		Render("•")
-
-	p.KeyMap.PrevPage = model.commands.previous
-	p.KeyMap.NextPage = model.commands.next
-
-	stepViewport := viewport.New(width, 4)
-	outputViewport := viewport.New(width, 2)
-	azureCLIViewport := viewport.New(width, height)
-
-	components := interactiveModeComponents{
-		paginator:        p,
-		stepViewport:     stepViewport,
-		outputViewport:   outputViewport,
-		azureCLIViewport: azureCLIViewport,
-	}
-
-	components.updateViewportHeight(height)
-	return components
-}
-
-func (components *interactiveModeComponents) updateViewportHeight(terminalHeight int) {
-	stepViewportPercent := 0.4
-	outputViewportPercent := 0.2
-	stepViewportHeight := int(float64(terminalHeight) * stepViewportPercent)
-	outputViewportHeight := int(float64(terminalHeight) * outputViewportPercent)
-
-	if stepViewportHeight < 4 {
-		stepViewportHeight = 4
-	}
-
-	if outputViewportHeight < 2 {
-		outputViewportHeight = 2
-	}
-
-	components.stepViewport.Height = stepViewportHeight
-	components.outputViewport.Height = outputViewportHeight
-	components.azureCLIViewport.Height = terminalHeight - 1
-}
-
 // Updates the intractive mode model
 func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	var commands []tea.Cmd
@@ -139,9 +79,11 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Update the state of the codeblock which finished executing.
 		codeBlockState := model.codeBlockState[step]
+
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
-		codeBlockState.Success = true
+		codeBlockState.Status = common.STATUS_SUCCESS
+
 		model.codeBlockState[step] = codeBlockState
 
 		logging.GlobalLogger.Infof("Finished executing:\n %s", codeBlockState.CodeBlock.Content)
@@ -223,7 +165,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState := model.codeBlockState[step]
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
-		codeBlockState.Success = false
+		codeBlockState.Status = common.STATUS_FAILURE
 
 		model.codeBlockState[step] = codeBlockState
 		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr)
@@ -309,27 +251,26 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		renderedStepSection,
 	)
 
-	if block.Success {
-		model.components.outputViewport.SetContent(block.StdOut)
+	if block.WasExecuted() {
+		if block.Succeeded() {
+			model.components.outputViewport.SetContent(block.StdOut)
+		} else {
+			model.components.outputViewport.SetContent(block.StdErr)
+		}
 	} else {
-		model.components.outputViewport.SetContent(block.StdErr)
+		model.components.outputViewport.SetContent("")
 	}
 
 	model.components.azureCLIViewport.SetContent(strings.Join(model.CommandLines, "\n"))
 
 	// Update all the viewports and append resulting commands.
-	var command tea.Cmd
-
-	model.components.paginator.Page = model.currentCodeBlock
-
-	model.components.stepViewport, command = model.components.stepViewport.Update(message)
-	commands = append(commands, command)
-
-	model.components.outputViewport, command = model.components.outputViewport.Update(message)
-	commands = append(commands, command)
-
-	model.components.azureCLIViewport, command = model.components.azureCLIViewport.Update(message)
-	commands = append(commands, command)
+	updatedComponents, componentCommands := updateComponents(
+		model.components,
+		model.currentCodeBlock,
+		message,
+	)
+	commands = append(commands, componentCommands...)
+	model.components = updatedComponents
 
 	return model, tea.Batch(commands...)
 }
@@ -449,7 +390,7 @@ func NewInteractiveModeModel(
 				StdOut:          "",
 				StdErr:          "",
 				Error:           nil,
-				Success:         false,
+				Status:          common.STATUS_PENDING,
 			}
 
 			totalCodeBlocks += 1
@@ -466,7 +407,6 @@ func NewInteractiveModeModel(
 		scenarioTitle:     title,
 		commands:          NewInteractiveModeCommands(),
 		stepsToBeExecuted: 0,
-
 		env:               env,
 		subscription:      subscription,
 		resourceGroupName: "",
