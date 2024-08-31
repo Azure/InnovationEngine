@@ -30,7 +30,7 @@ specific runs, and share the results with others.
 
 ## Requirements
 
-- [x] The user can generate a test report by running `ie test <scenario> //report=<path>`
+- [x] The user can generate a test report by running `ie test <scenario> --report=<path>`
 - [x] Reports capture the yaml metadata of the scenario.
 - [x] Reports store the variables declared in the scenario and their values.
 - [x] The report is generated in JSON format.
@@ -43,7 +43,7 @@ specific runs, and share the results with others.
 - The report will be generated in JSON format, but in the future we may consider
   other formats like yaml or HTML. JSON format was chosen for v1 because it is
   easy to parse, and it is a common format for sharing data.
-- Users must specify `//report=<path>` to generate a report. If the path is not
+- Users must specify `--report=<path>` to generate a report. If the path is not
   specified, the report will not be generated.
 
 ### Report schema
@@ -109,8 +109,8 @@ documentation about each field until then.
       "stepName": "First step",
       // The step number
       "stepNumber": 0,
-      // Whether the step was successful or not
-      "success": true,
+      // The status of the codeblock (success, failure, or pending if never executed).
+      "status": "success",
       // The computed similarity score of the output (between 0 - 1)
       "similarityScore": 0
     },
@@ -133,7 +133,7 @@ documentation about each field until then.
       "stdOut": "",
       "stepName": "Second step",
       "stepNumber": 1,
-      "success": true,
+      "status": "success",
       "similarityScore": 0
     }
   ]
@@ -186,7 +186,7 @@ The output of the command above should look like this:
       "stdOut": "Hello, world!\n",
       "stepName": "First step",
       "stepNumber": 0,
-      "success": true,
+      "status": "success",
       "similarityScore": 1
     },
     {
@@ -208,7 +208,7 @@ The output of the command above should look like this:
       "stdOut": "",
       "stepName": "Second step",
       "stepNumber": 1,
-      "success": true,
+      "status": "success",
       "similarityScore": 1
     }
   ]

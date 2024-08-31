@@ -18,7 +18,7 @@ type StatefulCodeBlock struct {
 	StdOut          string            `json:"stdOut"`
 	StepName        string            `json:"stepName"`
 	StepNumber      int               `json:"stepNumber"`
-	Status          string            `json:"success"`
+	Status          string            `json:"status"`
 	SimilarityScore float64           `json:"similarityScore"`
 }
 
