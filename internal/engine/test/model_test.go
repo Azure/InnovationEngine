@@ -57,7 +57,7 @@ func TestTestModeModel(t *testing.T) {
 		assert.Equal(t, "bash", state.CodeBlock.Language)
 		assert.Equal(t, "header1", state.CodeBlock.Header)
 		assert.Equal(t, "echo 'hello world'", state.CodeBlock.Content)
-		assert.Equal(t, false, state.Failed())
+		assert.Equal(t, true, state.Succeeded())
 	})
 
 	t.Run(
