@@ -2,43 +2,21 @@ package interactive
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Azure/InnovationEngine/internal/az"
 	"github.com/Azure/InnovationEngine/internal/engine/common"
 	"github.com/Azure/InnovationEngine/internal/engine/environments"
-	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/patterns"
 	"github.com/Azure/InnovationEngine/internal/ui"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/paginator"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 )
-
-// All interactive mode inputs.
-type InteractiveModeCommands struct {
-	execute     key.Binding
-	executeAll  key.Binding
-	executeMany key.Binding
-	next        key.Binding
-	pause       key.Binding
-	previous    key.Binding
-	quit        key.Binding
-}
-
-type interactiveModeComponents struct {
-	paginator        paginator.Model
-	stepViewport     viewport.Model
-	outputViewport   viewport.Model
-	azureCLIViewport viewport.Model
-}
 
 type InteractiveModeModel struct {
 	azureStatus       environments.AzureDeploymentStatus
@@ -71,197 +49,6 @@ func (model InteractiveModeModel) Init() tea.Cmd {
 	}))
 }
 
-// Initializes the viewports for the interactive mode model.
-func initializeComponents(model InteractiveModeModel, width, height int) interactiveModeComponents {
-	// paginator setup
-	p := paginator.New()
-	p.TotalPages = len(model.codeBlockState)
-	p.Type = paginator.Dots
-	// Dots
-	p.ActiveDot = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).
-		Render("•")
-	p.InactiveDot = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).
-		Render("•")
-
-	p.KeyMap.PrevPage = model.commands.previous
-	p.KeyMap.NextPage = model.commands.next
-
-	stepViewport := viewport.New(width, 4)
-	outputViewport := viewport.New(width, 2)
-	azureCLIViewport := viewport.New(width, height)
-
-	components := interactiveModeComponents{
-		paginator:        p,
-		stepViewport:     stepViewport,
-		outputViewport:   outputViewport,
-		azureCLIViewport: azureCLIViewport,
-	}
-
-	components.updateViewportHeight(height)
-	return components
-}
-
-// Handle user input for interactive mode.
-func handleUserInput(
-	model InteractiveModeModel,
-	message tea.KeyMsg,
-) (InteractiveModeModel, []tea.Cmd) {
-	var commands []tea.Cmd
-
-	// If we're recording input for a multi-char command,
-	if model.recordingInput {
-		isNumber := lib.IsNumber(message.String())
-
-		// If the input is a number, append it to the recorded input.
-		if message.Type == tea.KeyRunes && isNumber {
-			model.recordedInput += message.String()
-			return model, commands
-		}
-
-		// If the input is not a number, we'll stop recording input and reset
-		// the commands remaining to the recorded input.
-		if message.Type == tea.KeyEnter || !isNumber {
-			commandsRemaining, _ := strconv.Atoi(model.recordedInput)
-
-			if commandsRemaining > len(model.codeBlockState)-model.currentCodeBlock {
-				commandsRemaining = len(model.codeBlockState) - model.currentCodeBlock
-			}
-
-			logging.GlobalLogger.Debugf("Will execute the next %d steps", commandsRemaining)
-			model.stepsToBeExecuted = commandsRemaining
-			commands = append(commands, func() tea.Msg {
-				return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
-			})
-
-			model.recordingInput = false
-			model.recordedInput = ""
-			logging.GlobalLogger.Debugf(
-				"Recording input stopped and previously recorded input cleared.",
-			)
-			return model, commands
-		}
-	}
-
-	switch {
-	case key.Matches(message, model.commands.execute):
-		if model.executingCommand {
-			logging.GlobalLogger.Info("Command is already executing, ignoring execute command")
-			break
-		}
-
-		// Prevent the user from executing a command if the previous command has
-		// not been executed successfully or executed at all.
-		previousCodeBlock := model.currentCodeBlock - 1
-		if previousCodeBlock >= 0 {
-			previousCodeBlockState := model.codeBlockState[previousCodeBlock]
-			if !previousCodeBlockState.Success {
-				logging.GlobalLogger.Info(
-					"Previous command has not been executed successfully, ignoring execute command",
-				)
-				break
-			}
-		}
-
-		// Prevent the user from executing a command if the current command has
-		// already been executed successfully.
-		codeBlockState := model.codeBlockState[model.currentCodeBlock]
-		if codeBlockState.Success {
-			logging.GlobalLogger.Info(
-				"Command has already been executed successfully, ignoring execute command",
-			)
-			break
-		}
-
-		codeBlock := codeBlockState.CodeBlock
-
-		model.executingCommand = true
-
-		// If we're on the last step and the command is an SSH command, we need
-		// to report the status before executing the command. This is needed for
-		// one click deployments and does not affect the normal execution flow.
-		if model.currentCodeBlock == len(model.codeBlockState)-1 &&
-			patterns.SshCommand.MatchString(codeBlock.Content) {
-			model.azureStatus.Status = "Succeeded"
-			environments.AttachResourceURIsToAzureStatus(
-				&model.azureStatus,
-				model.resourceGroupName,
-				model.environment,
-			)
-
-			commands = append(commands, tea.Sequence(
-				common.UpdateAzureStatus(model.azureStatus, model.environment),
-				func() tea.Msg {
-					return common.ExecuteCodeBlockSync(codeBlock, lib.CopyMap(model.env))
-				}))
-
-		} else {
-			commands = append(commands, common.ExecuteCodeBlockAsync(
-				codeBlock,
-				lib.CopyMap(model.env),
-			))
-		}
-
-	case key.Matches(message, model.commands.previous):
-		if model.executingCommand {
-			logging.GlobalLogger.Info("Command is already executing, ignoring execute command")
-			break
-		}
-		if model.currentCodeBlock > 0 {
-			model.currentCodeBlock--
-		}
-	case key.Matches(message, model.commands.next):
-		if model.executingCommand {
-			logging.GlobalLogger.Info("Command is already executing, ignoring execute command")
-			break
-		}
-		if model.currentCodeBlock < len(model.codeBlockState)-1 {
-			model.currentCodeBlock++
-		}
-
-	case key.Matches(message, model.commands.quit):
-		commands = append(commands, tea.Quit)
-
-	case key.Matches(message, model.commands.executeAll):
-		model.stepsToBeExecuted = len(model.codeBlockState) - model.currentCodeBlock
-		commands = append(
-			commands,
-			func() tea.Msg {
-				return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
-			},
-		)
-	case key.Matches(message, model.commands.executeMany):
-		model.recordingInput = true
-	case key.Matches(message, model.commands.pause):
-		if !model.executingCommand {
-			logging.GlobalLogger.Info("No command is currently executing, ignoring pause command")
-		}
-		model.stepsToBeExecuted = 0
-	}
-
-	return model, commands
-}
-
-func (components *interactiveModeComponents) updateViewportHeight(terminalHeight int) {
-	stepViewportPercent := 0.4
-	outputViewportPercent := 0.2
-	stepViewportHeight := int(float64(terminalHeight) * stepViewportPercent)
-	outputViewportHeight := int(float64(terminalHeight) * outputViewportPercent)
-
-	if stepViewportHeight < 4 {
-		stepViewportHeight = 4
-	}
-
-	if outputViewportHeight < 2 {
-		outputViewportHeight = 2
-	}
-
-	components.stepViewport.Height = stepViewportHeight
-	components.outputViewport.Height = outputViewportHeight
-	components.azureCLIViewport.Height = terminalHeight - 1
-}
-
 // Updates the intractive mode model
 func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	var commands []tea.Cmd
@@ -292,9 +79,11 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Update the state of the codeblock which finished executing.
 		codeBlockState := model.codeBlockState[step]
+
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
-		codeBlockState.Success = true
+		codeBlockState.Status = common.STATUS_SUCCESS
+
 		model.codeBlockState[step] = codeBlockState
 
 		logging.GlobalLogger.Infof("Finished executing:\n %s", codeBlockState.CodeBlock.Content)
@@ -376,7 +165,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState := model.codeBlockState[step]
 		codeBlockState.StdOut = message.StdOut
 		codeBlockState.StdErr = message.StdErr
-		codeBlockState.Success = false
+		codeBlockState.Status = common.STATUS_FAILURE
 
 		model.codeBlockState[step] = codeBlockState
 		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr)
@@ -462,27 +251,27 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		renderedStepSection,
 	)
 
-	if block.Success {
-		model.components.outputViewport.SetContent(block.StdOut)
+	// Only set the output if the block was executed, otherwise reset it.
+	if block.WasExecuted() {
+		if block.Succeeded() {
+			model.components.outputViewport.SetContent(block.StdOut)
+		} else {
+			model.components.outputViewport.SetContent(block.StdErr)
+		}
 	} else {
-		model.components.outputViewport.SetContent(block.StdErr)
+		model.components.outputViewport.SetContent("")
 	}
 
 	model.components.azureCLIViewport.SetContent(strings.Join(model.CommandLines, "\n"))
 
 	// Update all the viewports and append resulting commands.
-	var command tea.Cmd
-
-	model.components.paginator.Page = model.currentCodeBlock
-
-	model.components.stepViewport, command = model.components.stepViewport.Update(message)
-	commands = append(commands, command)
-
-	model.components.outputViewport, command = model.components.outputViewport.Update(message)
-	commands = append(commands, command)
-
-	model.components.azureCLIViewport, command = model.components.azureCLIViewport.Update(message)
-	commands = append(commands, command)
+	updatedComponents, componentCommands := updateComponents(
+		model.components,
+		model.currentCodeBlock,
+		message,
+	)
+	commands = append(commands, componentCommands...)
+	model.components = updatedComponents
 
 	return model, tea.Batch(commands...)
 }
@@ -602,7 +391,7 @@ func NewInteractiveModeModel(
 				StdOut:          "",
 				StdErr:          "",
 				Error:           nil,
-				Success:         false,
+				Status:          common.STATUS_PENDING,
 			}
 
 			totalCodeBlocks += 1
@@ -615,46 +404,10 @@ func NewInteractiveModeModel(
 		ui.CommandPrompt(language) + codeBlockState[0].CodeBlock.Content,
 	}
 
-	// Configure extra keybinds used for executing the many/all commands.
-	executeAllKeybind := key.NewBinding(
-		key.WithKeys("a"),
-		key.WithHelp("a", "Execute all remaining commands."),
-	)
-
-	executeManyKeybind := key.NewBinding(
-		key.WithKeys("m"),
-		key.WithHelp("m<number><enter>", "Execute the next <number> commands."),
-	)
-	pauseKeybind := key.NewBinding(
-		key.WithKeys("p", "Pause execution of commands."),
-	)
-
 	return InteractiveModeModel{
-		scenarioTitle: title,
-		commands: InteractiveModeCommands{
-			execute: key.NewBinding(
-				key.WithKeys("e"),
-				key.WithHelp("e", "Execute the current command."),
-			),
-			quit: key.NewBinding(
-				key.WithKeys("q"),
-				key.WithHelp("q", "Quit the scenario."),
-			),
-			previous: key.NewBinding(
-				key.WithKeys("left"),
-				key.WithHelp("←", "Go to the previous command."),
-			),
-			next: key.NewBinding(
-				key.WithKeys("right"),
-				key.WithHelp("→", "Go to the next command."),
-			),
-			// Only enabled when in the azure environment.
-			executeAll:  executeAllKeybind,
-			executeMany: executeManyKeybind,
-			pause:       pauseKeybind,
-		},
+		scenarioTitle:     title,
+		commands:          NewInteractiveModeCommands(),
 		stepsToBeExecuted: 0,
-
 		env:               env,
 		subscription:      subscription,
 		resourceGroupName: "",

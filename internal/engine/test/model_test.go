@@ -57,7 +57,7 @@ func TestTestModeModel(t *testing.T) {
 		assert.Equal(t, "bash", state.CodeBlock.Language)
 		assert.Equal(t, "header1", state.CodeBlock.Header)
 		assert.Equal(t, "echo 'hello world'", state.CodeBlock.Content)
-		assert.Equal(t, false, state.Success)
+		assert.Equal(t, true, state.Succeeded())
 	})
 
 	t.Run(
@@ -89,7 +89,7 @@ func TestTestModeModel(t *testing.T) {
 				// Assert outputs of the executed block.
 				assert.Equal(t, "hello world\n", executedBlock.StdOut)
 				assert.Equal(t, "", executedBlock.StdErr)
-				assert.Equal(t, true, executedBlock.Success)
+				assert.Equal(t, true, executedBlock.Succeeded())
 			}
 		},
 	)
@@ -124,7 +124,7 @@ func TestTestModeModel(t *testing.T) {
 				// Assert outputs of the executed block.
 				assert.Equal(t, "hello world\n", executedBlock.StdOut)
 				assert.Equal(t, "", executedBlock.StdErr)
-				assert.Equal(t, true, executedBlock.Success)
+				assert.Equal(t, true, executedBlock.Succeeded())
 			} else {
 				assert.Fail(t, "Model is not a TestModeModel")
 			}
@@ -188,7 +188,7 @@ func TestTestModeModel(t *testing.T) {
 				// Assert outputs of the executed block.
 				assert.Equal(t, "hello world\n", executedBlock.StdOut)
 				assert.Equal(t, "", executedBlock.StdErr)
-				assert.Equal(t, true, executedBlock.Success)
+				assert.Equal(t, true, executedBlock.Succeeded())
 
 			} else {
 				assert.Fail(t, "Model is not a TestModeModel")
