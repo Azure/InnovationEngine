@@ -251,6 +251,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		renderedStepSection,
 	)
 
+	// Only set the output if the block was executed, otherwise reset it.
 	if block.WasExecuted() {
 		if block.Succeeded() {
 			model.components.outputViewport.SetContent(block.StdOut)
