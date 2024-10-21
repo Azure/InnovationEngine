@@ -60,6 +60,7 @@ type InteractiveModeModel struct {
 	scenarioCompleted bool
 	components        interactiveModeComponents
 	ready             bool
+	markdownSource    string
 	CommandLines      []string
 }
 
@@ -344,6 +345,18 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.resourceGroupName,
 				model.environment,
 			)
+
+			environmentVariables, err := lib.LoadEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
+			if err != nil {
+				logging.GlobalLogger.Errorf("Failed to load environment state file: %s", err)
+				model.azureStatus.SetError(err)
+			}
+
+			model.azureStatus.ConfigureMarkdownForDownload(
+				model.markdownSource,
+				environmentVariables,
+				model.environment,
+			)
 			model.azureStatus.SetOutput(strings.Join(model.CommandLines, "\n"))
 			commands = append(
 				commands,
@@ -570,6 +583,7 @@ func NewInteractiveModeModel(
 	environment string,
 	steps []common.Step,
 	env map[string]string,
+	markdownSource string,
 ) (InteractiveModeModel, error) {
 	// TODO: In the future we should just set the current step for the azure status
 	// to one as the default.
@@ -666,6 +680,7 @@ func NewInteractiveModeModel(
 		environment:       environment,
 		scenarioCompleted: false,
 		ready:             false,
+		markdownSource:    markdownSource,
 		CommandLines:      commandLines,
 	}, nil
 }
