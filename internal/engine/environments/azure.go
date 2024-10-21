@@ -81,7 +81,12 @@ func (status *AzureDeploymentStatus) SetOutput(output string) {
 func (status *AzureDeploymentStatus) ConfigureMarkdownForDownload(
 	markdown string,
 	environmentVariables map[string]string,
+	environment string,
 ) {
+	if !IsAzureEnvironment(environment) {
+		return
+	}
+
 	for key, value := range environmentVariables {
 		exportRegex := patterns.ExportVariableRegex(key)
 

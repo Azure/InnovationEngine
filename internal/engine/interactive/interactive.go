@@ -352,7 +352,11 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.azureStatus.SetError(err)
 			}
 
-			model.azureStatus.ConfigureMarkdownForDownload(model.markdownSource, environmentVariables)
+			model.azureStatus.ConfigureMarkdownForDownload(
+				model.markdownSource,
+				environmentVariables,
+				model.environment,
+			)
 			model.azureStatus.SetOutput(strings.Join(model.CommandLines, "\n"))
 			commands = append(
 				commands,
