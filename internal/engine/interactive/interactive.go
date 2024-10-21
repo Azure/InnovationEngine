@@ -352,36 +352,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.azureStatus.SetError(err)
 			}
 
-			configuredMarkdownSource := model.markdownSource
-
-			for key, value := range environmentVariables {
-				exportRegex := patterns.ExportVariableRegex(key)
-
-				matches := exportRegex.FindAllStringSubmatch(model.markdownSource, -1)
-
-				if len(matches) != 0 {
-					logging.GlobalLogger.Debugf(
-						"Found %d matches for the environment variable %s, Replacing them in markdown source.",
-						len(matches),
-						key,
-					)
-				}
-
-				for _, match := range matches {
-					oldLine := match[0]
-					oldValue := match[1]
-
-					// Replace the old export with the new export statement
-					newLine := strings.Replace(oldLine, oldValue, value+" ", 1)
-					logging.GlobalLogger.Debugf("Replacing '%s' with '%s'", oldLine, newLine)
-
-					// Update the code block with the new export statement
-					configuredMarkdownSource = strings.Replace(configuredMarkdownSource, oldLine, newLine, 1)
-				}
-			}
-
-			logging.GlobalLogger.Tracef("Configured markdown source: %s", configuredMarkdownSource)
-			model.azureStatus.SetConfiguredMarkdown(configuredMarkdownSource)
+			model.azureStatus.ConfigureMarkdownForDownload(model.markdownSource, environmentVariables)
 			model.azureStatus.SetOutput(strings.Join(model.CommandLines, "\n"))
 			commands = append(
 				commands,

@@ -3,9 +3,11 @@ package environments
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/az"
 	"github.com/Azure/InnovationEngine/internal/logging"
+	"github.com/Azure/InnovationEngine/internal/patterns"
 	"github.com/Azure/InnovationEngine/internal/ui"
 )
 
@@ -73,8 +75,45 @@ func (status *AzureDeploymentStatus) SetOutput(output string) {
 	status.Output = output
 }
 
-func (status *AzureDeploymentStatus) SetConfiguredMarkdown(script string) {
-	status.ConfiguredMarkdown = script
+// Given a markdown string, replace the environment variables with the values
+// provided in the environmentVariables map. Currently this is only used
+// by the portal.
+func (status *AzureDeploymentStatus) ConfigureMarkdownForDownload(
+	markdown string,
+	environmentVariables map[string]string,
+) {
+	for key, value := range environmentVariables {
+		exportRegex := patterns.ExportVariableRegex(key)
+
+		matches := exportRegex.FindAllStringSubmatch(markdown, -1)
+
+		if len(matches) != 0 {
+			logging.GlobalLogger.Debugf(
+				"Found %d matches for the environment variable %s, Replacing them in markdown source.",
+				len(matches),
+				key,
+			)
+		}
+
+		for _, match := range matches {
+			oldLine := match[0]
+			oldValue := match[1]
+
+			// Replace the old export with the new export statement
+			newLine := strings.Replace(oldLine, oldValue, value+" ", 1)
+			logging.GlobalLogger.Debugf("Replacing '%s' with '%s'", oldLine, newLine)
+
+			// Update the code block with the new export statement
+			markdown = strings.Replace(
+				markdown,
+				oldLine,
+				newLine,
+				1,
+			)
+		}
+	}
+
+	status.ConfiguredMarkdown = markdown
 }
 
 // Print out the status JSON for azure/cloudshell if in the correct environment.
