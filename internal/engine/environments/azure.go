@@ -73,7 +73,7 @@ func (status *AzureDeploymentStatus) SetOutput(output string) {
 	status.Output = output
 }
 
-func (status *AzureDeploymentStatus) SetConfiguredScript(script string) {
+func (status *AzureDeploymentStatus) SetConfiguredMarkdown(script string) {
 	status.ConfiguredMarkdown = script
 }
 

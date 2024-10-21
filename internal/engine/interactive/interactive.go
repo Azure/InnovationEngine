@@ -381,7 +381,7 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			logging.GlobalLogger.Tracef("Configured markdown source: %s", configuredMarkdownSource)
-			model.azureStatus.SetConfiguredScript(configuredMarkdownSource)
+			model.azureStatus.SetConfiguredMarkdown(configuredMarkdownSource)
 			model.azureStatus.SetOutput(strings.Join(model.CommandLines, "\n"))
 			commands = append(
 				commands,
