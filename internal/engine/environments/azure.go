@@ -23,13 +23,13 @@ type AzureStep struct {
 
 // The status of a one-click deployment or learn mode deployment.
 type AzureDeploymentStatus struct {
-	Steps            []AzureStep `json:"steps"`
-	CurrentStep      int         `json:"currentStep"`
-	Status           string      `json:"status"`
-	ResourceURIs     []string    `json:"resourceURIs"`
-	Error            string      `json:"error"`
-	Output           string      `json:"output"`
-	ConfiguredScript string      `json:"configuredScript"`
+	Steps              []AzureStep `json:"steps"`
+	CurrentStep        int         `json:"currentStep"`
+	Status             string      `json:"status"`
+	ResourceURIs       []string    `json:"resourceURIs"`
+	Error              string      `json:"error"`
+	Output             string      `json:"output"`
+	ConfiguredMarkdown string      `json:"configuredMarkdown"`
 }
 
 func NewAzureDeploymentStatus() AzureDeploymentStatus {
@@ -74,7 +74,7 @@ func (status *AzureDeploymentStatus) SetOutput(output string) {
 }
 
 func (status *AzureDeploymentStatus) SetConfiguredScript(script string) {
-	status.ConfiguredScript = script
+	status.ConfiguredMarkdown = script
 }
 
 // Print out the status JSON for azure/cloudshell if in the correct environment.
