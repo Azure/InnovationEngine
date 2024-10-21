@@ -1,32 +1,30 @@
 name: build-test-release-tagged
-
 on:
   push:
     tags:
       - v*
-
 jobs:
   build-test-release:
     permissions:
       contents: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build all targets.
-      run: |
-        make build-all
-    - name: Run unit tests across all targets.
-      run: |
-        make test-all
-    - name: Prepare scenarios to be released.
-      run: |
-        sudo apt install zip
-        zip -r scenarios.zip scenarios
-    - name: Release Innovation Engine
-      uses: softprops/action-gh-release@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        generate_release_notes: true
-        files: |
-          ./bin/ie
-          ./scenarios.zip
+      - uses: actions/checkout@v4
+      - name: Build all targets.
+        run: |
+          make build-all
+      - name: Run unit tests across all targets.
+        run: |
+          make test-all
+      - name: Prepare scenarios to be released.
+        run: |
+          sudo apt install zip
+          zip -r scenarios.zip scenarios
+      - name: Release Innovation Engine
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generate_release_notes: true
+          files: |
+            ./bin/ie
+            ./scenarios.zip

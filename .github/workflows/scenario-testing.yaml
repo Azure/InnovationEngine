@@ -16,7 +16,7 @@ jobs:
   test-ie-installation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Check ie installation
         run: |
           set -e
@@ -38,14 +38,14 @@ jobs:
     # the testing subscription for any branch in this repository.
     environment: ScenarioTesting
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build & test all targets.
         run: |
           make build-all
           make test-all WITH_COVERAGE=true
           make test-local-scenarios ENVIRONMENT=github-action
       - name: Upload test coverage
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: github.event_name == 'pull_request'
         with:
           name: coverage
