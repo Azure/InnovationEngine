@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/lib/fs"
 	"github.com/Azure/InnovationEngine/internal/logging"
 	"github.com/Azure/InnovationEngine/internal/parsers"
+	"github.com/Azure/InnovationEngine/internal/patterns"
 	"github.com/yuin/goldmark/ast"
 )
 
@@ -29,6 +29,12 @@ type Scenario struct {
 	Steps       []Step
 	Properties  map[string]interface{}
 	Environment map[string]string
+	Source      []byte
+}
+
+// Get the markdown source for the scenario as a string.
+func (s *Scenario) GetSourceAsString() string {
+	return string(s.Source)
 }
 
 // Groups the codeblocks into steps based on the header of the codeblock.
@@ -132,7 +138,7 @@ func CreateScenarioFromMarkdown(
 	for key, value := range environmentVariableOverrides {
 		environmentVariables[key] = value
 		logging.GlobalLogger.Debugf("Attempting to override %s with %s", key, value)
-		exportRegex := regexp.MustCompile(fmt.Sprintf(`(?m)export %s\s*=\s*(.*?)(;|&&|$)`, key))
+		exportRegex := patterns.ExportVariableRegex(key)
 
 		for index, codeBlock := range codeBlocks {
 			matches := exportRegex.FindAllStringSubmatch(codeBlock.Content, -1)
@@ -206,6 +212,7 @@ func CreateScenarioFromMarkdown(
 		Steps:       steps,
 		Properties:  properties,
 		MarkdownAst: markdown,
+		Source:      source,
 	}, nil
 }
 

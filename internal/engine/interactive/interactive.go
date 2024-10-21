@@ -60,6 +60,7 @@ type InteractiveModeModel struct {
 	scenarioCompleted bool
 	components        interactiveModeComponents
 	ready             bool
+	markdownSource    string
 	CommandLines      []string
 }
 
@@ -344,6 +345,43 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.resourceGroupName,
 				model.environment,
 			)
+
+			environmentVariables, err := lib.LoadEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
+			if err != nil {
+				logging.GlobalLogger.Errorf("Failed to load environment state file: %s", err)
+				model.azureStatus.SetError(err)
+			}
+
+			configuredMarkdownSource := model.markdownSource
+
+			for key, value := range environmentVariables {
+				exportRegex := patterns.ExportVariableRegex(key)
+
+				matches := exportRegex.FindAllStringSubmatch(model.markdownSource, -1)
+
+				if len(matches) != 0 {
+					logging.GlobalLogger.Debugf(
+						"Found %d matches for the environment variable %s, Replacing them in markdown source.",
+						len(matches),
+						key,
+					)
+				}
+
+				for _, match := range matches {
+					oldLine := match[0]
+					oldValue := match[1]
+
+					// Replace the old export with the new export statement
+					newLine := strings.Replace(oldLine, oldValue, value+" ", 1)
+					logging.GlobalLogger.Debugf("Replacing '%s' with '%s'", oldLine, newLine)
+
+					// Update the code block with the new export statement
+					configuredMarkdownSource = strings.Replace(configuredMarkdownSource, oldLine, newLine, 1)
+				}
+			}
+
+			logging.GlobalLogger.Tracef("Configured markdown source: %s", configuredMarkdownSource)
+			model.azureStatus.SetConfiguredScript(configuredMarkdownSource)
 			model.azureStatus.SetOutput(strings.Join(model.CommandLines, "\n"))
 			commands = append(
 				commands,
@@ -570,6 +608,7 @@ func NewInteractiveModeModel(
 	environment string,
 	steps []common.Step,
 	env map[string]string,
+	markdownSource string,
 ) (InteractiveModeModel, error) {
 	// TODO: In the future we should just set the current step for the azure status
 	// to one as the default.
@@ -666,6 +705,7 @@ func NewInteractiveModeModel(
 		environment:       environment,
 		scenarioCompleted: false,
 		ready:             false,
+		markdownSource:    markdownSource,
 		CommandLines:      commandLines,
 	}, nil
 }

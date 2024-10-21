@@ -1,6 +1,9 @@
 package patterns
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+)
 
 var (
 	// An SSH command regex where there must be a username@host somewhere present in the command.
@@ -18,4 +21,8 @@ var (
 	// ARM regex
 	AzResourceURI       = regexp.MustCompile(`\"id\": \"(/subscriptions/[^\"]+)\"`)
 	AzResourceGroupName = regexp.MustCompile(`resourceGroups/([^\"\\/\ ]+)`)
+
+	ExportVariableRegex = func(key string) *regexp.Regexp {
+		return regexp.MustCompile(fmt.Sprintf(`(?m)export %s\s*=\s*(.*?)(;|&&|$)`, key))
+	}
 )

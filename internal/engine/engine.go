@@ -157,6 +157,7 @@ func (e *Engine) InteractWithScenario(scenario *common.Scenario) error {
 			e.Configuration.Environment,
 			stepsToExecute,
 			lib.CopyMap(scenario.Environment),
+			scenario.GetSourceAsString(),
 		)
 		if err != nil {
 			return err
@@ -181,9 +182,11 @@ func (e *Engine) InteractWithScenario(scenario *common.Scenario) error {
 
 		switch e.Configuration.Environment {
 		case environments.EnvironmentsAzure, environments.EnvironmentsOCD:
+
 			logging.GlobalLogger.Info(
 				"Cleaning environment variable file located at /tmp/env-vars",
 			)
+
 			err := lib.CleanEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 			if err != nil {
 				logging.GlobalLogger.Errorf("Error cleaning environment variables: %s", err.Error())
