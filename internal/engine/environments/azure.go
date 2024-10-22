@@ -36,11 +36,13 @@ type AzureDeploymentStatus struct {
 
 func NewAzureDeploymentStatus() AzureDeploymentStatus {
 	return AzureDeploymentStatus{
-		Steps:        []AzureStep{},
-		CurrentStep:  0,
-		Status:       "Executing",
-		ResourceURIs: []string{},
-		Error:        "",
+		Steps:              []AzureStep{},
+		CurrentStep:        0,
+		Status:             "Executing",
+		ResourceURIs:       []string{},
+		Error:              "",
+		ConfiguredMarkdown: "",
+		Output:             "",
 	}
 }
 
@@ -134,6 +136,7 @@ func ReportAzureStatus(status AzureDeploymentStatus, environment string) {
 		// We add these strings to the output so that the portal can find and parse
 		// the JSON status.
 		ocdStatus := fmt.Sprintf("ie_us%sie_ue", statusJson)
+		logging.GlobalLogger.Tracef("Generated status: %s", ocdStatus)
 		fmt.Println(ui.OcdStatusUpdateStyle.Render(ocdStatus))
 	}
 }
