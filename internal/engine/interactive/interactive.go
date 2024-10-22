@@ -191,6 +191,20 @@ func handleUserInput(
 				model.environment,
 			)
 
+			environmentVariables, err := lib.LoadEnvironmentStateFile(
+				lib.DefaultEnvironmentStateFile,
+			)
+			if err != nil {
+				logging.GlobalLogger.Errorf("Failed to load environment state file: %s", err)
+				model.azureStatus.SetError(err)
+			}
+
+			model.azureStatus.ConfigureMarkdownForDownload(
+				model.markdownSource,
+				environmentVariables,
+				model.environment,
+			)
+
 			commands = append(commands, tea.Sequence(
 				common.UpdateAzureStatus(model.azureStatus, model.environment),
 				func() tea.Msg {
