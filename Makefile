@@ -14,7 +14,7 @@ MODULE_ROOT :=  $(shell go list -m)
 build-ie:
 	@echo "Building the Innovation Engine CLI..."
 ifeq ($(RELEASE_BUILD), true)
-	@CGO_ENABLED=0 go build -ldflags "-X $(MODULE_ROOT)/cmd/ie/commands.VERSION=$(LATEST_TAG) -X $(MODULE_ROOT)/cmd/commands.COMMIT=$(LATEST_COMMIT) -X $(MODULE_ROOT)/cmd/ie/commands.DATE=$(BUILD_DATE)" -o "$(IE_BINARY)" cmd/ie/ie.go
+	@CGO_ENABLED=0 go build -ldflags "-X $(MODULE_ROOT)/cmd/ie/commands.VERSION=$(LATEST_TAG) -X $(MODULE_ROOT)/cmd/ie/commands.COMMIT=$(LATEST_COMMIT) -X $(MODULE_ROOT)/cmd/ie/commands.DATE=$(BUILD_DATE)" -o "$(IE_BINARY)" cmd/ie/ie.go
 else
 	@CGO_ENABLED=0 go build -ldflags "-X $(MODULE_ROOT)/cmd/ie/commands.VERSION=dev -X $(MODULE_ROOT)/cmd/ie/commands.COMMIT=$(LATEST_COMMIT) -X $(MODULE_ROOT)/cmd/ie/commands.DATE=$(BUILD_DATE)" -o "$(IE_BINARY)" cmd/ie/ie.go
 endif

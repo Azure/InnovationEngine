@@ -3,7 +3,7 @@ package commands
 import "github.com/spf13/cobra"
 
 var (
-	VERSION = "Development"
+	VERSION = "dev"
 	COMMIT  = "N/A"
 	DATE    = "N/A"
 )
