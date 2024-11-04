@@ -6,9 +6,18 @@ API_BINARY := $(BINARY_DIR)/api
 
 # -------------------------- Native build targets ------------------------------
 
+RELEASE_BUILD := false
+LATEST_TAG := $(shell git describe --tags --abbrev=0)
+LATEST_COMMIT := $(shell git rev-parse --short HEAD)
+BUILD_DATE := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
+MODULE_ROOT :=  $(shell go list -m)
 build-ie:
 	@echo "Building the Innovation Engine CLI..."
-	@CGO_ENABLED=0 go build -o "$(IE_BINARY)" cmd/ie/ie.go
+ifeq ($(RELEASE_BUILD), true)
+	@CGO_ENABLED=0 go build -ldflags "-X $(MODULE_ROOT)/cmd/ie/commands.VERSION=$(LATEST_TAG) -X $(MODULE_ROOT)/cmd/commands.COMMIT=$(LATEST_COMMIT) -X $(MODULE_ROOT)/cmd/ie/commands.DATE=$(BUILD_DATE)" -o "$(IE_BINARY)" cmd/ie/ie.go
+else
+	@CGO_ENABLED=0 go build -ldflags "-X $(MODULE_ROOT)/cmd/ie/commands.VERSION=dev -X $(MODULE_ROOT)/cmd/ie/commands.COMMIT=$(LATEST_COMMIT) -X $(MODULE_ROOT)/cmd/ie/commands.DATE=$(BUILD_DATE)" -o "$(IE_BINARY)" cmd/ie/ie.go
+endif
 
 
 build-all: build-ie
@@ -17,7 +26,7 @@ build-all: build-ie
 
 install-ie:
 	@echo "Installing the Innovation Engine CLI..."
-	@CGO_ENABLED=0 go install cmd/ie/ie.go
+	@CGO_ENABLED=0 go install -ldflags "-X $(MODULE_ROOT)/cmd/ie/commands.VERSION=dev -X $(MODULE_ROOT)/cmd/ie/commands.COMMIT=$(LATEST_COMMIT) -X $(MODULE_ROOT)/cmd/ie/commands.DATE=$(BUILD_DATE)" cmd/ie/ie.go
 
 # ------------------------------ Test targets ----------------------------------
 
