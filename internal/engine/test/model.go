@@ -132,17 +132,34 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 				model.resourceGroupName = tmpResourceGroup
 			}
 		}
-		model.CommandLines = append(model.CommandLines, codeBlockState.StdOut)
+		model.CommandLines = append(
+			model.CommandLines,
+			ui.VerboseStyle.Render(codeBlockState.StdOut),
+		)
 		viewportContentUpdated = true
 
 		// Increment the codeblock and update the viewport content.
 		model.currentCodeBlock++
 
 		if model.currentCodeBlock < len(model.codeBlockState) {
+			nextTitle := model.codeBlockState[model.currentCodeBlock].StepName
 			nextCommand := model.codeBlockState[model.currentCodeBlock].CodeBlock.Content
 			nextLanguage := model.codeBlockState[model.currentCodeBlock].CodeBlock.Language
 
-			model.CommandLines = append(model.CommandLines, ui.CommandPrompt(nextLanguage)+nextCommand)
+			// Only add the title if the next step title is different from the current step.
+			if codeBlockState.StepName != nextTitle {
+				model.CommandLines = append(
+					model.CommandLines,
+					ui.StepTitleStyle.Render(
+						fmt.Sprintf("Step %d: %s", model.currentCodeBlock+1, nextTitle),
+					)+"\n",
+				)
+			}
+
+			model.CommandLines = append(
+				model.CommandLines,
+				ui.CommandPrompt(nextLanguage)+nextCommand,
+			)
 		}
 
 		// Only increment the step for azure if the step name has changed.
@@ -178,7 +195,10 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		codeBlockState.SimilarityScore = message.SimilarityScore
 
 		model.codeBlockState[step] = codeBlockState
-		model.CommandLines = append(model.CommandLines, codeBlockState.StdErr+message.Error.Error())
+		model.CommandLines = append(
+			model.CommandLines,
+			ui.ErrorStyle.Render(codeBlockState.StdErr+message.Error.Error()),
+		)
 		viewportContentUpdated = true
 
 		commands = append(commands, common.Exit(true))
@@ -287,6 +307,8 @@ func NewTestModeModel(
 
 	language := codeBlockState[0].CodeBlock.Language
 	commandLines := []string{
+		ui.ScenarioTitleStyle.Render(title) + "\n",
+		ui.StepTitleStyle.Render("Step 1: "+codeBlockState[0].StepName) + "\n",
 		ui.CommandPrompt(language) + codeBlockState[0].CodeBlock.Content,
 	}
 
