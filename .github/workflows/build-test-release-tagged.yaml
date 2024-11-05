@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build all targets.
         run: |
-          make build-all
+          make build-all RELEASE_BUILD=true
       - name: Run unit tests across all targets.
         run: |
           make test-all
