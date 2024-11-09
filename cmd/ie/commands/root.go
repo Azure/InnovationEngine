@@ -50,7 +50,7 @@ func ExecuteCLI() {
 		String(
 			"environment",
 			environments.EnvironmentsLocal,
-			"The environment that the CLI is running in. Valid options are 'local', 'github-actions'. For running ie in your standard terminal, local will work just fine. If using IE inside a github action, use github-actions.",
+			"The environment that the CLI is running in. Valid options are 'local', 'github-action'. For running ie in your standard terminal, local will work just fine. If using IE inside a github action, use github-action.",
 		)
 
 	rootCommand.PersistentFlags().
