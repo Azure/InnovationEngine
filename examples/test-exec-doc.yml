@@ -1,0 +1,153 @@
+# Name of the workflow
+name: Run Tests on Push to Main
+
+# Set permissions required for the workflow
+permissions:
+  contents: write           # Allows writing repository contents
+  pull-requests: write      # Allows creating and modifying pull requests
+  id-token: write           # Allows generating tokens for authentication
+  issues: write             # Allows creating and modifying issues
+
+# Define the events that trigger the workflow
+on:
+  push:
+    paths:
+      - '**/*.md'           # Trigger on push to any Markdown file
+  pull_request:
+    paths:
+      - '**/*.md'           # Trigger on pull requests affecting Markdown files
+  workflow_dispatch:        # Allows manual triggering of the workflow
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest  # Run the job on the latest Ubuntu runner
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0      # Fetch all history for all branches and tags
+
+    - name: Azure CLI Login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}             # Azure Client ID from secrets
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}             # Azure Tenant ID from secrets
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} # Azure Subscription ID from secrets
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x' # Specify Python version 3.x
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip   # Upgrade pip
+        pip install PyGithub pyyaml # Install required Python packages
+
+    - name: Run tests and handle PR
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT }} # Personal Access Token from secrets
+      run: |
+        python <<EOF
+        import os
+        import subprocess
+        import shutil
+        import github
+
+        # Get GitHub token from environment variable
+        GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+        # Authenticate with GitHub using PyGithub
+        g = github.Github(GITHUB_TOKEN)
+
+        # Check if 'ie' (Innovation Engine) is installed, install if not
+        if not shutil.which("ie"):
+            # Update package lists and install unzip
+            subprocess.run("sudo apt-get update && sudo apt-get install -y unzip", shell=True, check=True)
+            # Install Innovation Engine CLI
+            subprocess.run("curl -Lks https://aka.ms/install-ie | /bin/bash", shell=True, check=True)
+
+        # Retrieve repository information
+        result = subprocess.run(['git', 'config', '--get', 'remote.origin.url'], capture_output=True, text=True)
+        repo_url = result.stdout.strip()
+        parts = repo_url.split('/')
+        owner = parts[-2]                     # Repository owner
+        repo_name = parts[-1].replace('.git', '') # Repository name
+        # Access the repository using GitHub API
+        repo = g.get_repo(f"{owner}/{repo_name}")
+
+        # Get branch name from environment variable
+        BRANCH_NAME = os.environ['GITHUB_REF'].split('/')[-1]
+        if BRANCH_NAME != "main":
+            # Prepare to create or update a pull request to 'main'
+            PR_TITLE = f"Merge Exec Doc from {BRANCH_NAME} to main"
+            PR_BODY = "This PR attempts to publish your Exec Doc. Running tests on it now using Innovation Engine..."
+
+            # Check if a PR with the same title already exists
+            existing_pulls = repo.get_pulls(state='open', head=f"{owner}:{BRANCH_NAME}", base='main')
+            pr = None
+            for pull in existing_pulls:
+                if pull.title == PR_TITLE:
+                    pr = pull
+                    pr.edit(body=PR_BODY) # Update PR body if it exists
+                    break
+            if pr is None:
+                # Create a new pull request if none exists
+                pr = repo.create_pull(title=PR_TITLE, body=PR_BODY, head=f"{owner}:{BRANCH_NAME}", base='main')
+            pr_number = pr.number
+        else:
+            pr_number = None  # No PR needed if on 'main' branch
+
+        # Initialize a list to store test results
+        results = ["**Test Results**\n\n==========\n\n"]
+        # Walk through all files in the repository
+        for root, dirs, files in os.walk('.'):
+            for file in files:
+                if file.endswith('.md'):  # Process only Markdown files
+                    file_path = os.path.join(root, file)
+                    # Execute the Innovation Engine on the Markdown file
+                    result = subprocess.run(['ie', 'execute', file_path, '--environment', 'github-action'])
+                    if result.returncode != 0:
+                        # If execution fails, extract error log from 'ie.log'
+                        error_log = ''
+                        with open('ie.log', 'r') as log_file:
+                            lines = log_file.readlines()
+                            # Filter out error lines
+                            error_lines = [line for line in lines if "level=error" in line]
+                            error_log = ''.join(error_lines)
+                        # Prepare issue details
+                        doc_path = '/'.join(file_path.split('/')[1:])
+                        issue_title = f"DOC FAILING TESTS: {doc_path}"
+                        issue_body = f"Hey! Your executable document is not working. Please fix the errors given below.\n\nLink to Doc: https://github.com/{owner}/{repo_name}/blob/main/{doc_path}\n\n### Error Details\n\n***{error_log}***"
+                        issues = repo.get_issues(state='open')
+                        # Check if an issue with the same title already exists
+                        existing_issue = next((issue for issue in issues if issue.title == issue_title), None)
+                        if existing_issue:
+                            # Add a reminder comment to the existing issue
+                            existing_issue.create_comment(f"Reminder: Please address the issues in {doc_path}.")
+                            issue_url = existing_issue.html_url
+                            issue_number = existing_issue.number
+                        else:
+                            # Create a new issue if none exists
+                            try:
+                                new_issue = repo.create_issue(title=issue_title, body=issue_body, assignee=owner)
+                            except:
+                                # Assign to default user if assigning to owner fails
+                                new_issue = repo.create_issue(title=issue_title, body=issue_body, assignee='naman-msft')
+                            issue_url = new_issue.html_url
+                            issue_number = new_issue.number
+                        # Append failure result to the results list
+                        results.append(f"**{file_path}**: Tests failed. Issue created.\n\nIssue Details: [Issue #{issue_number}]({issue_url})\n\n==========\n\n")
+                    else:
+                        # Append success result to the results list
+                        results.append(f"**{file_path}**: Tests passed successfully.\n\n==========\n\n")
+
+        # Post the test results as a comment on the pull request
+        if pr_number:
+            pr = repo.get_pull(pr_number)
+            pr.create_issue_comment('\n'.join(results))
+        else:
+            # Print the test results to the workflow log if no PR
+            print('No PR created. Test results:\n' + '\n'.join(results))
+
+        EOF
