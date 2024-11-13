@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how to set up and use a GitHub Action that automates testing of your Markdown documentation using Innovation Engine. The action ensures your executable documents are accurate and robust by running tests on them. It will create issues for any errors found and prevent pull requests from merging until those errors are resolved.
+This guide explains how to set up and use a GitHub Action that automates testing of your Markdown documentation using Innovation Engine. The action ensures your executable documents are accurate and robust by running tests on them. It will create issues for any errors found and, when combined with branch protection rules, can prevent pull requests from merging until those errors are resolved.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ The GitHub Action performs the following steps:
 
 2. **Checkout Repository**: Uses `actions/checkout@v2` to clone the repository.
 
-3. **Azure CLI Login**: Logs into Azure using the provided credentials with `azure/login@v1`.
+3. **Azure CLI Login**: Logs into Azure using the provided credentials with `azure/login@v2`.
 
 4. **Set Up Python**: Sets up a Python 3.x environment using `actions/setup-python@v2`.
 
@@ -67,4 +67,4 @@ You can modify the GitHub Action to suit your project's needs:
 
 ## Conclusion
 
-By integrating this GitHub Action into your repository, you automate the testing of your executable Markdown documents using Innovation Engine. This helps maintain documentation accuracy and prevents broken documentation from being merged into your main branch.
+By integrating this GitHub Action into your repository, you automate the testing of your executable Markdown documents using Innovation Engine. This helps maintain documentation accuracy and, combine with branch protection rules, prevents broken documentation from being merged into your main branch.

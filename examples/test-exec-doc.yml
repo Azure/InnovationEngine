@@ -13,9 +13,6 @@ on:
   push:
     paths:
       - '**/*.md'           # Trigger on push to any Markdown file
-  pull_request:
-    paths:
-      - '**/*.md'           # Trigger on pull requests affecting Markdown files
   workflow_dispatch:        # Allows manual triggering of the workflow
 
 jobs:
@@ -26,28 +23,88 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
-        fetch-depth: 0      # Fetch all history for all branches and tags
+        fetch-depth: 0        # Fetch all history for accurate diff
 
+    - name: Check for changed Markdown files
+      id: check_changes
+      run: |
+        # Check if this is the initial commit (all zeros SHA)
+        if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+          echo "Initial commit detected."
+
+          # Determine the default branch (e.g., main)
+          if git show-ref --verify --quiet refs/remotes/origin/main; then
+            DEFAULT_BRANCH="main"
+          elif git show-ref --verify --quiet refs/remotes/origin/master; then
+            DEFAULT_BRANCH="master"
+          else
+            echo "Default branch is not 'main' or 'master'. Getting all Markdown files."
+            CHANGED_MARKDOWN_FILES=$(git ls-files '*.md')
+            echo "Markdown files to test:"
+            echo "$CHANGED_MARKDOWN_FILES"
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGED_MARKDOWN_FILES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "Default branch is $DEFAULT_BRANCH"
+          
+          # Get the last commit SHA of the default branch
+          UPSTREAM_SHA=$(git rev-parse origin/$DEFAULT_BRANCH)
+          echo "Upstream SHA: $UPSTREAM_SHA"
+          
+          # List changed Markdown files by comparing with the upstream branch
+          CHANGED_MARKDOWN_FILES=$(git diff --name-only $UPSTREAM_SHA ${{ github.sha }} | grep -E '\.md$' || true)
+
+        else
+          # Compare the latest commit with the previous one
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          echo "Changed files: $CHANGED_FILES"
+          # Filter changed Markdown files
+          CHANGED_MARKDOWN_FILES=$(echo "$CHANGED_FILES" | grep -E '\.md$' || true)
+        fi
+
+        echo "Markdown files to test:"
+        echo "$CHANGED_MARKDOWN_FILES"
+
+        if [ ! -z "$CHANGED_MARKDOWN_FILES" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+          # Set multiline output using the '<<EOF' syntax
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_MARKDOWN_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+          echo "No Markdown files changed. Exiting."
+          exit 0
+        fi
+        
     - name: Azure CLI Login
-      uses: azure/login@v1
+      if: steps.check_changes.outputs.changed == 'true'
+      uses: azure/login@v2
       with:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}             # Azure Client ID from secrets
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}             # Azure Tenant ID from secrets
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} # Azure Subscription ID from secrets
 
     - name: Set up Python
+      if: steps.check_changes.outputs.changed == 'true'
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x' # Specify Python version 3.x
+        python-version: '3.x'  # Specify Python version 3.x
 
     - name: Install dependencies
+      if: steps.check_changes.outputs.changed == 'true'
       run: |
-        pip install --upgrade pip   # Upgrade pip
-        pip install PyGithub pyyaml # Install required Python packages
+        pip install --upgrade pip==24.3.1 || pip install --upgrade pip  # Try pinned version, fallback to latest
+        pip install PyGithub==2.1.1 pyyaml==5.4.1 || pip install PyGithub pyyaml # Install required Python packages
 
     - name: Run tests and handle PR
+      if: steps.check_changes.outputs.changed == 'true'
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT }} # Personal Access Token from secrets
+        GITHUB_TOKEN: ${{ secrets.PAT }}  # Personal Access Token from secrets
+        CHANGED_MARKDOWN_FILES: ${{ steps.check_changes.outputs.changed_files }}  # List of changed Markdown files
       run: |
         python <<EOF
         import os
@@ -64,8 +121,10 @@ jobs:
         if not shutil.which("ie"):
             # Update package lists and install unzip
             subprocess.run("sudo apt-get update && sudo apt-get install -y unzip", shell=True, check=True)
+
             # Install Innovation Engine CLI
-            subprocess.run("curl -Lks https://aka.ms/install-ie | /bin/bash", shell=True, check=True)
+            INNOVATION_ENGINE_VERSION = "v0.2.3"
+            subprocess.run(f"curl -Lks https://aka.ms/install-ie | /bin/bash -s {INNOVATION_ENGINE_VERSION}", shell=True, check=True)
 
         # Retrieve repository information
         result = subprocess.run(['git', 'config', '--get', 'remote.origin.url'], capture_output=True, text=True)
@@ -98,49 +157,58 @@ jobs:
         else:
             pr_number = None  # No PR needed if on 'main' branch
 
+        # Get the list of changed Markdown files
+        changed_files_env = os.getenv('CHANGED_MARKDOWN_FILES', '')
+        changed_files = [f.strip() for f in changed_files_env.split('\n') if f.strip().endswith('.md')]
+
+        if not changed_files:
+            print("No Markdown files to test.")
+            exit(0)
+
         # Initialize a list to store test results
         results = ["**Test Results**\n\n==========\n\n"]
-        # Walk through all files in the repository
-        for root, dirs, files in os.walk('.'):
-            for file in files:
-                if file.endswith('.md'):  # Process only Markdown files
-                    file_path = os.path.join(root, file)
-                    # Execute the Innovation Engine on the Markdown file
-                    result = subprocess.run(['ie', 'execute', file_path, '--environment', 'github-action'])
-                    if result.returncode != 0:
-                        # If execution fails, extract error log from 'ie.log'
-                        error_log = ''
-                        with open('ie.log', 'r') as log_file:
-                            lines = log_file.readlines()
-                            # Filter out error lines
-                            error_lines = [line for line in lines if "level=error" in line]
-                            error_log = ''.join(error_lines)
-                        # Prepare issue details
-                        doc_path = '/'.join(file_path.split('/')[1:])
-                        issue_title = f"DOC FAILING TESTS: {doc_path}"
-                        issue_body = f"Hey! Your executable document is not working. Please fix the errors given below.\n\nLink to Doc: https://github.com/{owner}/{repo_name}/blob/main/{doc_path}\n\n### Error Details\n\n***{error_log}***"
-                        issues = repo.get_issues(state='open')
-                        # Check if an issue with the same title already exists
-                        existing_issue = next((issue for issue in issues if issue.title == issue_title), None)
-                        if existing_issue:
-                            # Add a reminder comment to the existing issue
-                            existing_issue.create_comment(f"Reminder: Please address the issues in {doc_path}.")
-                            issue_url = existing_issue.html_url
-                            issue_number = existing_issue.number
-                        else:
-                            # Create a new issue if none exists
-                            try:
-                                new_issue = repo.create_issue(title=issue_title, body=issue_body, assignee=owner)
-                            except:
-                                # Assign to default user if assigning to owner fails
-                                new_issue = repo.create_issue(title=issue_title, body=issue_body, assignee='naman-msft')
-                            issue_url = new_issue.html_url
-                            issue_number = new_issue.number
-                        # Append failure result to the results list
-                        results.append(f"**{file_path}**: Tests failed. Issue created.\n\nIssue Details: [Issue #{issue_number}]({issue_url})\n\n==========\n\n")
-                    else:
-                        # Append success result to the results list
-                        results.append(f"**{file_path}**: Tests passed successfully.\n\n==========\n\n")
+        # Iterate over changed Markdown files
+        for file_path in changed_files:
+            # Execute the Innovation Engine on the Markdown file
+            result = subprocess.run(['ie', 'execute', file_path, '--environment', 'github-action'])
+            if result.returncode != 0:
+                # If execution fails, extract error log from 'ie.log'
+                error_log = ''
+                try:
+                    with open('ie.log', 'r') as log_file:
+                        lines = log_file.readlines()
+                        # Filter out error lines
+                        error_lines = [line for line in lines if "level=error" in line]
+                        error_log = ''.join(error_lines)
+                except FileNotFoundError:
+                    error_log = "ie.log not found."
+
+                # Prepare issue details
+                doc_path = file_path
+                issue_title = f"DOC FAILING TESTS: {doc_path}"
+                issue_body = f"Hey! Your executable document is not working. Please fix the errors given below.\n\nLink to Doc: https://github.com/{owner}/{repo_name}/blob/main/{doc_path}\n\n### Error Details\n\n***{error_log}***"
+                issues = repo.get_issues(state='open')
+                # Check if an issue with the same title already exists
+                existing_issue = next((issue for issue in issues if issue.title == issue_title), None)
+                if existing_issue:
+                    # Add a reminder comment to the existing issue
+                    existing_issue.create_comment(f"Reminder: Please address the issues in {doc_path}.")
+                    issue_url = existing_issue.html_url
+                    issue_number = existing_issue.number
+                else:
+                    # Create a new issue if none exists
+                    try:
+                        new_issue = repo.create_issue(title=issue_title, body=issue_body, assignee=owner)
+                    except:
+                        # Assign to default user if assigning to owner fails
+                        new_issue = repo.create_issue(title=issue_title, body=issue_body, assignee='naman-msft')
+                    issue_url = new_issue.html_url
+                    issue_number = new_issue.number
+                # Append failure result to the results list
+                results.append(f"**{file_path}**: Tests failed. Issue created.\n\nIssue Details: [Issue #{issue_number}]({issue_url})\n\n==========\n\n")
+            else:
+                # Append success result to the results list
+                results.append(f"**{file_path}**: Tests passed successfully.\n\n==========\n\n")
 
         # Post the test results as a comment on the pull request
         if pr_number:
