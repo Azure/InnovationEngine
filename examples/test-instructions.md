@@ -24,32 +24,52 @@ Before setting up the GitHub Action, you need the following:
 
 The GitHub Action performs the following steps:
 
-1. **Trigger**: Runs on push or pull request events affecting Markdown files, or when manually triggered.
+1. **Trigger**: Runs on push events affecting Markdown files or when manually triggered.
 
-2. **Checkout Repository**: Uses `actions/checkout@v2` to clone the repository.
+2. **Checkout Repository**: Uses `actions/checkout@v2` to clone the repository with full history for accurate diffs.
 
-3. **Azure CLI Login**: Logs into Azure using the provided credentials with `azure/login@v2`.
+3. **Check for Changed Markdown Files**:
 
-4. **Set Up Python**: Sets up a Python 3.x environment using `actions/setup-python@v2`.
+   - **Initial Commit**:
+     - If this is the initial commit and the default branch is `main` or `master`, it compares changes with the default branch.
+     - If the default branch is not `main` or `master`, it considers all Markdown files in the repository.
+   - **Subsequent Commits**:
+     - Compares changes between the latest commit and the previous one.
+   - **Outputs**:
+     - Sets an output variable indicating whether Markdown files have changed.
+     - Lists the changed Markdown files to be tested.
 
-5. **Install Dependencies**: Installs required Python packages:
+4. **Azure CLI Login**: Logs into Azure using the provided credentials with `azure/login@v2` (only if Markdown files have changed).
+
+5. **Set Up Python**: Sets up a Python 3.12 environment using `actions/setup-python@v2` (only if Markdown files have changed).
+
+6. **Install Dependencies**: Installs required Python packages (only if Markdown files have changed):
+
    ```bash
-   pip install --upgrade pip
-   pip install PyGithub pyyaml
+   pip install --upgrade pip==24.3.1 || pip install --upgrade pip  # Try specific pip version, fallback to latest
+   pip install PyGithub==2.1.1 pyyaml==5.4.1 || pip install PyGithub pyyaml  # Try specific package versions, fallback to latest
    ```
 
-6. **Run Tests and Handle PRs**: Executes a Python script that:
-   - Installs Innovation Engine (`ie`) if not already installed.
-   - Retrieves repository information.
-   - If on a branch other than `main`, it creates or updates a pull request to merge changes into `main`.
-   - Iterates over all Markdown files in the repository:
+7. **Run Tests and Handle PRs**: Executes a Python script that (only if Markdown files have changed):
+
+   - **Innovation Engine Installation**: Installs `ie` (Innovation Engine) if not already installed.
+   - **Repository Information**: Retrieves repository details such as owner, name, and branch.
+   - **Pull Request Handling**:
+     - If on a branch other than `main`, it creates or updates a pull request to merge changes into `main`.
+     - Checks for existing pull requests with the same title to avoid duplicates.
+   - **Testing Markdown Files**:
+     - Iterates over the list of changed Markdown files.
      - Runs `ie execute` on each file to test the executable documentation.
-     - If tests fail:
-       - Extracts error logs from the ie.log file, which contains logs of Innovation Engine execution.
+     - **On Test Failure**:
+       - Extracts error logs from the ie.log file.
        - Creates or updates a GitHub issue with the error details.
        - Records the failure in the test results.
-     - If tests pass, records the success.
-   - Posts the test results as a comment on the pull request or outputs them in the workflow logs.
+       - Does not assign the issue to any user to avoid permission issues.
+     - **On Test Success**:
+       - Records the success in the test results.
+   - **Reporting Results**:
+     - Posts the test results as a comment on the pull request.
+     - If no pull request exists (i.e., on the `main` branch), outputs the results in the workflow logs.
 
 ## Customization
 
@@ -59,11 +79,13 @@ You can modify the GitHub Action to suit your project's needs:
 
 - **Azure Login Step**: If your documentation doesn't require Azure resources, you can remove the Azure login step.
 
-- **Dependencies**: Add or remove Python packages in the `Install dependencies` step as needed for your tests.
+- **Python Version and Dependencies**:
+  - Update the `python-version` in the `Set Up Python` step to match your project's requirements.
+  - In the `Install Dependencies` step, specify the versions of `pip`, `PyGithub`, and `pyyaml` as needed. The action tries to install specific versions first and falls back to the latest versions if the specified versions are not available.
 
-- **Testing Script**: Update the Python script to change how tests are executed, how errors are handled, or how results are reported.
+- **Testing Script**: Update the Python script to change how tests are executed, how errors are handled, or how results are reported. For example, you might customize the error extraction logic or modify the issue creation process.
 
-- **Secrets Management**: Ensure all necessary secrets are correctly named and stored in your repository's settings.
+- **Secrets Management**: Ensure all necessary secrets (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `PAT`) are correctly named and stored in your repository's settings under **Settings > Secrets and variables > Actions**.
 
 ## Conclusion
 

@@ -92,7 +92,7 @@ jobs:
       if: steps.check_changes.outputs.changed == 'true'
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'  # Specify Python version 3.x
+        python-version: '3.12'  # Specify Python version 3.x
 
     - name: Install dependencies
       if: steps.check_changes.outputs.changed == 'true'
@@ -161,10 +161,6 @@ jobs:
         changed_files_env = os.getenv('CHANGED_MARKDOWN_FILES', '')
         changed_files = [f.strip() for f in changed_files_env.split('\n') if f.strip().endswith('.md')]
 
-        if not changed_files:
-            print("No Markdown files to test.")
-            exit(0)
-
         # Initialize a list to store test results
         results = ["**Test Results**\n\n==========\n\n"]
         # Iterate over changed Markdown files
@@ -201,7 +197,7 @@ jobs:
                         new_issue = repo.create_issue(title=issue_title, body=issue_body, assignee=owner)
                     except:
                         # Assign to default user if assigning to owner fails
-                        new_issue = repo.create_issue(title=issue_title, body=issue_body, assignee='naman-msft')
+                        new_issue = repo.create_issue(title=issue_title, body=issue_body)
                     issue_url = new_issue.html_url
                     issue_number = new_issue.number
                 # Append failure result to the results list
