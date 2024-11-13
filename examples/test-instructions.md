@@ -67,4 +67,4 @@ You can modify the GitHub Action to suit your project's needs:
 
 ## Conclusion
 
-By integrating this GitHub Action into your repository, you automate the testing of your executable Markdown documents using Innovation Engine. This helps maintain documentation accuracy and, combine with branch protection rules, prevents broken documentation from being merged into your main branch.
+By integrating this GitHub Action into your repository, you automate the testing of your executable Markdown documents using Innovation Engine. This helps maintain documentation accuracy and, combined with branch protection rules, prevents broken documentation from being merged into your main branch.
