@@ -57,6 +57,8 @@ The GitHub Action performs the following steps:
    - **Pull Request Handling**:
      - If on a branch other than `main`, it creates or updates a pull request to merge changes into `main`.
      - Checks for existing pull requests with the same title to avoid duplicates.
+     - **CREATE_PR Environment Variable**:
+       - The `CREATE_PR` variable is set to `true` if the event is a push, otherwise it uses the value from `workflow_dispatch` input or defaults to `false`.
    - **Testing Markdown Files**:
      - Iterates over the list of changed Markdown files.
      - Runs `ie execute` on each file to test the executable documentation.
