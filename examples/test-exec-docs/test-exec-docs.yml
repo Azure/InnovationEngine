@@ -105,12 +105,10 @@ jobs:
     - name: Install dependencies
       if: steps.check_changes.outputs.changed == 'true'
       run: |
-        # Try installing pinned versions
-        pip install --upgrade pip==24.3.1 || pip install --upgrade pip
-        pip install setuptools wheel
-
         # Try installing required packages with pinned versions
-        pip install PyGithub==2.1.1 pyyaml==5.4.1 || pip install PyGithub pyyaml
+        pip install --upgrade pip==24.3.1 
+        pip install setuptools wheel
+        pip install PyGithub==2.1.1 pyyaml==6.0.2 
 
     - name: Run tests and handle PR
       if: steps.check_changes.outputs.changed == 'true'
