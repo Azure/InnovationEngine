@@ -1,5 +1,5 @@
 # Name of the workflow
-name: Run Tests on Push to Main
+name: Innovation Engine Tests
 
 # Set permissions required for the workflow
 permissions:
@@ -10,81 +10,92 @@ permissions:
 
 # Define the events that trigger the workflow
 on:
-  push:
-    paths:
-      - '**/*.md'           # Trigger on push to any Markdown file
-  workflow_dispatch:        # Allows manual triggering of the workflow
-    inputs:
-      create_pr:
-        description: 'Set to true to enable PR creation logic'
-        required: true
-        default: 'false'
+  pull_request:
+    types: [opened, synchronize]  # Trigger on PR creation and updates
 
 jobs:
   run-tests:
     runs-on: ubuntu-latest  # Run the job on the latest Ubuntu runner
     
     env:
-      # Set CREATE_PR to true if the event is a push, otherwise use the value from workflow_dispatch input or default to false
-      CREATE_PR: ${{ github.event_name == 'push' && 'true' || github.event.inputs.create_pr || 'false' }}
+      CREATE_PR: 'false'  # No need to create PR as it's already a PR event
+    
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0        # Fetch all history for accurate diff
+
+    - name: Determine commit SHAs
+      id: commits
+      run: |
+        # Set BASE_SHA to the base of the PR
+        BASE_SHA="${{ github.event.pull_request.base.sha }}"
+        # Set HEAD_SHA to the head of the PR
+        HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+        
+        echo "Base SHA: $BASE_SHA"
+        echo "Head SHA: $HEAD_SHA"
+
+        # Count the number of commits between base and head
+        COMMIT_COUNT=$(git rev-list --count "${BASE_SHA}..${HEAD_SHA}")
+        echo "Commit count since base: $COMMIT_COUNT"
+
+        if [ "$COMMIT_COUNT" -eq 1 ]; then
+          FINAL_BASE_SHA="$BASE_SHA"
+          echo "This is the first commit on the branch."
+        else
+          # Ensure HEAD_SHA has a parent commit
+          PARENT_SHA=$(git rev-parse "${HEAD_SHA}^")
+          
+          if [ $? -ne 0 ] || [ -z "$PARENT_SHA" ]; then
+            echo "Error: Unable to find parent commit of HEAD_SHA."
+            exit 1
+          fi
+
+          FINAL_BASE_SHA="$PARENT_SHA"
+          echo "This is not the first commit on the branch."
+          echo "Parent SHA: $PARENT_SHA"
+        fi
+
+        # Set outputs for subsequent steps
+        echo "final_base_sha=$FINAL_BASE_SHA" >> $GITHUB_OUTPUT
+        echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
 
     - name: Check for changed Markdown files
       id: check_changes
       run: |
-        # Check if this is the initial commit (all zeros SHA)
-        if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
-          echo "Initial commit detected."
+        FINAL_BASE_SHA="${{ steps.commits.outputs.final_base_sha }}"
+        HEAD_SHA="${{ steps.commits.outputs.head_sha }}"
 
-          # Determine the default branch (e.g., main)
-          if git show-ref --verify --quiet refs/remotes/origin/main; then
-            DEFAULT_BRANCH="main"
-          elif git show-ref --verify --quiet refs/remotes/origin/master; then
-            DEFAULT_BRANCH="master"
-          else
-            echo "Default branch is not 'main' or 'master'. Getting all Markdown files."
-            CHANGED_MARKDOWN_FILES=$(git ls-files '*.md')
-            echo "Markdown files to test:"
-            echo "$CHANGED_MARKDOWN_FILES"
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-            echo "$CHANGED_MARKDOWN_FILES" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          echo "Default branch is $DEFAULT_BRANCH"
-          
-          # Get the last commit SHA of the default branch
-          UPSTREAM_SHA=$(git rev-parse origin/$DEFAULT_BRANCH)
-          echo "Upstream SHA: $UPSTREAM_SHA"
-          
-          # List changed Markdown files by comparing with the upstream branch
-          CHANGED_MARKDOWN_FILES=$(git diff --name-only $UPSTREAM_SHA ${{ github.sha }} | grep -E '\.md$' || true)
-
-        else
-          # Compare the latest commit with the previous one
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
-          echo "Changed files: $CHANGED_FILES"
-          # Filter changed Markdown files
-          CHANGED_MARKDOWN_FILES=$(echo "$CHANGED_FILES" | grep -E '\.md$' || true)
+        # Ensure FINAL_BASE_SHA and HEAD_SHA are set
+        if [ -z "${FINAL_BASE_SHA}" ] || [ -z "${HEAD_SHA}" ]; then
+          echo "Error: FINAL_BASE_SHA or HEAD_SHA is not set."
+          exit 1
         fi
+
+        echo "Final Base SHA: $FINAL_BASE_SHA"
+        echo "Head SHA: $HEAD_SHA"
+
+        CHANGED_FILES=$(git diff --name-only "${FINAL_BASE_SHA}" "${HEAD_SHA}" --)
+
+        echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
+        echo "$CHANGED_FILES" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        
+        CHANGED_MARKDOWN_FILES=$(echo "$CHANGED_FILES" | grep -E '\.md$' || true)
 
         echo "Markdown files to test:"
         echo "$CHANGED_MARKDOWN_FILES"
 
-        if [ ! -z "$CHANGED_MARKDOWN_FILES" ]; then
+        if [ -n "$CHANGED_MARKDOWN_FILES" ]; then
           echo "changed=true" >> $GITHUB_OUTPUT
-          # Set multiline output using the '<<EOF' syntax
           echo "changed_files<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED_MARKDOWN_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         else
           echo "changed=false" >> $GITHUB_OUTPUT
-          echo "No Markdown files changed. Exiting."
+          echo "No Markdown files changed. Exiting." >&2
           exit 0
         fi
         
@@ -98,14 +109,14 @@ jobs:
 
     - name: Set up Python
       if: steps.check_changes.outputs.changed == 'true'
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.12'  # Specify Python version 3.x
 
     - name: Install dependencies
       if: steps.check_changes.outputs.changed == 'true'
       run: |
-        # Try installing required packages with pinned versions
+        # Install required packages with pinned versions
         pip install --upgrade pip==24.3.1 
         pip install setuptools wheel
         pip install PyGithub==2.1.1 pyyaml==6.0.2 
@@ -116,19 +127,30 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.PAT }}  # Personal Access Token from secrets
         CHANGED_MARKDOWN_FILES: ${{ steps.check_changes.outputs.changed_files }}  # List of changed Markdown files
         CREATE_PR: ${{ env.CREATE_PR }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}  # Add PR_NUMBER environment variable
       run: |
         python <<EOF
         import os
         import subprocess
         import shutil
-        import github
+        from github import Github
 
         # Get GitHub token from environment variable
         GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
-        CREATE_PR = os.getenv('CREATE_PR', 'false').lower() == 'true'
+        PR_NUMBER = os.getenv('PR_NUMBER')  # Retrieve PR_NUMBER
+
+        if not PR_NUMBER:
+            print("Error: PR_NUMBER is not set.")
+            exit(1)
+
+        try:
+            pr_number = int(PR_NUMBER)
+        except ValueError:
+            print(f"Error: Invalid PR_NUMBER '{PR_NUMBER}'.")
+            exit(1)
 
         # Authenticate with GitHub using PyGithub
-        g = github.Github(GITHUB_TOKEN)
+        g = Github(GITHUB_TOKEN)
 
         # Check if 'ie' (Innovation Engine) is installed, install if not
         if not shutil.which("ie"):
@@ -140,35 +162,8 @@ jobs:
             subprocess.run(f"curl -Lks https://aka.ms/install-ie | /bin/bash -s {INNOVATION_ENGINE_VERSION}", shell=True, check=True)
 
         # Retrieve repository information
-        result = subprocess.run(['git', 'config', '--get', 'remote.origin.url'], capture_output=True, text=True)
-        repo_url = result.stdout.strip()
-        parts = repo_url.split('/')
-        owner = parts[-2]                     # Repository owner
-        repo_name = parts[-1].replace('.git', '') # Repository name
-        # Access the repository using GitHub API
-        repo = g.get_repo(f"{owner}/{repo_name}")
-
-        # Get branch name from environment variable
-        BRANCH_NAME = os.environ['GITHUB_REF'].split('/')[-1]
-        if BRANCH_NAME != "main":
-            # Prepare to create or update a pull request to 'main'
-            PR_TITLE = f"Merge Exec Doc from {BRANCH_NAME} to main"
-            PR_BODY = "This PR attempts to publish your Exec Doc. Running tests on it now using Innovation Engine..."
-
-            # Check if a PR with the same title already exists
-            existing_pulls = repo.get_pulls(state='open', head=f"{owner}:{BRANCH_NAME}", base='main')
-            pr = None
-            for pull in existing_pulls:
-                if pull.title == PR_TITLE:
-                    pr = pull
-                    pr.edit(body=PR_BODY) # Update PR body if it exists
-                    break
-            if pr is None and CREATE_PR:
-                # Create a new pull request if none exists
-                pr = repo.create_pull(title=PR_TITLE, body=PR_BODY, head=f"{owner}:{BRANCH_NAME}", base='main')
-            pr_number = pr.number if pr else None
-        else:
-            pr_number = None  # No PR needed if on 'main' branch
+        repo_full_name = os.getenv('GITHUB_REPOSITORY')
+        repo = g.get_repo(repo_full_name)
 
         # Get the list of changed Markdown files
         changed_files_env = os.getenv('CHANGED_MARKDOWN_FILES', '')
@@ -176,55 +171,44 @@ jobs:
 
         # Initialize a list to store test results
         results = ["**Test Results**\n\n==========\n\n"]
+
+        any_failures = False
+
         # Iterate over changed Markdown files
         for file_path in changed_files:
             # Execute the Innovation Engine on the Markdown file
             result = subprocess.run(['ie', 'execute', file_path, '--environment', 'github-action'])
             if result.returncode != 0:
+                any_failures = True
                 # If execution fails, extract error log from 'ie.log'
                 error_log = ''
+                
                 try:
                     with open('ie.log', 'r') as log_file:
                         lines = log_file.readlines()
                         # Filter out error lines
                         error_lines = [line for line in lines if "level=error" in line]
-                        error_log = ''.join(error_lines)
+                        if error_lines:
+                            error_log = error_lines[-1]  # Get the last error line
+                        else:
+                            error_log = "No error message found in ie.log"
                 except FileNotFoundError:
                     error_log = "ie.log not found."
 
-                # Prepare issue details
-                doc_path = file_path
-                issue_title = f"DOC FAILING TESTS: {doc_path}"
-                issue_body = f"Hey! Your executable document is not working. Please fix the errors given below.\n\nLink to Doc: https://github.com/{owner}/{repo_name}/blob/main/{doc_path}\n\n### Error Details\n\n***{error_log}***"
-                issues = repo.get_issues(state='open')
-                # Check if an issue with the same title already exists
-                existing_issue = next((issue for issue in issues if issue.title == issue_title), None)
-                if existing_issue:
-                    # Add a reminder comment to the existing issue
-                    existing_issue.create_comment(f"Reminder: Please address the issues in {doc_path}.")
-                    issue_url = existing_issue.html_url
-                    issue_number = existing_issue.number
-                else:
-                    # Create a new issue if none exists
-                    try:
-                        new_issue = repo.create_issue(title=issue_title, body=issue_body, assignee=owner)
-                    except:
-                        # Assign to default user if assigning to owner fails
-                        new_issue = repo.create_issue(title=issue_title, body=issue_body)
-                    issue_url = new_issue.html_url
-                    issue_number = new_issue.number
                 # Append failure result to the results list
-                results.append(f"**{file_path}**: Tests failed. Issue created.\n\nIssue Details: [Issue #{issue_number}]({issue_url})\n\n==========\n\n")
+                results.append(f"**{file_path}**: Tests failed.\n\nError Details:\n\n***{error_log}***\n\n==========\n\n")
             else:
                 # Append success result to the results list
                 results.append(f"**{file_path}**: Tests passed successfully.\n\n==========\n\n")
 
         # Post the test results as a comment on the pull request
-        if pr_number:
-            pr = repo.get_pull(pr_number)
-            pr.create_issue_comment('\n'.join(results))
+        pr = repo.get_pull(pr_number)
+        pr.create_issue_comment('\n'.join(results))
+
+        # If any failures occurred, exit with a non-zero status to fail the workflow
+        if any_failures:
+            exit(1)
         else:
-            # Print the test results to the workflow log if no PR
-            print('No PR created. Test results:\n' + '\n'.join(results))
+            exit(0)
 
         EOF
