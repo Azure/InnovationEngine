@@ -177,7 +177,7 @@ jobs:
         # Iterate over changed Markdown files
         for file_path in changed_files:
             # Execute the Innovation Engine on the Markdown file
-            result = subprocess.run(['ie', 'execute', file_path, '--environment', 'github-action'])
+            result = subprocess.run(['ie', 'test', file_path, '--environment', 'github-action'])
             if result.returncode != 0:
                 any_failures = True
                 # If execution fails, extract error log from 'ie.log'
