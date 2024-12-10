@@ -1,6 +1,6 @@
 # Test Code Blocks
 
-This documetn should contain an near exhaustive set of code blocks and surronding content for test purposes.
+This document should contain a near exhaustive set of code blocks and surronding content for test purposes.
 
 If this document passes `ie test` then we are good to go.
 
@@ -16,6 +16,22 @@ echo "Hello, world!"
 
 ```text
 Hello, world!
+```
+
+## Multiparagraph intro
+
+It should be OK to have multiple paragraphs before the code block.
+
+This isn't currently tested by `ie test`, so we will need to run `ie interactive` and eyeball the results of this one.
+
+```bash
+echo "Detailed descriptions are important."
+```
+
+<!-- expected_similarity=1.0 -->
+
+```text
+Detailed descriptions are important.
 ```
 
 ## Sandwhich Case

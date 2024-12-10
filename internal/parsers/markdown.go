@@ -99,6 +99,7 @@ func ExtractCodeBlocksFromAst(
 	var lastExpectedSimilarityScore float64
 	var lastExpectedRegex *regexp.Regexp
 	var lastNode ast.Node
+	var currentParagraphs string
 
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering {
@@ -108,6 +109,10 @@ func ExtractCodeBlocksFromAst(
 				lastHeader = string(extractTextFromMarkdown(&n.BaseBlock, source))
 				lastNode = node
 			case *ast.Paragraph:
+				if currentParagraphs != "" {
+					currentParagraphs += "\n\n"
+				}
+				currentParagraphs += string(extractTextFromMarkdown(&n.BaseBlock, source))
 				lastNode = node
 			// Extract the code block if it matches the language.
 			case *ast.HTMLBlock:
@@ -151,7 +156,7 @@ func ExtractCodeBlocksFromAst(
 				if lastNode != nil {
 					switch n := lastNode.(type) {
 					case *ast.Paragraph:
-						description = string(extractTextFromMarkdown(&n.BaseBlock, source))
+						description = currentParagraphs
 					default:
 						logging.GlobalLogger.Warnf("The node before the codeblock `%s` is not a paragraph, it is a %s", content, n.Kind())
 					}
@@ -159,6 +164,7 @@ func ExtractCodeBlocksFromAst(
 					logging.GlobalLogger.Warnf("There are no markdown elements before the last codeblock `%s`", content)
 				}
 
+				currentParagraphs = ""
 				lastNode = node
 				for _, desiredLanguage := range languagesToExtract {
 					if language == desiredLanguage {
