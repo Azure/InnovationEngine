@@ -81,12 +81,12 @@ result blocks.
 Result blocks are distinguished in Executable documentation by a custom 
 expected_similarity comment tag followed by a code block. For example
 
-<!!--expected_similarity=0.8-->
+\<!--expected_similarity=0.8-->
 <!--expected_similarity=0.8-->
 ```text
 Hello world
 ```
-This example purposely breaks the comment syntax so that it shows up in 
+In the above example we have escaped the comment syntax so that it shows up in 
 markdown. Otherwise, the tag of expected_similarity is completely invisible.
 
 The expected similarity value is a floating point number between 0 and 1 which 
