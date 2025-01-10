@@ -1,14 +1,23 @@
 # Overview
 
-Innovation Engine is a tool for rapid innovation and simplification. Innovation Engine contains 
-a CLI known as ie that enables execution and testing of Executable Documentation.
+Innovation Engine is a tool for rapid innovation and simplification. Innovation Engine is 
+a CLI tool known as ie that enables execution and testing of Executable Documentation.
 
-## What is Executable Documentation? 
-Executable documentation takes standard markdown language and amplifies it by 
-allowing the code commands within the document to be executed in full or step by step in an educational manner, and tested 
-via automated CI/CD pipelines.
+Executable Documentation is a shell script, leveraging any tools available in the shell and embedding it within documentation. That is, it takes standard markdown language and amplifies it by allowing the code commands within the document to be executed interacted with an executed.
+This means that for the first time documentation is also code. 
+
+Using Innovation Engine you can:
+
+  * Describe the intent and expected behaviour of your shell scripts in markdown rather than comments. This means you documentation can contain hyperlinks, images, formatting etc. It can be rendered as standard markdown, e.g. as a `README.md` or a wiki page in GitHub, or as a web page. It also means that there is no need to keep two separate documents in sync. Editing code and documentation is now done in a single file.
+  * Execute the code within your documentation just like any other shell script. The Innovation Engine CLI tool will parse out your script and execute it for you, as if it were a standard shell script.
+  * Execute in "learn mode" onboarding new team members can be hard. Telling them to learn from a script is often going too deep too quickly, while starting from documentation presents the challenge of finding the right starting point for all skill levels. Innovation Engine allows individuals to work through the documented script at their own pace. Telling the engine to execute up to the point that they can follow and then working through step by step guided by the documentation.
+  * Test the intended results of a script through the inclusion of self-documenting results blocks. This allows you to test your documentation/scripts in the CLI before merging, or in your CI/CD environment using, for example, GitHub Actions.
+  * Extract the executable script from the documentation for use without Innovation Engine in the workflow.
+
+Innovation Engine is designed to be reused in custom user experiences. For example, Microsoft Azure uses Innovation Engine to provide documentation on their Learn site, which can also be executed in the Azure Portal. This allows users to explore "good practice" documentation at the pace they prefer. They can simply read the documentation, they can interactively work through it in a customer Portal interface or they can simply go ahead and run it in order to deploy the architecture described within the document.
 
 ## Install Innovation Engine CLI
+
 To install the Innovation Engine CLI, run the following commands. To install a specific version, set VERSION to the desired release number, such as "v0.1.3".
 You can find all releases [here](https://github.com/Azure/InnovationEngine/releases).
 
