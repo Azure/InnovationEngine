@@ -1,0 +1,5 @@
+# Ignore sample project clone
+aks-ray-sample
+
+# Ignore MNIST job specification
+ray-job.pytorch-mnist.yaml

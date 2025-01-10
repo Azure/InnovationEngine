@@ -13,3 +13,6 @@ ie.log
 # Ignore test coverage
 coverage.html
 coverage.out
+
+# Ignore git repos checkout out by examples
+examples/*/.git
