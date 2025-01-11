@@ -32,6 +32,7 @@ mv ie ~/.local/bin
 ```
 
 ## Build Innovation Engine from Source
+
 Paste the following commands into the shell. This will 
 clone the Innovation Engine repo, install the requirements, and build out the 
 Innovation Engine executable.
@@ -48,6 +49,14 @@ command:
 ```bash
 ./bin/ie execute tutorial.md
 ```
+
+## Testing Innovation Engine
+
+Innovation Engine is self-documenting, that is all our documentation is written to be executable. Since Innovation Engine can test the actual results of an execution against the intended reslts this means our documentation is also part of our test suite. In our `scripts` folder you will find a `test_ie.sh` script. Running this will run through all of our documentation in test mode.
+
+If you make any changes to the IE code (see Contributing below) we would encourage you to tun the full test suite before issuing a PR.
+
+To manual test a document it is best to run in `interactive` mode (see below). This mode provides an interactive console for reading and executing the content of Executable Documentation.
 
 # How to Use Innovation Engine
 The general format to run an executable document is: 
