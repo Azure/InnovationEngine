@@ -52,7 +52,11 @@ command:
 
 ## Testing Innovation Engine
 
-Innovation Engine is self-documenting, that is all our documentation is written to be executable. Since Innovation Engine can test the actual results of an execution against the intended reslts this means our documentation is also part of our test suite. In our `scripts` folder you will find a `test_ie.sh` script. Running this will run through all of our documentation in test mode.
+Innovation Engine is self-documenting, that is all our documentation is written to be executable. Since Innovation Engine can test the results of an execution against the intended results this means our documentation is also part of our test suite. Testing against all our documentation is easy as:
+
+```bash
+make test-docs
+```
 
 If you make any changes to the IE code (see Contributing below) we would encourage you to tun the full test suite before issuing a PR.
 
@@ -179,7 +183,7 @@ features and cool ideas to yourself. Please issue pull requests
 against our [GitHub repo](https://github.com/Azure/innovationengine).
 
 Be sure to use our Git pre-commit script to test your contributions
-before committing, simply run the following command: `python3 main.py test test`
+before committing, simply run the following command: `make test-docs`
 
 This project welcomes contributions and suggestions.  Most
 contributions require you to agree to a Contributor License Agreement

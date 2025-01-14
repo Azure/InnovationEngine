@@ -82,6 +82,12 @@ test-upstream-scenarios:
 		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)" WORKING_DIRECTORY="$${dir}" ENVIRONMENT="$(ENVIRONMENT)") || exit $$?; \
 	done
 
+test-docs:
+	@echo "Testing all documents in the docs folder"
+	for file in ./docs/*.md; do \
+		($(MAKE) test-scenario SCENARIO="$${file}") || exit $$?; \
+	done
+
 # ------------------------------- Run targets ----------------------------------
 
 run-ie: build-ie

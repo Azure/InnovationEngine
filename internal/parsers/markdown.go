@@ -233,6 +233,40 @@ func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) map[string]st
 	return scenarioVariables
 }
 
+// Extracts a list of markdown URLs that are contained within the section that has the title "Prerequisites".
+func ExtractPrerequisiteUrlsFromAst(node ast.Node, source []byte) ([]string, error) {
+	var urls []string
+	var inPrerequisitesSection bool
+
+	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if entering {
+			switch n := node.(type) {
+			case *ast.Heading:
+				if n.Level == 2 {
+					headingText := string(extractTextFromMarkdown(&n.BaseBlock, source))
+					if headingText == "Prerequisites" {
+						inPrerequisitesSection = true
+					} else {
+						inPrerequisitesSection = false
+					}
+				}
+			case *ast.Link:
+				if inPrerequisitesSection {
+					url := string(n.Destination)
+					urls = append(urls, url)
+				}
+			}
+		}
+		return ast.WalkContinue, nil
+	})
+
+	if len(urls) == 0 {
+		return nil, fmt.Errorf("no URLs found in the Prerequisites section")
+	}
+
+	return urls, nil
+}
+
 // Converts a string of shell variable exports into a map of key/value pairs.
 // I.E. `export FOO=bar\nexport BAZ=qux` becomes `{"FOO": "bar", "BAZ": "qux"}`
 func convertScenarioVariablesToMap(variableBlock string) map[string]string {

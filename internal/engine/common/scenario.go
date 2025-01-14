@@ -134,6 +134,35 @@ func CreateScenarioFromMarkdown(
 	logging.GlobalLogger.WithField("CodeBlocks", codeBlocks).
 		Debugf("Found %d code blocks", len(codeBlocks))
 
+	// Extract the URLs of any prerequisite documents from the markdown file.
+	prerequisiteUrls, err := parsers.ExtractPrerequisiteUrlsFromAst(markdown, source)
+	if err == nil && len(prerequisiteUrls) > 0 {
+		for _, url := range prerequisiteUrls {
+			logging.GlobalLogger.Infof("Prerequisite: %s", url)
+			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+				url = filepath.Join(filepath.Dir(path), url)
+			}
+			prerequisiteSource, err := resolveMarkdownSource(url)
+			if err != nil {
+				return nil, err
+			}
+
+			prerequisiteMarkdown := parsers.ParseMarkdownIntoAst(prerequisiteSource)
+			prerequisiteProperties := parsers.ExtractYamlMetadataFromAst(prerequisiteMarkdown)
+			for key, value := range prerequisiteProperties {
+				properties[key] = value
+			}
+
+			prerequisiteVariables := parsers.ExtractScenarioVariablesFromAst(prerequisiteMarkdown, prerequisiteSource)
+			for key, value := range prerequisiteVariables {
+				environmentVariables[key] = value
+			}
+
+			prerequisiteCodeBlocks := parsers.ExtractCodeBlocksFromAst(prerequisiteMarkdown, prerequisiteSource, languagesToExecute)
+			codeBlocks = append(codeBlocks, prerequisiteCodeBlocks...)
+		}
+	}
+
 	varsToExport := lib.CopyMap(environmentVariableOverrides)
 	for key, value := range environmentVariableOverrides {
 		environmentVariables[key] = value
