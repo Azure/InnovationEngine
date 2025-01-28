@@ -6,8 +6,8 @@ In this article, you configure and deploy a Ray cluster on Azure Kubernetes Serv
 ## Prerequisites
 
 * Review the [Ray cluster on AKS overview](./ray-overview.md) to understand the components and deployment process.
-* Have an [active Azure Subscription (free subscriptions available) and an install of Azure CLI](Prerequisites-AzureCLIAndSub.md)
-* Install [Draft for AKS](Prerequisites-DraftForAKS.md) - a tool to help containerize applications.  TODO: Is Draft really needed - not sure it is since I ran some tests sucessfully without it.
+* Have an [active Azure Subscription (free subscriptions available) and an install of Azure CLI](../Common/Prerequisites-AzureCLIAndSub.md)
+* Install [Draft for AKS](../Common/Prerequisites-DraftForAKS.md) - a tool to help containerize applications.  TODO: Is Draft really needed - not sure it is since I ran some tests sucessfully without it.
 * Install [Helm](Prerequisites-Helm.md) - package manager for Kubernetes.
 * Install [Terraform](Prerequisites-Terraform.md) - Infrastructure as Code management tool
 

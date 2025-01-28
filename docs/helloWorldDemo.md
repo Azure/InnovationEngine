@@ -30,7 +30,18 @@ date
 Wed Apr 20 15:35:31 PDT 2022
 ```
 
-You can run almost any shell command this way.
+You can run almost any shell command this way. This means it is a good idea to use environment variables. Let's setup a couple.
+
+```bash
+export APPLICATION_NAME="Innovation Engine"
+export GREETING="Hello World"
+```
+
+Now we can use those to ensure our values are carried through to commands.
+
+```bash
+echo "$GREETING, from $APPLICATION_NAME"
+```
 
 <!-- TODO: add examples of major features -->
 
