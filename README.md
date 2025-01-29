@@ -59,7 +59,7 @@ Once built you can run the container and connect to it. Innovation Engine will a
 document when you execute this command.
 
 ```bash
-docker run -it ie .
+docker run -it ie
 ```
 
 You can override the start command if you want to take control immediately with:
@@ -203,8 +203,8 @@ These tools are independent of Innovation Engine, however, if you build a contai
 ```bash
 docker run -it \
   -e AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY \
-    -e AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT \
-    ie /bin/sh -c "python AuthoringTools/ada.py"
+  -e AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT \
+  ie /bin/sh -c "python AuthoringTools/ada.py"
 ```
 
 

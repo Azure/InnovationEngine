@@ -1,7 +1,6 @@
-# filepath: /home/rogardle/projects/InnovationEngine/Dockerfile
 FROM golang:1.20-alpine
 
-RUN apk update && apk add --no-cache make git openssh python3 py3-pip bash
+RUN apk update
 RUN apk add --no-cache --update \
     bash \
     cargo \
