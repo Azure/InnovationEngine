@@ -15,3 +15,4 @@ Now we will echo this to the console. This will both serve to illustrate that th
 ```bash
 echo "Unique hash: $UNIQUE_HASH"
 ```
+

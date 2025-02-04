@@ -207,8 +207,6 @@ docker run -it \
   ie /bin/sh -c "python AuthoringTools/ada.py"
 ```
 
-
-
 ## Contributing
 
 This is an open source project. Don't keep your code improvements,

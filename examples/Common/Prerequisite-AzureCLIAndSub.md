@@ -25,6 +25,7 @@ For more details on installing the CLI see [How to install the Azure CLI](/cli/a
 
 You need to be logged in to an active Azure subscription is required. If you don't have an Azure subscription, you can [create a free account](https://azure.microsoft.com/free/).
 
+
 ```bash
 if ! az account show > /dev/null 2>&1; then
     echo "Please login to Azure CLI using 'az login' before running this script."
@@ -37,4 +38,33 @@ fi
 <!-- expected_similarity=0.8 -->
 ```text
 Currently logged in to Azure CLI. Using subscription ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx
+```
+
+Once logged in we need to ensure that there is an active refresh token.
+
+```bash
+if ! az account get-access-token > /dev/null 2>&1; then
+  echo "Azure CLI session has expired. Please login with 'az login --use-device-code' and try again."
+else
+  echo "Azure CLI session is active."
+fi
+```
+
+<!-- expected_similarity=0.8 -->
+```text
+Azure CLI session is active.
+```
+
+### Azure Tenant ID
+
+Retrieve the tenant ID associated with the active Azure subscription and store it in an environment variable called `TENANT_ID`.
+
+```bash
+export TENANT_ID=$(az account show --query tenantId -o tsv)
+echo "Tenant ID: $TENANT_ID"
+```
+
+<!-- expected_similarity=0.6 -->
+```text
+Tenant ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx
 ```
