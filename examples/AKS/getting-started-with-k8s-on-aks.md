@@ -39,6 +39,7 @@ The objectives of this workshop are to:
 The following prerequisites are required to complete this workshop:
 
 - [Azure Subscription and Azure CLI](../Common/Prerequisite-AzureCLIAndSub.md)
+- [Terraform](../Common/Prerequisites-Terraform.md)
 - [Visual Studio Code](https://code.visualstudio.com/)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - [Git](https://git-scm.com/)
