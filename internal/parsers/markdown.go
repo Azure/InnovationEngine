@@ -253,7 +253,9 @@ func ExtractPrerequisiteUrlsFromAst(node ast.Node, source []byte) ([]string, err
 			case *ast.Link:
 				if inPrerequisitesSection {
 					url := string(n.Destination)
-					urls = append(urls, url)
+					if strings.HasSuffix(url, ".md") {
+						urls = append(urls, url)
+					}
 				}
 			}
 		}
@@ -262,6 +264,8 @@ func ExtractPrerequisiteUrlsFromAst(node ast.Node, source []byte) ([]string, err
 
 	if len(urls) == 0 {
 		return nil, fmt.Errorf("no URLs found in the Prerequisites section")
+	} else {
+		logging.GlobalLogger.Debugf("Found %d URLs in the Prerequisites section", len(urls))
 	}
 
 	return urls, nil
