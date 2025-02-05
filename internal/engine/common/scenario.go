@@ -121,7 +121,7 @@ func CreateScenarioFromMarkdown(
 		}
 	}
 
-	// Convert the markdonw into an AST and extract the scenario variables.
+	// Convert the markdown into an AST and extract the scenario variables.
 	markdown := parsers.ParseMarkdownIntoAst(source)
 	properties := parsers.ExtractYamlMetadataFromAst(markdown)
 	scenarioVariables := parsers.ExtractScenarioVariablesFromAst(markdown, source)
@@ -134,11 +134,12 @@ func CreateScenarioFromMarkdown(
 	logging.GlobalLogger.WithField("CodeBlocks", codeBlocks).
 		Debugf("Found %d code blocks", len(codeBlocks))
 
-	// Extract the URLs of any prerequisite documents from the markdown file.
+	// Extract the URLs of any prerequisite documents linked from the markdown file.
+	// TODO: This is a bit of a hack. Should be refactored to remove duplication. Use recursion.
 	prerequisiteUrls, err := parsers.ExtractPrerequisiteUrlsFromAst(markdown, source)
 	if err == nil && len(prerequisiteUrls) > 0 {
 		for _, url := range prerequisiteUrls {
-			logging.GlobalLogger.Infof("Prerequisite: %s", url)
+			logging.GlobalLogger.Infof("Executing prerequisite: %s", url)
 			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 				url = filepath.Join(filepath.Dir(path), url)
 			}
@@ -159,8 +160,28 @@ func CreateScenarioFromMarkdown(
 			}
 
 			prerequisiteCodeBlocks := parsers.ExtractCodeBlocksFromAst(prerequisiteMarkdown, prerequisiteSource, languagesToExecute)
-			codeBlocks = append(codeBlocks, prerequisiteCodeBlocks...)
+
+			// Split existing codeBlocks into before and after prerequisites
+			var beforePrerequisites, afterPrerequisites []parsers.CodeBlock
+			prerequisitesFound := false
+
+			for _, block := range codeBlocks {
+				if block.Header == "Prerequisites" {
+					prerequisitesFound = true
+				}
+				if prerequisitesFound {
+					afterPrerequisites = append(afterPrerequisites, block)
+				} else {
+					beforePrerequisites = append(beforePrerequisites, block)
+				}
+			}
+
+			// recombine all codeblocks in the correct order of execution
+			codeBlocks = append(beforePrerequisites, prerequisiteCodeBlocks...)
+			codeBlocks = append(codeBlocks, afterPrerequisites...)
 		}
+	} else {
+		logging.GlobalLogger.Warn(err)
 	}
 
 	varsToExport := lib.CopyMap(environmentVariableOverrides)
