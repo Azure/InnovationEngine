@@ -10,35 +10,28 @@ Define the version of Terraform to install
 export TERRAFORM_VERSION="1.10.5"
 ```
 
-Download Terraform
+Download, install and configure Terraform
 
 ```bash
-curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-```
+if ! command -v terraform &> /dev/null
+then
+    curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
-Unzip the downloaded file
+    mkdir -p ~/bin
+    unzip -j terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform -d ~/bin
+    
+    if [[ ":$PATH:" != *":$HOME/bin:"* ]]; then
+        export PATH="$HOME/bin:$PATH"
+        echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+    fi
+    
+    terraform -v
 
-```bash
-unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-```
+    rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
-Move the Terraform binary to /usr/local/bin
-
-```bash
-mkdir -p ~/bin
-mv terraform ~/bin/
-```
-
-Verify the installation
-
-```bash
-terraform -v
-```
-
-Cleanup
-
-```bash
-rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-rm LICENSE
+    echo "Terraform has been installed"
+else
+    echo "Terraform is already installed"
+fi
 ```
 

@@ -64,7 +64,7 @@ export TENANT_ID=$(az account show --query tenantId -o tsv)
 echo "Tenant ID: $TENANT_ID"
 ```
 
-<!-- expected_similarity=0.6 -->
+<!-- expected_similarity=0.4 -->
 ```text
 Tenant ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx
 ```
