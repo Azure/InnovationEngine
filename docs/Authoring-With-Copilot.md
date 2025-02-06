@@ -24,11 +24,23 @@ Add the following to the `settings.json` file that opens.
 
 # Use Copilot
 
-<!-- TODO: implement the workflow as documented -->
+Using Copilot to author docs is easy in Visual Studio Code.
+
+## Initial Authoring
 
 * Create a new document
 * `CTRL+I`
-* Type "Outline an executable document which [Objective]"
-* Copilot will attempt to outline the document for your, providing heading titles and intro paragraphs
+* Type "Create an executable document which [Objective]"
+* Copilot will attempt to create the document for your, providing heading titles and intro paragraphs
 * Review the document, if any section is missing or needs adjustment position the cursor at that point, hit `CTRL-I`, give the instruction
-* Work through the document creating the code blocks 
+* Work through the document creating the code blocks
+
+## Testing
+
+Once you have the document in good shape and you feel it will work you can test it with Innovation Engine.
+
+* Hit CTRL-SHIFT-` to open a WSL terminal (Innovation Engine does not work in PowerShell)
+* Type `ie test filename.md`
+* The document will be executed in test mode, any failure will be reported in the terminal
+* If you want Copilot assistance with errors, position the cursor in the code block where the error occurred and paste the error message
+* Repeat until no errors occur
