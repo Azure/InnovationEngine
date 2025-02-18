@@ -6,19 +6,30 @@ It is often useful to break down a large document into component pieces. Long an
 
 Prerequisites are documents that should be executed before the current document proceeds. They are used to ensure, for example, that the environment is correctly setup. When running in interactive mode the user is given the opportunity to run the prerequsites interactively or non-interactively. This allows the user to skip details they already understand or to step through concepts that are new to them.
 
-This document defines a [prerequisite](prerequisiteExample.md). In fact, if you are running in Innovation Engine you will already have seen it execute. In the following sections we'll explore how that happened. We can validate it ran by ensuring that the environment variable set in that document has a vlue.
+```bash
+if [ -z "$UNIQUE_HASH" ]; then
+    echo "Unique hash has no value yet."
+else
+    echo "It looks like your environment already has a value for Unique Hash is '$UNIQUE_HASH'. This needs to be unset in order to test prerequisites correctly. Clearing the existing value."
+    export UNIQUE_HASH=""
+fi
+```
+
+This document defines a [prerequisite](Common/prerequisiteExample.md). In fact, if you are running in Innovation Engine you will already have seen it execute. In the following sections we'll explore how that happened. We can validate it ran by ensuring that the environment variable set in that document has a vlue.
+
+### Check Prerequisites Ran
 
 ```bash
 if [ -z "$UNIQUE_HASH" ]; then
-    echo "UNIQUE_HASH has no value. It looks like prerequisites were not run correctly."
+    echo "Prerequisites didn't run since UNIQUE_HASH has no value."
 else
-    echo "Unique Hash is '$UNIQUE_HASH'"
+    echo "Prerequisites ran, Unique Hash is '$UNIQUE_HASH'."
 fi
 ```
 
 <!-- expected_similarity=0.7 -->
 ```text
-Unique Hash is 'abcd1234'
+Prerequisites ran, Unique Hash is 'abcd1234'
 ```
 
 ### Prerequisites Syntax
@@ -26,6 +37,8 @@ Unique Hash is 'abcd1234'
 The prerequisites section starts with a heading of `## prerequisites`.
 
 The body of this section will contain 0 or more links to a document that should be executed ahead of the current one. When viewed in a rendered form, such as a web page, the link allows the user to click through to view the document. When interpreted by Innovation Engine the document will be loaded and executed within the same context as the current document.
+
+<!-- The following documentation is from SimDem, this behavioud has not been implemented in IE at the time of writing
 
 ### Automatically validating Pre-requisites
 
@@ -100,7 +113,6 @@ TODO: document the intended behavioud and implement it
 
 # Next Steps
 
-<!--
 TODO: port relevant content from SimDem to here and update to cover IE
 
   1. [Understanding SimDem Syntax](../syntax/script.md)
