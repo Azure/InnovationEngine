@@ -36,3 +36,28 @@ Now we can dump all the values set in this document with the following code:
 ```bash
 printenv | grep '^EV_'
 ```
+
+## Initialization Files
+
+It is possible to pass in values for these variables using a `.ini` file. This should have the same name as the executable doc. For example, this document is called `environmentVariables.md` and has an associates `environmentVariables.ini` file which defines the variable `EV_FROM_INI` variable:
+
+```bash
+export EV_FROM_INI="Value set in the .ini file."
+echo $EV_FROM_INI
+```
+
+<!-- expected_similarity=1.0 -->
+```text
+Value set in the .ini file.
+```
+
+However, if the environment variable is already set in the environment then the `.ini` values will not override that setting. For example, `PATH` is normally set on any machine. The `.ini` file for this contains a definition for `PATH` but it will not be used as `PATH` is already set in the environment. That is, your existing environment settings take precedent over the `.ini` file.
+
+```bash
+echo $PATH
+```
+
+<!-- expected_similarity="^(?!.*will be ignored).*" -->
+```text
+/home/username/.local/bin...
+```
