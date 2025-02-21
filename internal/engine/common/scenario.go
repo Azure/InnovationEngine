@@ -163,16 +163,13 @@ func CreateScenarioFromMarkdown(
 
 			// Split existing codeBlocks into before and after prerequisites
 			var beforePrerequisites, afterPrerequisites []parsers.CodeBlock
-			prerequisitesFound := false
 
+			// TODO: Need to use prerequisite header on prereq code blocks
 			for _, block := range codeBlocks {
 				if block.Header == "Prerequisites" {
-					prerequisitesFound = true
-				}
-				if prerequisitesFound {
-					afterPrerequisites = append(afterPrerequisites, block)
-				} else {
 					beforePrerequisites = append(beforePrerequisites, block)
+				} else {
+					afterPrerequisites = append(afterPrerequisites, block)
 				}
 			}
 

@@ -1,4 +1,4 @@
-This document uses the Azure CLI connected to an active Azure Subscription. The following commands ensure that you have both an active subscription and a current version of the Azure CLI.
+This document uses the Azure CLI connected to an active Azure Subscription. The following commands ensure that you have both an active subscription and a current version of the Azure CLI. Assuming you are logged in and have executed these commands the environment variable `ACTIVE_SUBSCRIPTION_ID` will contain the currently active subscription ID.
 
 ### Azure CLI
 
@@ -9,9 +9,9 @@ if ! command -v az &> /dev/null
 then
   echo "Azure CLI could not be found, installing..."
   curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+else
+  echo "Azure CLI is installed."
 fi
-
-echo "Azure CLI is installed."
 ```
 
 <!-- expected_similarity=".*installed" -->
