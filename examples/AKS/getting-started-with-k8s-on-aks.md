@@ -76,23 +76,45 @@ providers=(
 for provider in "${providers[@]}"; do
     provider_state=$(az provider show --namespace $provider --query "registrationState" -o tsv)
     if [ "$provider_state" == "Registered" ]; then
-        echo "Provider $provider is already registered."
+        echo "Provider '$provider' is registered."
     else
-        echo "Provider $provider is not registered. Registering now..."
+        echo "Provider '$provider' is not registered. Registering now..."
         az provider register --namespace $provider
+        echo "Provider '$provider' is registered."
     fi
 done
 ```
-  
+
+The output of this command should indicate that all features are registered multiple lines in the following format.
+
+<!-- expected_similarity="*is registered.yo" -->
+```text
+Provider 'Microsoft.Dashboard' is registered.
+```
+
 4. Run the following commands to ensure you have all the necessary features registered in your subscription.
 
-  ```TODO:Removed bash marker to prevent execution as it casues errors
+  ```bash
   az feature register --namespace "Microsoft.ContainerService" --name "EnableWorkloadIdentityPreview"
   az feature register --namespace "Microsoft.ContainerService" --name "AKS-GitOps"
   az feature register --namespace "Microsoft.ContainerService" --name "AzureServiceMeshPreview"
   az feature register --namespace "Microsoft.ContainerService" --name "AKS-KedaPreview"
   az feature register --namespace "Microsoft.ContainerService" --name "AKS-PrometheusAddonPreview"
   ```
+
+The output from these commands should indicate that all features have been registered, one such conversation is shown below.
+
+<!-- expected_similarity=1.0 -->
+```text
+{
+  "id": "/subscriptions/f5b6dc3c-c79b-44ac-9850-cedcc65f0192/providers/Microsoft.Features/providers/Microsoft.ContainerService/features/AKS-KedaPreview",
+  "name": "Microsoft.ContainerService/AKS-KedaPreview",
+  "properties": {
+    "state": "Registered"
+  },
+  "type": "Microsoft.Features/providers/features"
+}
+```
 
 5. This lab uses files made available in a GitHub repo. Clone or pull the repository:
 
@@ -168,9 +190,11 @@ An AKS cluster has been provisioned for you. Let's use the Azure CLI to download
 
 Run the following command to set variables for your resource group and AKS cluster name. Don't forget to replace `<user-number>` in the command below with the username you've been assigned.
 
+
+TODO: The original content here was in the form `rg-user<user-number>`. Need to resolve this in Exec Docs, for now going with a constant
 ```bash
-RG_NAME=rg-user<user-number>
-AKS_NAME=aks-user<user-number>
+export RG_NAME=rg-user1
+export AKS_NAME=aks-user1
 ```
 
 Run the following command to download the credentials for your AKS cluster.
@@ -197,7 +221,7 @@ You can see the list of clusters you have access to by running the following com
 kubectl config get-contexts
 ```
 
-If you have more than one context listed, you can switch between clusters by running the following command:
+If you have more than one context listed, you can switch between clusters by running the `use-context` command:
 
 ```bash
 kubectl config use-context <context-name>
@@ -288,7 +312,7 @@ Let's see if our Pod is running.
 kubectl get pods
 ```
 
-You should see something like this:
+You should see something like this, though the status may be different:
 
 ```text
 NAME     READY   STATUS    RESTARTS   AGE
@@ -301,6 +325,16 @@ Here, we are telling Kubernetes that we want a Pod named `nginx2` using the `ngi
 This is different from the imperative approach where we told Kubernetes to run a Pod named `nginx` using the `nginx` image. The declarative approach is preferred because it allows us to check our code into source control and track changes over time.
 
 The `kubectl apply` command is idempotent. This means that if you run the command multiple times, the result will be the same. If the resource already exists, it will be updated. If the resource does not exist, it will be created.
+
+When scripting we will want to wait here until the status becomes "Running", this can be done easily:
+
+```bash
+while [[ $(kubectl get pods nginx2 -o jsonpath='{.status.phase}') != "Running" ]]; do
+  echo "Waiting for nginx2 pod to be in Running state..."
+  sleep 5
+done
+echo "Nginx2 pod is now in Running state."
+```
 
 :::info[Important]
 
