@@ -30,7 +30,7 @@
             "mode": "debug",
             "program": "${workspaceRoot}/examples/eg/main.go",
             "cwd": "${workspaceRoot}/examples/eg",
-            "args": ["ask", "Say 'hello' in a random language."],
+            "args": ["ask", "Deploy a basic AKS cluster for testing purposes. This should focus on low cost as it is not intended for production."],
             "showLog": true,
             "console": "integratedTerminal",
             "envFile": "${workspaceRoot}/examples/eg/.openai"

@@ -57,7 +57,7 @@ func getSuggestedDocuments(prompt string) []string {
 		return results
 	}
 
-	maxTokens := int32(400)
+	maxTokens := int32(10000)
 	keyCredential := azcore.NewKeyCredential(azureOpenAIKey)
 	client, err := azopenai.NewClientWithKeyCredential(azureOpenAIEndpoint, keyCredential, nil)
 
@@ -66,9 +66,14 @@ func getSuggestedDocuments(prompt string) []string {
 		return results
 	}
 
-	// This is a conversation in progress.
+	content, err := os.ReadFile("systemPrompt.txt")
+	if err != nil {
+		log.Printf("ERROR reading file: %s", err)
+		return results
+	}
+
 	messages := []azopenai.ChatRequestMessageClassification{
-		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent("You are a helpful assistant.")},
+		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(string(content))},
 
 		// The user asks a question
 		&azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(prompt)},
@@ -85,8 +90,6 @@ func getSuggestedDocuments(prompt string) []string {
 	gotReply := false
 
 	resp, err := client.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		// This is a conversation in progress.
-		// NOTE: all messages count against token usage for this API.
 		Messages:       messages,
 		DeploymentName: &modelDeploymentID,
 		MaxTokens:      &maxTokens,
@@ -98,6 +101,7 @@ func getSuggestedDocuments(prompt string) []string {
 		return results
 	}
 
+	// Parse the response
 	for _, choice := range resp.Choices {
 		gotReply = true
 
