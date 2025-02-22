@@ -37,10 +37,13 @@ As an excercise, if you have checked out the Innovation Engine code you could ed
 
 # Next Steps (TBD)
 
+1. [Modes of operation](modesOfOperation.md)
+2. [Hello World Demo](helloWorldDemo.md)
+
 <!--
 TODO: port relevant content from SimDem to here and update to cover IE
-  1. [Modes of operation](modes/README.md)
-  2. [Hello World Demo](demo/README.md)
+  
+  2. 
   3. [Build a Hello World script](tutorial/README.md)
   4. [Write SimDem documents](syntax/README.md)
   5. [Special Commands](special_commands/README.md)

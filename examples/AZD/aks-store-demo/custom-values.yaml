@@ -1,0 +1,31 @@
+namespace: 
+namespace: 
+productService:
+  image:
+    repository: /aks-store-demo/product-service
+storeAdmin:
+  image:
+    repository: /aks-store-demo/store-admin
+storeFront:
+  image:
+    repository: /aks-store-demo/store-front
+virtualCustomer:
+  image:
+    repository: /aks-store-demo/virtual-customer
+virtualWorker:
+  image:
+    repository: /aks-store-demo/virtual-worker
+aiService:
+  image:
+      repository: /aks-store-demo/ai-service
+  create: true
+  modelDeploymentName: 
+  openAiEndpoint: https://ada-naman.openai.azure.com/
+  useAzureOpenAi: true
+  openAiKey: 
+orderService:
+  image:
+    repository: /aks-store-demo/order-service
+makelineService:
+  image:
+    repository: /aks-store-demo/makeline-service
