@@ -16,10 +16,12 @@ The following prerequisites are required to complete this workshop:
 
 In order to minimize the chance of errors and to facilitate reuse we will use Environment Variables for values we will use repeatedly in this document. For easy discovery we will use the prefix `EG_` on each variable name. The first time we encounter one of these variables in this document we will explain its purpose and a default value will be provided.
 
-The first variable we need is `EG_HASH` this is a random string of 8 characters that will be used to create unique values when required.
+The first variable we need is `EG_HASH` this is a random string of 8 characters that will be used to create unique values when required. However, if the environment already has a value for this we want to reuse the existing value so that we can reuse existing infrastructure.ll 
 
 ```bash
-export EG_HASH=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)
+if [ -z "$EG_HASH" ]; then
+    export EG_HASH=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)
+fi
 ```
 
 ### Create an Azure resource group
@@ -121,9 +123,21 @@ To install the CLI application from source you need to build the project from wi
 make
 ```
 
-The EG command requires that the `OPENAI_API_KEY` and `OPENAI_ENDPOINT` are set. These can be retrieved using the comamnds above and thus, if you have been following along will already be set in your environment.
+The EG command requires that the `OPENAI_API_KEY`,  `OPENAI_ENDPOINT` and `OPENAI_MODEL_DEEG_DEPLOYMENT_NAMEPLOYMENT_NAME` are set. These can be retrieved using the comamnds above and thus, if you have been following along will already be set in your environment. For convenience though we will save them in a local file for reference. Note that if you destroy the resources created by the above commands these values will need to be changed.
 
-You can run the CLI application from source using:
+```bash
+echo "OPENAI_API_KEY=$OPENAI_API_KEY" > .openai
+echo "OPENAI_ENDPOINT=$OPENAI_API_ENDPOINT" >> .openai
+echo "EG_DEPLOYMENT_NAME=$EG_DEPLOYMENT_NAME" >> .openai
+```
+
+You can now setup future environments to use this deployment by running the following command:
+
+```bash
+source .openai
+```
+
+To run the CLI application use:
 
 ```bash
 ./bin/eg --help
@@ -142,7 +156,17 @@ It then uses Innovation Engine (IE) to execute these docs.
 
 ## Usage
 
+The most common commands is `ask`. This command will pass a prompt tot he OpenAI instance we just created and output the results. For example:
 
+```bash
+./bin/eg ask "Say Hello in a random language."
+```
+
+
+
+```bash
+end here so as not to delete resource
+```
 
 ## Contributing
 

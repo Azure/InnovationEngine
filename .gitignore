@@ -16,3 +16,6 @@ coverage.out
 
 # Ignore git repos checkout out by examples
 examples/awesome-aks
+
+# ignore initialization files
+.openai

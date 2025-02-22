@@ -20,9 +20,15 @@ var promptCmd = &cobra.Command{
 		prompt := args[0]
 
 		fmt.Printf("You asked: %s\n\n", prompt)
-		fmt.Print("Here are some suggested documents:\n\n")
 
 		suggestedDocuments := getSuggestedDocuments(prompt)
+
+		if len(suggestedDocuments) == 0 {
+			fmt.Println("No suggested documents found.")
+			return
+		}
+
+		fmt.Print("Here are some suggested documents:\n\n")
 		for i, doc := range suggestedDocuments {
 			fmt.Printf("\t%d. %s\n", i+1, doc)
 		}
@@ -45,9 +51,9 @@ func getSuggestedDocuments(prompt string) []string {
 		fmt.Fprintf(os.Stderr, "OPENAI_ENDPOINT environment variable not set\n")
 		return results
 	}
-	modelDeploymentID := os.Getenv("OPENAI_MODEL_DEPLOYMENT_NAME")
+	modelDeploymentID := os.Getenv("EG_DEPLOYMENT_NAME")
 	if modelDeploymentID == "" {
-		fmt.Fprintf(os.Stderr, "OPENAI_MODEL_DEPLOYMENT_NAME environment variable not set\n")
+		fmt.Fprintf(os.Stderr, "EG_DEPLOYMENT_NAME environment variable not set\n")
 		return results
 	}
 
@@ -65,13 +71,13 @@ func getSuggestedDocuments(prompt string) []string {
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent("You are a helpful assistant.")},
 
 		// The user asks a question
-		&azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent("Does Azure OpenAI support customer managed keys?")},
+		&azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(prompt)},
 
 		// The reply would come back from the model. You'd add it to the conversation so we can maintain context.
-		&azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent("Yes, customer managed keys are supported by Azure OpenAI")},
+		//&azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent("Yes, customer managed keys are supported by Azure OpenAI")},
 
 		// The user answers the question based on the latest reply.
-		&azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent("What other Azure Services support customer managed keys?")},
+		//&azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent("What other Azure Services support customer managed keys?")},
 
 		// from here you'd keep iterating, sending responses back from ChatGPT
 	}
@@ -94,19 +100,6 @@ func getSuggestedDocuments(prompt string) []string {
 
 	for _, choice := range resp.Choices {
 		gotReply = true
-
-		if choice.ContentFilterResults != nil {
-			fmt.Fprintf(os.Stderr, "Content filter results\n")
-
-			if choice.ContentFilterResults.Error != nil {
-				fmt.Fprintf(os.Stderr, "  Error:%v\n", choice.ContentFilterResults.Error)
-			}
-
-			fmt.Fprintf(os.Stderr, "  Hate: sev: %v, filtered: %v\n", *choice.ContentFilterResults.Hate.Severity, *choice.ContentFilterResults.Hate.Filtered)
-			fmt.Fprintf(os.Stderr, "  SelfHarm: sev: %v, filtered: %v\n", *choice.ContentFilterResults.SelfHarm.Severity, *choice.ContentFilterResults.SelfHarm.Filtered)
-			fmt.Fprintf(os.Stderr, "  Sexual: sev: %v, filtered: %v\n", *choice.ContentFilterResults.Sexual.Severity, *choice.ContentFilterResults.Sexual.Filtered)
-			fmt.Fprintf(os.Stderr, "  Violence: sev: %v, filtered: %v\n", *choice.ContentFilterResults.Violence.Severity, *choice.ContentFilterResults.Violence.Filtered)
-		}
 
 		if choice.Message != nil && choice.Message.Content != nil {
 			fmt.Fprintf(os.Stderr, "Content[%d]: %s\n", *choice.Index, *choice.Message.Content)
