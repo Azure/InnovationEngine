@@ -13,13 +13,13 @@ import (
 )
 
 var promptCmd = &cobra.Command{
-	Use:   "ask [prompt]",
-	Short: "Ask a question, such as 'How do I deploy and AKS cluster with an API gateway?'",
+	Use:   "write [prompt]",
+	Short: "Write a new Exec Doc in response to a prompt, such as 'Deploy an AKS cluster to host an API gateway?'",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		prompt := args[0]
 
-		fmt.Printf("You asked: %s\n\n", prompt)
+		fmt.Printf("Prompt: %s\n\n", prompt)
 
 		suggestedDocuments := getSuggestedDocuments(prompt)
 
