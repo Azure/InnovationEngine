@@ -6,7 +6,7 @@ We use enviroment variables to simplify commands, some of them will have been se
 
 ```bash
 export LOCATION=eastus
-VM_SKU=Standard_D2als_v6
+export VM_SKU=Standard_D2als_v6
 # export VM_SKU=Standard_L8s # this is an invalid VM_SKU for most users deliberately selected to create a failure in validation
 ```
 
