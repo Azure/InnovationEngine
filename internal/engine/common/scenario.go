@@ -121,7 +121,7 @@ func CreateScenarioFromMarkdown(
 		}
 	}
 
-	// Convert the markdonw into an AST and extract the scenario variables.
+	// Convert the markdown into an AST and extract the scenario variables.
 	markdown := parsers.ParseMarkdownIntoAst(source)
 	properties := parsers.ExtractYamlMetadataFromAst(markdown)
 	scenarioVariables := parsers.ExtractScenarioVariablesFromAst(markdown, source)
@@ -133,6 +133,53 @@ func CreateScenarioFromMarkdown(
 	codeBlocks := parsers.ExtractCodeBlocksFromAst(markdown, source, languagesToExecute)
 	logging.GlobalLogger.WithField("CodeBlocks", codeBlocks).
 		Debugf("Found %d code blocks", len(codeBlocks))
+
+	// Extract the URLs of any prerequisite documents linked from the markdown file.
+	// TODO: This is a bit of a hack. Should be refactored to remove duplication. Use recursion.
+	prerequisiteUrls, err := parsers.ExtractPrerequisiteUrlsFromAst(markdown, source)
+	if err == nil && len(prerequisiteUrls) > 0 {
+		for _, url := range prerequisiteUrls {
+			logging.GlobalLogger.Infof("Executing prerequisite: %s", url)
+			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+				url = filepath.Join(filepath.Dir(path), url)
+			}
+			prerequisiteSource, err := resolveMarkdownSource(url)
+			if err != nil {
+				return nil, err
+			}
+
+			prerequisiteMarkdown := parsers.ParseMarkdownIntoAst(prerequisiteSource)
+			prerequisiteProperties := parsers.ExtractYamlMetadataFromAst(prerequisiteMarkdown)
+			for key, value := range prerequisiteProperties {
+				properties[key] = value
+			}
+
+			prerequisiteVariables := parsers.ExtractScenarioVariablesFromAst(prerequisiteMarkdown, prerequisiteSource)
+			for key, value := range prerequisiteVariables {
+				environmentVariables[key] = value
+			}
+
+			prerequisiteCodeBlocks := parsers.ExtractCodeBlocksFromAst(prerequisiteMarkdown, prerequisiteSource, languagesToExecute)
+
+			// Split existing codeBlocks into before and after prerequisites
+			var beforePrerequisites, afterPrerequisites []parsers.CodeBlock
+
+			// TODO: Need to use prerequisite header on prereq code blocks
+			for _, block := range codeBlocks {
+				if block.Header == "Prerequisites" {
+					beforePrerequisites = append(beforePrerequisites, block)
+				} else {
+					afterPrerequisites = append(afterPrerequisites, block)
+				}
+			}
+
+			// recombine all codeblocks in the correct order of execution
+			codeBlocks = append(beforePrerequisites, prerequisiteCodeBlocks...)
+			codeBlocks = append(codeBlocks, afterPrerequisites...)
+		}
+	} else {
+		logging.GlobalLogger.Warn(err)
+	}
 
 	varsToExport := lib.CopyMap(environmentVariableOverrides)
 	for key, value := range environmentVariableOverrides {

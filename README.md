@@ -49,10 +49,32 @@ command:
 ```bash
 ./bin/ie execute tutorial.md
 ```
+### Building a Container from Source
+
+```bash
+docker build -t ie .
+```
+
+Once built you can run the container and connect to it. Innovation Engine will automatically run an introductory
+document when you execute this command.
+
+```bash
+docker run -it ie
+```
+
+You can override the start command if you want to take control immediately with:
+
+```bash
+docker run -it ie /bin/sh
+```
 
 ## Testing Innovation Engine
 
-Innovation Engine is self-documenting, that is all our documentation is written to be executable. Since Innovation Engine can test the actual results of an execution against the intended reslts this means our documentation is also part of our test suite. In our `scripts` folder you will find a `test_ie.sh` script. Running this will run through all of our documentation in test mode.
+Innovation Engine is self-documenting, that is all our documentation is written to be executable. Since Innovation Engine can test the results of an execution against the intended results this means our documentation is also part of our test suite. Testing against all our documentation is easy as:
+
+```bash
+make test-docs
+```
 
 If you make any changes to the IE code (see Contributing below) we would encourage you to tun the full test suite before issuing a PR.
 
@@ -172,6 +194,19 @@ jobs:
         python3 main.py test README.md
 ```
 
+# Authoring Documents
+
+Authoring documents for use in Innovation Engine is no different from writing high quality documentation for reading. However, it does force you to follow good practice and therefore can sometimes feel a little too involved. That is  every edge case needs to be accounted for so that automated testing will reliably pass. We are therefore working on tools to help you in the authoring process.
+
+These tools are independent of Innovation Engine, however, if you build a container from source they will be included in that container. To use them you will need an Azure OpenAI key (you can use an OpenAI key if you prefer) - be sure to add them in the command below.
+
+```bash
+docker run -it \
+  -e AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY \
+  -e AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT \
+  ie /bin/sh -c "python AuthoringTools/ada.py"
+```
+
 ## Contributing
 
 This is an open source project. Don't keep your code improvements,
@@ -179,7 +214,7 @@ features and cool ideas to yourself. Please issue pull requests
 against our [GitHub repo](https://github.com/Azure/innovationengine).
 
 Be sure to use our Git pre-commit script to test your contributions
-before committing, simply run the following command: `python3 main.py test test`
+before committing, simply run the following command: `make test-docs`
 
 This project welcomes contributions and suggestions.  Most
 contributions require you to agree to a Contributor License Agreement
