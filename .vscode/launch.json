@@ -30,7 +30,7 @@
             "mode": "debug",
             "program": "${workspaceRoot}/examples/eg/main.go",
             "cwd": "${workspaceRoot}/examples/eg",
-            "args": ["write", "Deploy a basic AKS cluster for testing purposes. This should focus on low cost as it is not intended for production."],
+            "args": ["write", "Add some documents to an Azure OpenAI model using RAG."],
             "showLog": true,
             "console": "integratedTerminal",
             "envFile": "${workspaceRoot}/examples/eg/.openai"
