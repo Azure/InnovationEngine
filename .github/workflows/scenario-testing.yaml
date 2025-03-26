@@ -1,71 +1,214 @@
-name: scenario-testing
-on:
-  schedule:
-    - cron: "0 */2 * * *"
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
+# Name of the workflow
+name: Innovation Engine Tests
+
+# Set permissions required for the workflow
 permissions:
-  id-token: write
-  contents: read
+  contents: write           # Allows writing repository contents
+  pull-requests: write      # Allows creating and modifying pull requests
+  id-token: write           # Allows generating tokens for authentication
+  issues: write             # Allows creating and modifying issues
+
+# Define the events that trigger the workflow
+on:
+  pull_request:
+    types: [opened, synchronize]  # Trigger on PR creation and updates
+
 jobs:
-  test-ie-installation:
-    runs-on: ubuntu-latest
+  run-tests:
+    runs-on: ubuntu-latest  # Run the job on the latest Ubuntu runner
+    
+    env:
+      CREATE_PR: 'false'  # No need to create PR as it's already a PR event
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Check ie installation
-        run: |
-          set -e
-          cat scripts/install_from_release.sh | /bin/bash
-          if ! command -v ie; then
-            echo "ie not found"
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0        # Fetch all history for accurate diff
+
+    - name: Determine commit SHAs
+      id: commits
+      run: |
+        # Set BASE_SHA to the base of the PR
+        BASE_SHA="${{ github.event.pull_request.base.sha }}"
+        # Set HEAD_SHA to the head of the PR
+        HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+        
+        echo "Base SHA: $BASE_SHA"
+        echo "Head SHA: $HEAD_SHA"
+
+        # Count the number of commits between base and head
+        COMMIT_COUNT=$(git rev-list --count "${BASE_SHA}..${HEAD_SHA}")
+        echo "Commit count since base: $COMMIT_COUNT"
+
+        if [ "$COMMIT_COUNT" -eq 1 ]; then
+          FINAL_BASE_SHA="$BASE_SHA"
+          echo "This is the first commit on the branch."
+        else
+          # Ensure HEAD_SHA has a parent commit
+          PARENT_SHA=$(git rev-parse "${HEAD_SHA}^")
+          
+          if [ $? -ne 0 ] || [ -z "$PARENT_SHA" ]; then
+            echo "Error: Unable to find parent commit of HEAD_SHA."
             exit 1
           fi
 
-          bash scripts/install_docs_from_release.sh en-us v1.0.1
-          if [ ! -d "${HOME}/scenarios" ]
-          then
-            echo "scenarios not found"
-            exit 1
-          fi
-  test-ocd-scenarios:
-    runs-on: ubuntu-latest
-    # This is needed in order to obtain OIDC tokens to sign this pipeline into
-    # the testing subscription for any branch in this repository.
-    environment: ScenarioTesting
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build & test all targets.
-        run: |
-          make build-all
-          make test-all WITH_COVERAGE=true
-          make test-local-scenarios ENVIRONMENT=github-action
-      - name: Upload test coverage
-        uses: actions/upload-artifact@v4
-        if: github.event_name == 'pull_request'
-        with:
-          name: coverage
-          path: coverage.html
-      - name: Sign into Azure
-        uses: azure/login@v1
-        if: github.event_name != 'pull_request'
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION }}
-      - name: Run all one click deployment scenarios.
-        uses: azure/CLI@v1
-        if: github.event_name != 'pull_request'
-        with:
-          azcliversion: 2.53.0
-          inlineScript: |
-            apk add --no-cache make git openssh openssl helm curl jq
-            make test-upstream-scenarios SUBSCRIPTION=${{ secrets.AZURE_SUBSCRIPTION }} ENVIRONMENT=github-action
-      - name: Display ie.log file
-        if: (success() || failure())
-        run: |
-          cat ie.log
+          FINAL_BASE_SHA="$PARENT_SHA"
+          echo "This is not the first commit on the branch."
+          echo "Parent SHA: $PARENT_SHA"
+        fi
+
+        # Set outputs for subsequent steps
+        echo "final_base_sha=$FINAL_BASE_SHA" >> $GITHUB_OUTPUT
+        echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+
+    - name: Check for changed Markdown files
+      id: check_changes
+      run: |
+        FINAL_BASE_SHA="${{ steps.commits.outputs.final_base_sha }}"
+        HEAD_SHA="${{ steps.commits.outputs.head_sha }}"
+
+        # Ensure FINAL_BASE_SHA and HEAD_SHA are set
+        if [ -z "${FINAL_BASE_SHA}" ] || [ -z "${HEAD_SHA}" ]; then
+          echo "Error: FINAL_BASE_SHA or HEAD_SHA is not set."
+          exit 1
+        fi
+
+        echo "Final Base SHA: $FINAL_BASE_SHA"
+        echo "Head SHA: $HEAD_SHA"
+
+        CHANGED_FILES=$(git diff --name-only "${FINAL_BASE_SHA}" "${HEAD_SHA}" --)
+
+        echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
+        echo "$CHANGED_FILES" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        
+        CHANGED_MARKDOWN_FILES=$(echo "$CHANGED_FILES" | grep -E '\.md$' || true)
+
+        echo "Markdown files to test:"
+        echo "$CHANGED_MARKDOWN_FILES"
+
+        if [ -n "$CHANGED_MARKDOWN_FILES" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_MARKDOWN_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+          echo "No Markdown files changed. Exiting." >&2
+          exit 0
+        fi
+        
+    - name: Azure CLI Login
+      if: steps.check_changes.outputs.changed == 'true'
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}             # Azure Client ID from secrets
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}             # Azure Tenant ID from secrets
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} # Azure Subscription ID from secrets
+
+    - name: Set up Python
+      if: steps.check_changes.outputs.changed == 'true'
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'  # Specify Python version 3.x
+
+    - name: Install dependencies
+      if: steps.check_changes.outputs.changed == 'true'
+      run: |
+        # Install required packages with pinned versions
+        pip install --upgrade pip==24.3.1 
+        pip install setuptools wheel
+        pip install PyGithub==2.1.1 pyyaml==6.0.2 
+
+    - name: Run tests and handle PR
+      if: steps.check_changes.outputs.changed == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT }}  # Personal Access Token from secrets
+        CHANGED_MARKDOWN_FILES: ${{ steps.check_changes.outputs.changed_files }}  # List of changed Markdown files
+        CREATE_PR: ${{ env.CREATE_PR }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}  # Add PR_NUMBER environment variable
+      run: |
+        python <<EOF
+        import os
+        import subprocess
+        import shutil
+        from github import Github
+
+        # Get GitHub token from environment variable
+        GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+        PR_NUMBER = os.getenv('PR_NUMBER')  # Retrieve PR_NUMBER
+
+        if not PR_NUMBER:
+            print("Error: PR_NUMBER is not set.")
+            exit(1)
+
+        try:
+            pr_number = int(PR_NUMBER)
+        except ValueError:
+            print(f"Error: Invalid PR_NUMBER '{PR_NUMBER}'.")
+            exit(1)
+
+        # Authenticate with GitHub using PyGithub
+        g = Github(GITHUB_TOKEN)
+
+        # Check if 'ie' (Innovation Engine) is installed, install if not
+        if not shutil.which("ie"):
+            # Update package lists and install unzip
+            subprocess.run("sudo apt-get update && sudo apt-get install -y unzip", shell=True, check=True)
+
+            # Install Innovation Engine CLI
+            INNOVATION_ENGINE_VERSION = "v0.2.3"
+            subprocess.run(f"curl -Lks https://aka.ms/install-ie | /bin/bash -s {INNOVATION_ENGINE_VERSION}", shell=True, check=True)
+
+        # Retrieve repository information
+        repo_full_name = os.getenv('GITHUB_REPOSITORY')
+        repo = g.get_repo(repo_full_name)
+
+        # Get the list of changed Markdown files
+        changed_files_env = os.getenv('CHANGED_MARKDOWN_FILES', '')
+        changed_files = [f.strip() for f in changed_files_env.split('\n') if f.strip().endswith('.md')]
+
+        # Initialize a list to store test results
+        results = ["**Test Results**\n\n==========\n\n"]
+
+        any_failures = False
+
+        # Iterate over changed Markdown files
+        for file_path in changed_files:
+            # Execute the Innovation Engine on the Markdown file
+            result = subprocess.run(['ie', 'test', file_path, '--environment', 'github-action'])
+            if result.returncode != 0:
+                any_failures = True
+                # If execution fails, extract error log from 'ie.log'
+                error_log = ''
+                
+                try:
+                    with open('ie.log', 'r') as log_file:
+                        lines = log_file.readlines()
+                        # Filter out error lines
+                        error_lines = [line for line in lines if "level=error" in line]
+                        if error_lines:
+                            error_log = error_lines[-1]  # Get the last error line
+                        else:
+                            error_log = "No error message found in ie.log"
+                except FileNotFoundError:
+                    error_log = "ie.log not found."
+
+                # Append failure result to the results list
+                results.append(f"**{file_path}**: Tests failed.\n\nError Details:\n\n***{error_log}***\n\n==========\n\n")
+            else:
+                # Append success result to the results list
+                results.append(f"**{file_path}**: Tests passed successfully.\n\n==========\n\n")
+
+        # Post the test results as a comment on the pull request
+        pr = repo.get_pull(pr_number)
+        pr.create_issue_comment('\n'.join(results))
+
+        # If any failures occurred, exit with a non-zero status to fail the workflow
+        if any_failures:
+            exit(1)
+        else:
+            exit(0)
+
+        EOF
