@@ -21,6 +21,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 - [Reporting Bugs](#reporting-bugs)
 - [Suggesting Enhancements](#suggesting-enhancements)
 - [Your First Code Contribution](#your-first-code-contribution)
+- [Reviewing Copilot PRs](#reviewing-copilot-prs)
 <!--TODO [Improving The Documentation](#improving-the-documentation)-->
 - [Styleguides](#styleguides)
 
@@ -163,6 +164,10 @@ and make a PR for it!
 When creating a PR, please include as much context as possible. At minimum, this should include what the PR does and the testing strategies for it.
 
 If your PR is a work in progress, please label it as a draft and include 'WIP' at the beginning of the PR title.
+
+#### Reviewing Copilot PRs
+
+For guidance on how to review pull requests that were authored by GitHub Copilot, please refer to our [Reviewing Copilot PRs](./docs/REVIEWING_COPILOT_PR.md) guide.
 
 <!--### Improving The Documentation
 TODO-->
