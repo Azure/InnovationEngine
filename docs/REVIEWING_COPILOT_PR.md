@@ -31,7 +31,7 @@ GitHub Codespaces provides a complete, configurable dev environment directly wit
 
 ### 3. Setting Up the Environment
 
-To properly test the changes, you'll need to install the Azure CLI:
+If you plan to run test scripts that include Azure CLI commands, you'll need to install the Azure CLI. Note that many test scenarios can be run without this dependency:
 
 ```bash
 # Install Azure CLI
@@ -42,6 +42,13 @@ Verify the installation:
 
 ```bash
 az --version
+```
+
+If you installed the Azure CLI and need to use it for testing, you'll need to login:
+
+```bash
+# Login to Azure using device code authentication
+az login --use-device-code
 ```
 
 ### 4. Building Innovation Engine
