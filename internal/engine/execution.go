@@ -138,6 +138,7 @@ func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]strin
 
 			var commandErr error
 			var frame int = 0
+			startTime := time.Now() // Record the start time for progress indicator
 
 			// If forwarding input/output, don't render the spinner.
 			if !interactiveCommand {
@@ -246,7 +247,10 @@ func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]strin
 						break renderingLoop
 					default:
 						frame = (frame + 1) % len(spinnerFrames)
-						fmt.Printf("\r  %s", ui.SpinnerStyle.Render(string(spinnerFrames[frame])))
+						elapsedTime := time.Since(startTime)
+						minutes := int(elapsedTime.Minutes())
+						seconds := int(elapsedTime.Seconds()) % 60
+						fmt.Printf("\r  %s [%02d:%02d elapsed]", ui.SpinnerStyle.Render(string(spinnerFrames[frame])), minutes, seconds)
 						time.Sleep(spinnerRefresh)
 					}
 				}
