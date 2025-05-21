@@ -152,6 +152,8 @@ func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]strin
 				terminal.HideCursor()
 
 				go func(block parsers.CodeBlock) {
+					var accumulatedOutput strings.Builder
+					
 					output, err := shells.ExecuteBashCommand(
 						block.Content,
 						shells.BashCommandConfiguration{
@@ -159,8 +161,32 @@ func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]strin
 							InheritEnvironment:   true,
 							InteractiveCommand:   false,
 							WriteToHistory:       true,
+							StreamOutput:         true,
+							OutputCallback: func(output string, isStderr bool) {
+								// Accumulate the output for final display
+								accumulatedOutput.WriteString(output)
+								
+								// Clear current spinner line
+								fmt.Print("\r                      \r")
+								
+								// Print stream output
+								if isStderr {
+									fmt.Print(ui.ErrorMessageStyle.Render(output))
+								} else {
+									fmt.Print(output)
+								}
+								
+								// Restore spinner
+								fmt.Printf("\r  %s", ui.SpinnerStyle.Render(string(spinnerFrames[frame])))
+							},
 						},
 					)
+					
+					// Update commandOutput with the full output
+					if output.StdOut == "" && accumulatedOutput.Len() > 0 {
+						output.StdOut = accumulatedOutput.String()
+					}
+					
 					logging.GlobalLogger.Infof("Command output to stdout:\n %s", output.StdOut)
 					logging.GlobalLogger.Infof("Command output to stderr:\n %s", output.StdErr)
 					commandOutput = output

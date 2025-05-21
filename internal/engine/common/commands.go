@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Azure/InnovationEngine/internal/engine/environments"
 	"github.com/Azure/InnovationEngine/internal/logging"
@@ -42,12 +43,27 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 		logging.GlobalLogger.Infof(
 			"Executing command asynchronously:\n %s", codeBlock.Content)
 
+		var accumulatedOutput strings.Builder
+		
 		output, err := shells.ExecuteBashCommand(codeBlock.Content, shells.BashCommandConfiguration{
 			EnvironmentVariables: env,
 			InheritEnvironment:   true,
 			InteractiveCommand:   false,
 			WriteToHistory:       true,
+			StreamOutput:         true,
+			OutputCallback: func(output string, isStderr bool) {
+				// In the async case, just accumulate the output
+				accumulatedOutput.WriteString(output)
+				// Print in real-time for interactive experience
+				fmt.Print(output)
+			},
 		})
+		
+		// Update output with accumulated content if needed
+		if output.StdOut == "" && accumulatedOutput.Len() > 0 {
+			output.StdOut = accumulatedOutput.String()
+		}
+		
 		if err != nil {
 			logging.GlobalLogger.Errorf("Error executing command:\n %s", err.Error())
 			return FailedCommandMessage{
