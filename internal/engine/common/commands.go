@@ -26,8 +26,23 @@ type FailedCommandMessage struct {
 	SimilarityScore float64
 }
 
+// Emitted when command output is streaming
+type StreamingOutputMessage struct {
+	Output   string
+	IsStderr bool
+}
+
 type ExitMessage struct {
 	EncounteredFailure bool
+}
+
+func SendStreamingOutput(output string, isStderr bool) tea.Cmd {
+	return func() tea.Msg {
+		return StreamingOutputMessage{
+			Output:   output,
+			IsStderr: isStderr,
+		}
+	}
 }
 
 func Exit(encounteredFailure bool) tea.Cmd {
@@ -52,9 +67,18 @@ func ExecuteCodeBlockAsync(codeBlock parsers.CodeBlock, env map[string]string) t
 			WriteToHistory:       true,
 			StreamOutput:         true,
 			OutputCallback: func(output string, isStderr bool) {
-				// In the async case, just accumulate the output
+				// Accumulate the output
 				accumulatedOutput.WriteString(output)
-				// Print in real-time for interactive experience
+				
+				// Log the streaming output
+				if isStderr {
+					logging.GlobalLogger.Infof("Streaming stderr: %s", output)
+				} else {
+					logging.GlobalLogger.Infof("Streaming stdout: %s", output)
+				}
+				
+				// Print the output directly to show streaming works
+				// This is a simple approach for testing the streaming functionality
 				fmt.Print(output)
 			},
 		})
