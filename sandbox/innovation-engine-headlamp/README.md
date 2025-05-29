@@ -2,7 +2,7 @@
 
 [Headlamp](https://headlamp.dev/) is an extensible Kubernetes UI that enables users to manage and visualize their clusters through a modern, customizable interface. It supports plugins to extend its capabilities with custom UIs and backend integrations.
 
-The **innovation-engine** plugin integrates the Innovation Engine (IE) CLI directly into Headlamp. This allows users to run IE commands from within the Headlamp dashboard, providing a seamless workflow for interacting with Innovation Engine features alongside cluster management tasks. The plugin includes a secure backend API that only allows whitelisted commands (by default, the IE CLI), ensuring safe execution of shell commands from the browser UI.
+The **innovation-engine** plugin integrates the Innovation Engine (IE) CLI directly into Headlamp. This allows users to run IE commands from within the Headlamp dashboard, providing a seamless workflow for interacting with Innovation Engine features alongside cluster management tasks. The plugin includes a secure backend API that only allows allowlisted commands (by default, the IE CLI), ensuring safe execution of shell commands from the browser UI.
 
 ----------------------------------------------------------------------------
 ----------------------------------------------------------------------------
@@ -42,7 +42,7 @@ From the root of the Innovation Engine repository:
 
 ### Running the Shell Exec Backend and the Headlamp Plugin
 
-The backend service provides a secure API for executing whitelisted shell commands—by default, only the Innovation Engine CLI (`ie`)—from the Headlamp UI. This allows users to interact with Innovation Engine features directly in the browser, while ensuring that only approved commands can be run for security. By default, the backend listens on port 4000.
+The backend service provides a secure API for executing allowlisted shell commands—by default, only the Innovation Engine CLI (`ie`)—from the Headlamp UI. This allows users to interact with Innovation Engine features directly in the browser, while ensuring that only approved commands can be run for security. By default, the backend listens on port 4000.
 
 In a terminal, from anywhere in the repository, start the backend service:
 
@@ -54,7 +54,7 @@ npm run start &
 popd
 ```
 
-The backend will automatically discover the Innovation Engine binary at `../../bin/ie` (relative to the plugin directory) and allow it as a whitelisted command if present.
+The backend will automatically discover the Innovation Engine binary at `../../bin/ie` (relative to the plugin directory) and allow it as a allowlisted command if present.
 
 ### Using the Plugin in Headlamp
 
