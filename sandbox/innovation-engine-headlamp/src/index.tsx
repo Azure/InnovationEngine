@@ -131,7 +131,7 @@ registerRoute({
 
     return (
       <SectionBox title="Innovation Engine" textAlign="center" paddingTop={2}>
-        <Typography>Enter a whitelisted shell command (e.g., ie):</Typography>
+        <Typography>Enter an allowlisted shell command (e.g., ie):</Typography>
         <input
           type="text"
           value={command}
