@@ -1,3 +1,18 @@
+## Implementation Guidelines
+- Follow the Headlamp plugin architecture and React best practices.
+- Use functional components and hooks for state management.
+- Ensure the UI is responsive and accessible, following WCAG guidelines.
+- Use CSS modules or styled-components for styling to avoid global conflicts.
+- Use TypeScript for type safety and better developer experience.
+- Document all implementation details in the appropriate specification document
+- Write tests for all major functionality, including unit tests for components and integration tests for user flows.
+- Use Jest and React Testing Library for testing React components.
+- Ensure all code is linted and formatted according to the project's style guide (e.g., ESLint, Prettier).
+- Use Git for version control, following the Git Flow branching strategy.
+- Do not commit anything to Git until it has been reviewed and approved by at least one other team member.
+- Do not ask for a review until a unity of work is complete, tested, and ready for review.
+- Ask for a review of work done as soon as possible, even if it is not complete, so that feedback can be incorporated early.
+
 ## Version Management
 
 - Use semantic versioning (e.g., v1.0.0) for releases.
