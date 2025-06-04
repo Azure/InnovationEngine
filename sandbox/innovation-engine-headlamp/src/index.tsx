@@ -8,6 +8,9 @@ import { SectionBox } from '@kinvolk/headlamp-plugin/lib/CommonComponents';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
+// Import the routes for Executable Document editor
+import './execDocRoutes';
+
 // Add an entry to the home sidebar (not in cluster).
 registerSidebarEntry({
   name: 'mypluginsidebar',
@@ -326,6 +329,27 @@ registerRoute({
                 {suggestion}
               </button>
             ))}
+          </div>
+          
+          <div style={{ marginTop: '20px', textAlign: 'center', padding: '15px', backgroundColor: '#e8f5e9', borderRadius: '8px' }}>
+            <Typography variant="subtitle1" style={{ marginBottom: '8px' }}>Try our new Exec Doc Editor!</Typography>
+            <Typography variant="body2" style={{ marginBottom: '12px' }}>
+              The new Executable Document Editor provides a more powerful interface for authoring and editing Exec Docs.
+            </Typography>
+            <a
+              href="#/exec-doc-editor"
+              style={{
+                display: 'inline-block',
+                padding: '8px 16px',
+                backgroundColor: '#4caf50',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '4px',
+                fontWeight: 'bold'
+              }}
+            >
+              Open Exec Doc Editor
+            </a>
           </div>
         </div>
       </SectionBox>
