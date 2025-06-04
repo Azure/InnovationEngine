@@ -6,12 +6,14 @@ interface OverviewAuthoringProps {
   initialOverview?: string;
   onSaveOverview: (overview: string) => void;
   onGenerateSteps: () => void;
+  authoringPhase?: 'create-overview' | 'refine-overview' | 'implement-content' | 'refine-content';
 }
 
 export const OverviewAuthoring: React.FC<OverviewAuthoringProps> = ({
   initialOverview = '',
   onSaveOverview,
-  onGenerateSteps
+  onGenerateSteps,
+  authoringPhase = 'create-overview'
 }) => {
   const [promptInput, setPromptInput] = React.useState('');
   const [generatedOverview, setGeneratedOverview] = React.useState(initialOverview);
@@ -81,11 +83,37 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
     onGenerateSteps();
   };
   
+  // Get phase-appropriate button text
+  const getActionButtonText = () => {
+    switch (authoringPhase) {
+      case 'create-overview':
+        return 'Approve & Create Overview';
+      case 'refine-overview':
+        return 'Approve & Generate Steps';
+      default:
+        return 'Approve & Generate Steps';
+    }
+  };
+  
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Typography variant="h5" style={{ marginBottom: '16px' }}>
-        Executable Document Overview
+        {authoringPhase === 'create-overview' ? 'Create Document Overview' : 'Refine Document Overview'}
       </Typography>
+      
+      {/* Phase guidance */}
+      <div style={{ 
+        padding: '8px 12px', 
+        backgroundColor: '#f0f9ff', 
+        borderLeft: '4px solid #1976d2',
+        marginBottom: '16px'
+      }}>
+        <Typography variant="body2">
+          {authoringPhase === 'create-overview' 
+            ? 'Step 1: Create an overview that describes what this document will accomplish.' 
+            : 'Step 2: Refine your overview to ensure it accurately describes the intended workflow.'}
+        </Typography>
+      </div>
       
       {/* Panel Toggle Buttons */}
       <div style={{ display: 'flex', marginBottom: '16px' }}>
@@ -258,7 +286,7 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
                   opacity: !generatedOverview.trim() ? 0.7 : 1
                 }}
               >
-                Approve & Generate Steps
+                {getActionButtonText()}
               </button>
             </div>
           </div>

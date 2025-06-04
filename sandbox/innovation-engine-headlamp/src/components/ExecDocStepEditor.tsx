@@ -8,6 +8,7 @@ interface ExecDocStepEditorProps {
   onRunStep: (stepId: string) => void;
   currentContext: string;
   currentNamespace: string;
+  authoringPhase?: 'create-overview' | 'refine-overview' | 'implement-content' | 'refine-content';
 }
 
 export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
@@ -15,12 +16,25 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
   onStepChange,
   onRunStep,
   currentContext,
-  currentNamespace
+  currentNamespace,
+  authoringPhase = 'refine-content'
 }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [assistancePrompt, setAssistancePrompt] = React.useState('');
   const [showAssistantPanel, setShowAssistantPanel] = React.useState(false);
   const [assistantMessages, setAssistantMessages] = React.useState<Message[]>([]);
+  
+  // Get phase-specific guidance text
+  const getPhaseGuidance = () => {
+    switch (authoringPhase) {
+      case 'implement-content':
+        return 'Step 3: Implement executable content based on the approved overview.';
+      case 'refine-content':
+        return 'Step 4: Refine the content to ensure it works correctly and is easy to follow.';
+      default:
+        return '';
+    }
+  };
   
   const handleRunStep = () => {
     onRunStep(step.id);
@@ -220,6 +234,18 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
 
       {/* Step Content */}
       <div style={{ padding: '16px' }}>
+        {/* Phase guidance - only show for active phases */}
+        {(authoringPhase === 'implement-content' || authoringPhase === 'refine-content') && (
+          <div style={{ 
+            marginBottom: '16px',
+            padding: '8px 12px', 
+            backgroundColor: '#f0f9ff', 
+            borderLeft: '4px solid #1976d2',
+          }}>
+            <Typography variant="body2">{getPhaseGuidance()}</Typography>
+          </div>
+        )}
+      
         {renderContextWarning()}
         
         {isEditing ? (
@@ -294,6 +320,18 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
             <pre style={{ margin: 0, fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
               {step.executionOutput}
             </pre>
+          </div>
+        )}
+
+        {/* Phase Guidance */}
+        {authoringPhase && (
+          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>
+            <Typography variant="subtitle1" style={{ marginBottom: '8px', fontWeight: 'medium' }}>
+              Phase Guidance:
+            </Typography>
+            <Typography variant="body2" style={{ margin: 0 }}>
+              {getPhaseGuidance()}
+            </Typography>
           </div>
         )}
       </div>

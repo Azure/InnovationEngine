@@ -17,6 +17,38 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
   const [execDoc, setExecDoc] = React.useState<ExecDoc | null>(initialDoc);
   const [currentView, setCurrentView] = React.useState<'overview' | 'steps'>(initialDoc ? 'steps' : 'overview');
   
+  // State for tracking current phase in the authoring process
+  const [authoringPhase, setAuthoringPhase] = React.useState<'create-overview' | 'refine-overview' | 'implement-content' | 'refine-content'>(
+    initialDoc ? 'refine-content' : 'create-overview'
+  );
+  
+  // Functions to progress through authoring phases
+  const moveToRefineOverview = () => {
+    setAuthoringPhase('refine-overview');
+    setCurrentView('overview');
+  };
+  
+  const moveToImplementContent = () => {
+    setAuthoringPhase('implement-content');
+    setCurrentView('steps');
+  };
+  
+  const moveToRefineContent = () => {
+    setAuthoringPhase('refine-content');
+    setCurrentView('steps');
+  };
+  
+  // Function to get the current phase name for display
+  const getPhaseDisplayName = (): string => {
+    switch (authoringPhase) {
+      case 'create-overview': return 'Phase 1: Create Overview';
+      case 'refine-overview': return 'Phase 2: Refine Overview';
+      case 'implement-content': return 'Phase 3: Implement Content';
+      case 'refine-content': return 'Phase 4: Refine Content';
+      default: return 'Document Authoring';
+    }
+  };
+  
   // State for file operations
   const [recentFiles, setRecentFiles] = React.useState<string[]>([]);
   const [autoSaveEnabled, setAutoSaveEnabled] = React.useState(false);
@@ -32,7 +64,7 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
   // Create a new document with overview
   const handleSaveOverview = (overview: string) => {
     if (!execDoc) {
-      // Create new doc
+      // Create new doc - we're in the create-overview phase
       setExecDoc({
         id: `doc-${Date.now()}`,
         title: overview.split('\n')[0].replace(/^# /, '') || 'Untitled Document',
@@ -43,6 +75,8 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
         kubeContext: currentContext,
         kubeNamespace: currentNamespace
       });
+      // Move to refine-overview phase
+      moveToRefineOverview();
     } else {
       // Update existing doc
       setExecDoc({
@@ -98,7 +132,8 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
       updatedAt: new Date()
     });
     
-    setCurrentView('steps');
+    // Move to implement-content phase
+    moveToImplementContent();
   };
 
   // Handle step changes
@@ -112,6 +147,11 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
       ),
       updatedAt: new Date()
     });
+    
+    // If we're still in implement-content phase and make a change, move to refine-content
+    if (authoringPhase === 'implement-content') {
+      moveToRefineContent();
+    }
   };
 
   // Handle step execution (simulated)
@@ -184,6 +224,7 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
         initialOverview={execDoc?.overview || ''}
         onSaveOverview={handleSaveOverview}
         onGenerateSteps={handleGenerateSteps}
+        authoringPhase={authoringPhase}
       />
     );
   };
@@ -268,6 +309,7 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
               onRunStep={handleRunStep}
               currentContext={currentContext}
               currentNamespace={currentNamespace}
+              authoringPhase={authoringPhase}
             />
           ))
         )}
@@ -278,6 +320,84 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '16px' }}>
+        {/* Authoring Phase Indicator */}
+        <div style={{ 
+          marginBottom: '16px',
+          padding: '8px 12px',
+          backgroundColor: '#e3f2fd',
+          borderRadius: '4px',
+          border: '1px solid #bbdefb'
+        }}>
+          <Typography variant="subtitle1" style={{ fontWeight: 'bold' }}>{getPhaseDisplayName()}</Typography>
+          
+          <div style={{ 
+            display: 'flex', 
+            marginTop: '8px',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              margin: '4px 0'
+            }}>
+              <div style={{ 
+                width: '16px', 
+                height: '16px', 
+                borderRadius: '50%',
+                backgroundColor: authoringPhase === 'create-overview' ? '#1976d2' : '#ddd',
+                marginRight: '8px'
+              }}></div>
+              <Typography variant="body2">Create Overview</Typography>
+            </div>
+            
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              margin: '4px 0'
+            }}>
+              <div style={{ 
+                width: '16px', 
+                height: '16px', 
+                borderRadius: '50%',
+                backgroundColor: authoringPhase === 'refine-overview' ? '#1976d2' : '#ddd',
+                marginRight: '8px'
+              }}></div>
+              <Typography variant="body2">Refine Overview</Typography>
+            </div>
+            
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              margin: '4px 0'
+            }}>
+              <div style={{ 
+                width: '16px', 
+                height: '16px', 
+                borderRadius: '50%',
+                backgroundColor: authoringPhase === 'implement-content' ? '#1976d2' : '#ddd',
+                marginRight: '8px'
+              }}></div>
+              <Typography variant="body2">Implement Content</Typography>
+            </div>
+            
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              margin: '4px 0'
+            }}>
+              <div style={{ 
+                width: '16px', 
+                height: '16px', 
+                borderRadius: '50%',
+                backgroundColor: authoringPhase === 'refine-content' ? '#1976d2' : '#ddd',
+                marginRight: '8px'
+              }}></div>
+              <Typography variant="body2">Refine Content</Typography>
+            </div>
+          </div>
+        </div>
+      
         {/* Kubernetes Context Selector */}
         <KubernetesContextSelector
           contexts={availableContexts}
