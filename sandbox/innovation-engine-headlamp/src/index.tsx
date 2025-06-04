@@ -163,3 +163,172 @@ registerSidebarEntry({
   icon: 'mdi:console',
   sidebar: 'Innovation-engine',
 });
+
+// Adding the Assistant sidebar entry
+registerSidebarEntry({
+  name: 'assistant',
+  label: 'Assistant',
+  url: '/assistant',
+  icon: 'mdi:robot',
+  sidebar: 'Innovation-engine',
+});
+
+// Adding a route for the Assistant page
+registerRoute({
+  path: '/assistant',
+  sidebar: {
+    item: 'assistant',
+    sidebar: 'Innovation-engine',
+  },
+  useClusterURL: false,
+  noAuthRequired: true,
+  name: 'assistant',
+  exact: true,
+  component: () => {
+    const [userQuery, setUserQuery] = React.useState('');
+    const [chatHistory, setChatHistory] = React.useState([
+      { role: 'assistant', content: 'Hello! I\'m the Innovation Engine Assistant. How can I help you with your Kubernetes or Executable Document needs?' }
+    ]);
+    const [isProcessing, setIsProcessing] = React.useState(false);
+    const chatContainerRef = React.useRef(null);
+
+    // Auto-scroll to bottom of chat when history changes
+    React.useEffect(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+    }, [chatHistory]);
+
+    // Handle sending a new query to the assistant
+    const handleSendQuery = () => {
+      if (!userQuery.trim()) return;
+      
+      // Add user query to chat history
+      setChatHistory(prev => [...prev, { role: 'user', content: userQuery }]);
+      
+      // Set processing state to show loading
+      setIsProcessing(true);
+      
+      // Simulate a response (this would be replaced with actual GitHub Copilot API call)
+      setTimeout(() => {
+        // Add simulated response
+        setChatHistory(prev => [...prev, { 
+          role: 'assistant', 
+          content: `I received your request: "${userQuery}". This is a placeholder response. In the full implementation, this would be processed by GitHub Copilot.`
+        }]);
+        setUserQuery('');
+        setIsProcessing(false);
+      }, 1000);
+    };
+
+    return (
+      <SectionBox title="Innovation Engine Assistant" textAlign="left" paddingTop={2}>
+        {/* Chat history display area */}
+        <div 
+          ref={chatContainerRef}
+          style={{ 
+            height: '400px', 
+            overflowY: 'auto', 
+            marginBottom: '20px',
+            padding: '10px',
+            border: '1px solid #e0e0e0',
+            borderRadius: '4px',
+            backgroundColor: '#f9f9f9'
+          }}
+        >
+          {chatHistory.map((message, index) => (
+            <div 
+              key={index} 
+              style={{
+                marginBottom: '10px',
+                textAlign: message.role === 'user' ? 'right' : 'left',
+              }}
+            >
+              <div 
+                style={{
+                  display: 'inline-block',
+                  maxWidth: '80%',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  backgroundColor: message.role === 'user' ? '#1976d2' : '#ffffff',
+                  color: message.role === 'user' ? 'white' : 'black',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                  border: message.role === 'assistant' ? '1px solid #e0e0e0' : 'none'
+                }}
+              >
+                <Typography>{message.content}</Typography>
+              </div>
+            </div>
+          ))}
+          {isProcessing && (
+            <div style={{ textAlign: 'center', padding: '10px' }}>
+              <Typography color="textSecondary">Processing your request...</Typography>
+            </div>
+          )}
+        </div>
+        
+        {/* Input area */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+          <textarea
+            value={userQuery}
+            onChange={(e) => setUserQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendQuery();
+              }
+            }}
+            placeholder="Enter your question or request here (e.g., 'Create a deployment for my app')"
+            style={{
+              flexGrow: 1,
+              padding: '10px',
+              borderRadius: '4px',
+              border: '1px solid #ccc',
+              minHeight: '100px',
+              resize: 'vertical',
+              fontFamily: 'inherit',
+              fontSize: '14px'
+            }}
+          />
+          <button
+            onClick={handleSendQuery}
+            disabled={isProcessing || !userQuery.trim()}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#1976d2',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: isProcessing || !userQuery.trim() ? 'not-allowed' : 'pointer',
+              opacity: isProcessing || !userQuery.trim() ? 0.7 : 1
+            }}
+          >
+            Send
+          </button>
+        </div>
+
+        {/* Quick start section */}
+        <div style={{ marginTop: '20px', borderTop: '1px solid #e0e0e0', paddingTop: '20px' }}>
+          <Typography variant="h6">Quick Start:</Typography>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
+            {['Create a simple deployment', 'Expose a service', 'Author an Executable Document', 'Learn about Kubernetes basics'].map((suggestion, index) => (
+              <button
+                key={index}
+                onClick={() => setUserQuery(suggestion)}
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: '#f1f1f1',
+                  border: '1px solid #ddd',
+                  borderRadius: '16px',
+                  cursor: 'pointer'
+                }}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+      </SectionBox>
+    );
+  },
+});
