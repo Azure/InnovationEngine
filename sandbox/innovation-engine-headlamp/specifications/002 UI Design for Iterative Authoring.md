@@ -12,23 +12,21 @@
 As a user of the Assistant Headlamp plugin, I want an intuitive user interface that allows me to iteratively author, edit, and validate Executable Documents (Exec Docs) with the help of GitHub Copilot, so that I can efficiently create, test, and manage step-by-step automation for Kubernetes workflows.
 
 **Authoring Process:**
-The Executable Document authoring process follows a structured four-step approach:
-1. **Create overview** - Generate a high-level description of what the document will accomplish
-2. **Manually edit or ask Copilot to make changes** - Refine the overview to ensure clarity and completeness
-3. **Write executable content to implement the described overview** - Generate step-by-step instructions with executable code
-4. **Manually edit or ask Copilot to make changes** - Refine the executable content for accuracy and usability
+The Executable Document authoring process follows a streamlined three-step approach:
+1. **Create and refine overview** - Generate and edit a high-level description of what the document will accomplish
+2. **Write executable content to implement the described overview** - Generate step-by-step instructions with executable code
+3. **Manually edit or ask Copilot to make changes** - Refine the executable content for accuracy and usability
 
 ## Requirements
 
 ### Functional Requirements
-1. The UI must support a structured process for authoring an Executable Document:
-   - Create overview
-   - Manually edit or ask Copilot to make changes to the overview
+1. The UI must support a streamlined process for authoring an Executable Document:
+   - Create and refine overview
    - Write executable content to implement the described overview
    - Manually edit or ask Copilot to make changes to the executable content
 2. The UI must allow the user to author the overview of a new Exec Doc by submitting a short prompt to Copilot.
 3. The user must be able to edit the overview either by direct text editing or by providing further instructions to Copilot for revision.
-4. The user must be able to approve and submit the overview for conversion into a full Executable Document.
+4. The user must be able to directly submit the overview for conversion into a full Executable Document.
 5. The UI must display the Exec Doc as a set of collapsible areas, each representing a step in the documented process.
 6. The user must be able to edit the content of each step, either directly in the UI or by interacting with Copilot for suggestions or rewrites.
 7. The user must be able to run each step of the Exec Doc individually from the UI to validate its correctness and behavior.
@@ -87,14 +85,11 @@ The Executable Document authoring process follows a structured four-step approac
 - **Structured Authoring Flow**:
   - Step 1: Create Overview
     - Initial prompt input for generating document outline
-    - Overview preview and approval
-  - Step 2: Overview Refinement
-    - Direct editing interface or Copilot-assisted refinement
-    - Version tracking of major edits
-  - Step 3: Executable Content Creation
+    - Overview preview and direct editing
+  - Step 2: Executable Content Creation
     - Automatic step generation based on approved overview
     - Step-by-step implementation guidance
-  - Step 4: Content Refinement
+  - Step 3: Content Refinement
     - Direct editing interface or Copilot-assisted refinement for each step
     - Validation through step execution
 
@@ -113,7 +108,7 @@ The Executable Document authoring process follows a structured four-step approac
 - **Preview Panel**:
   - Formatted Markdown preview of the overview
   - Edit button to switch to raw Markdown editing
-  - "Approve and Generate Steps" button to directly create steps from the overview
+  - "Generate Steps" button to directly create steps from the overview
 
 #### Exec Doc Editor UI
 - **Document Structure**:
@@ -155,23 +150,25 @@ The Executable Document authoring process follows a structured four-step approac
 
 #### Structured Authoring Process Implementation
 - **Phase Tracking**:
-  - Implemented authoring phase state management in `ExecDocEditor.tsx` with the states: 'create-overview', 'refine-overview', 'implement-content', and 'refine-content'
-  - Added phase transition functions: `moveToRefineOverview()`, `moveToImplementContent()`, and `moveToRefineContent()`
-  - Connected phase transitions to appropriate user actions (overview creation, step generation, step edits)
+  - Implemented authoring phase state management in `ExecDocEditor.tsx` with the states: 'create-overview', 'implement-content', and 'refine-content'
+  - Added phase transition functions: `moveToImplementContent()` and `moveToRefineContent()`
+  - Connected phase transitions to appropriate user actions (overview creation and editing, step generation, step edits)
 
 - **Phase-Aware UI**:
   - Added a visual phase indicator with progress tracking at the top of the editor
   - Implemented phase-specific guidance messages for each step of the process
   - Updated component props to pass current phase information between components
-  - Modified button text and UI elements to reflect the current authoring phase
+  - Modified button text and UI elements to reflect the current authoring phase, with direct "Generate Steps" option
 
 - **Component Updates**:
   - Enhanced `OverviewAuthoring.tsx` to display different UI elements and instructions based on current phase
+  - Simplified the overview creation process by merging overview creation and refinement into a single step
+  - Renamed the main action button from "Approve & Create Overview" to "Generate Steps" to streamline the workflow
   - Extended `ExecDocStepEditor.tsx` to show phase-specific guidance for implementing or refining content
   - Implemented comprehensive step property editing in `ExecDocStepEditor.tsx` for all step attributes
   - Added intelligent suggestion handling with contextual application to appropriate step sections
   - Improved step execution UI with better visual indicators and controls
-  - Updated existing UI components to ensure phase transitions maintain proper state
+  - Updated existing UI components to ensure simplified phase transitions maintain proper state
   - Implemented keyboard shortcuts (CTRL+ENTER) across all text input areas:
     - Description and code textareas in `ExecDocStepEditor.tsx` support CTRL+ENTER to save changes
     - Assistance prompt textarea in `ExecDocStepEditor.tsx` uses CTRL+ENTER to submit requests
@@ -190,13 +187,13 @@ The Executable Document authoring process follows a structured four-step approac
 - Context/namespace selection and display functions correctly
 
 ### Integration Tests
-- End-to-end flow following the structured process: create overview, refine overview, implement executable content, refine content, run steps, save/load
+- End-to-end flow following the streamlined process: create/refine overview, implement executable content, refine content, run steps, save/load
 - Error handling for Copilot/API failures and file I/O
 - Context/namespace switching and its effect on step execution
 - Transition between authoring process phases with proper state preservation
 
 ### Acceptance Criteria
-- A user can complete all four steps of the authoring process (create overview, refine overview, implement executable content, refine content) within the UI
+- A user can complete all three steps of the streamlined authoring process (create/refine overview, implement executable content, refine content) within the UI
 - The structured authoring process provides clear guidance and transitions between phases
 - All actions provide clear feedback and are accessible
 - Kubernetes context and namespace can be selected and displayed, affecting step execution as expected

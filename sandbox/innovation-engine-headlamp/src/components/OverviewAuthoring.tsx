@@ -6,7 +6,7 @@ interface OverviewAuthoringProps {
   initialOverview?: string;
   onSaveOverview: (overview: string) => void;
   onGenerateSteps: () => void;
-  authoringPhase?: 'create-overview' | 'refine-overview' | 'implement-content' | 'refine-content';
+  authoringPhase?: 'create-overview' | 'implement-content' | 'refine-content';
 }
 
 export const OverviewAuthoring: React.FC<OverviewAuthoringProps> = ({
@@ -82,18 +82,16 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
   const getActionButtonText = () => {
     switch (authoringPhase) {
       case 'create-overview':
-        return 'Approve & Create Overview';
-      case 'refine-overview':
-        return 'Approve & Generate Steps';
+        return 'Generate Steps';
       default:
-        return 'Approve & Generate Steps';
+        return 'Generate Steps';
     }
   };
   
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Typography variant="h5" style={{ marginBottom: '16px' }}>
-        {authoringPhase === 'create-overview' ? 'Create Document Overview' : 'Refine Document Overview'}
+        Create & Edit Document Overview
       </Typography>
       
       {/* Phase guidance */}

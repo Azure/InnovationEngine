@@ -18,16 +18,12 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
   const [currentView, setCurrentView] = React.useState<'overview' | 'steps'>(initialDoc ? 'steps' : 'overview');
   
   // State for tracking current phase in the authoring process
-  const [authoringPhase, setAuthoringPhase] = React.useState<'create-overview' | 'refine-overview' | 'implement-content' | 'refine-content'>(
+  const [authoringPhase, setAuthoringPhase] = React.useState<'create-overview' | 'implement-content' | 'refine-content'>(
     initialDoc ? 'refine-content' : 'create-overview'
   );
   
   // Functions to progress through authoring phases
-  const moveToRefineOverview = () => {
-    setAuthoringPhase('refine-overview');
-    setCurrentView('overview');
-  };
-  
+  // Note: 'refine-overview' phase removed to streamline the workflow
   const moveToImplementContent = () => {
     setAuthoringPhase('implement-content');
     setCurrentView('steps');
@@ -41,10 +37,9 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
   // Function to get the current phase name for display
   const getPhaseDisplayName = (): string => {
     switch (authoringPhase) {
-      case 'create-overview': return 'Phase 1: Create Overview';
-      case 'refine-overview': return 'Phase 2: Refine Overview';
-      case 'implement-content': return 'Phase 3: Implement Content';
-      case 'refine-content': return 'Phase 4: Refine Content';
+      case 'create-overview': return 'Phase 1: Create & Edit Overview';
+      case 'implement-content': return 'Phase 2: Implement Content';
+      case 'refine-content': return 'Phase 3: Refine Content';
       default: return 'Document Authoring';
     }
   };
@@ -75,8 +70,8 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
         kubeContext: currentContext,
         kubeNamespace: currentNamespace
       });
-      // Move to refine-overview phase
-      moveToRefineOverview();
+      // Stay in create-overview phase - refinement is part of the same step now
+      // The user can directly generate steps from here
     } else {
       // Update existing doc
       setExecDoc({
@@ -350,20 +345,7 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
               <Typography variant="body2">Create Overview</Typography>
             </div>
             
-            <div style={{ 
-              display: 'flex',
-              alignItems: 'center',
-              margin: '4px 0'
-            }}>
-              <div style={{ 
-                width: '16px', 
-                height: '16px', 
-                borderRadius: '50%',
-                backgroundColor: authoringPhase === 'refine-overview' ? '#1976d2' : '#ddd',
-                marginRight: '8px'
-              }}></div>
-              <Typography variant="body2">Refine Overview</Typography>
-            </div>
+            {/* Refine overview phase removed - it's integrated with Create Overview */}
             
             <div style={{ 
               display: 'flex',

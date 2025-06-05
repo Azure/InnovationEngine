@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2025-06-05 - Commit: (Streamlined UI workflow)
+
+### Changed
+- Streamlined the authoring process by eliminating the intermediate "Approve & Create Overview" step
+- Renamed button to "Generate Steps" for direct step creation after overview editing
+- Updated documentation and specifications to reflect the simplified three-phase workflow
+- Improved user flow by merging overview creation and refinement phases
+
 ## [0.2.5] - 2025-06-04 - Commit: (Keyboard shortcut enhancements)
 
 ### Added
