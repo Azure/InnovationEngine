@@ -51,6 +51,8 @@ The Executable Document authoring process follows a structured four-step approac
 - The plugin must support screen readers, providing meaningful descriptions for all controls and dynamic content.
 - High-contrast mode and sufficient color contrast must be ensured for all UI elements.
 - All feedback (success, error, Copilot responses, execution results) must be accessible to assistive technologies.
+- Keyboard shortcuts (CTRL+ENTER) must be implemented for common actions like submitting prompts or saving edits.
+- Keyboard shortcuts must be clearly indicated in placeholder text and tooltips for better discoverability.
 - Accessibility must be considered in all user flows, including editing, running, saving, and loading Exec Docs.
 - Accessibility testing must be included in the acceptance criteria and test plans.
 
@@ -111,7 +113,7 @@ The Executable Document authoring process follows a structured four-step approac
 - **Preview Panel**:
   - Formatted Markdown preview of the overview
   - Edit button to switch to raw Markdown editing
-  - Approve button to finalize overview and proceed to step generation
+  - "Approve and Generate Steps" button to directly create steps from the overview
 
 #### Exec Doc Editor UI
 - **Document Structure**:
@@ -121,9 +123,14 @@ The Executable Document authoring process follows a structured four-step approac
 
 - **Step Editing**:
   - Full-height rich text/Markdown editor for each step (minimum 10-12 lines visible)
+  - Complete editing capabilities for all step properties (not just description)
+  - Toggle controls for code/non-code blocks and expanded/collapsed state
+  - Ability to reset execution status for steps
   - Copilot assistance button to get help with specific steps
   - Syntax highlighting for code blocks
+  - Context-aware suggestion application to either description or code
   - Preview toggle to see rendered content
+  - Keyboard shortcuts (CTRL+ENTER) to save changes or submit prompts
 
 - **Step Execution**:
   - Play button for each step
@@ -161,7 +168,14 @@ The Executable Document authoring process follows a structured four-step approac
 - **Component Updates**:
   - Enhanced `OverviewAuthoring.tsx` to display different UI elements and instructions based on current phase
   - Extended `ExecDocStepEditor.tsx` to show phase-specific guidance for implementing or refining content
+  - Implemented comprehensive step property editing in `ExecDocStepEditor.tsx` for all step attributes
+  - Added intelligent suggestion handling with contextual application to appropriate step sections
+  - Improved step execution UI with better visual indicators and controls
   - Updated existing UI components to ensure phase transitions maintain proper state
+  - Implemented keyboard shortcuts (CTRL+ENTER) across all text input areas:
+    - Description and code textareas in `ExecDocStepEditor.tsx` support CTRL+ENTER to save changes
+    - Assistance prompt textarea in `ExecDocStepEditor.tsx` uses CTRL+ENTER to submit requests
+    - Overview textarea and prompt inputs in `OverviewAuthoring.tsx` handle CTRL+ENTER for submitting
 
 - **Version Management**:
   - Updated version in `package.json` from 0.2.0 to 0.2.1

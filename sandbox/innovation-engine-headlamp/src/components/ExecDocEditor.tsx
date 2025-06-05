@@ -309,7 +309,6 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
               onRunStep={handleRunStep}
               currentContext={currentContext}
               currentNamespace={currentNamespace}
-              authoringPhase={authoringPhase}
             />
           ))
         )}

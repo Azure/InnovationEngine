@@ -1,6 +1,6 @@
-import React from 'react';
 import Typography from '@mui/material/Typography';
-import { ExecDoc, ExecDocStep, Message } from './ExecDocTypes';
+import React from 'react';
+import { Message } from './ExecDocTypes';
 
 interface OverviewAuthoringProps {
   initialOverview?: string;
@@ -70,11 +70,6 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
       // Switch to preview panel after generating
       setActivePanel('preview');
     }, 1000);
-  };
-  
-  // Handle saving the overview
-  const handleSaveOverview = () => {
-    onSaveOverview(generatedOverview);
   };
   
   // Handle proceeding to step generation
@@ -169,6 +164,12 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
                 type="text"
                 value={promptInput}
                 onChange={(e) => setPromptInput(e.target.value)}
+                onKeyDown={(e) => {
+                  // Handle CTRL+ENTER to submit prompt
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && promptInput.trim()) {
+                    handleSendPrompt();
+                  }
+                }}
                 placeholder="E.g., Create a deployment for a Node.js application"
                 style={{
                   flex: 1,
@@ -305,6 +306,14 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
               <textarea
                 value={generatedOverview}
                 onChange={(e) => setGeneratedOverview(e.target.value)}
+                onKeyDown={(e) => {
+                  // Handle CTRL+ENTER to save changes and exit edit mode
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && generatedOverview.trim()) {
+                    e.preventDefault(); // Prevent default behavior (newline)
+                    setIsEditingOverview(false); // Exit edit mode
+                  }
+                }}
+                placeholder="Enter your document overview content. Press CTRL+ENTER to save changes."
                 style={{
                   width: '100%',
                   height: '100%',

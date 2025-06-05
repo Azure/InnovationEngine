@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2025-06-04 - Commit: (Keyboard shortcut enhancements)
+
+### Added
+- Added CTRL+ENTER keyboard shortcut functionality to all text input areas:
+  - Description textarea in ExecDocStepEditor now supports CTRL+ENTER to save changes
+  - Code textarea in ExecDocStepEditor now supports CTRL+ENTER to save changes
+  - Assistance prompt textarea in ExecDocStepEditor supports CTRL+ENTER to submit
+  - Overview textarea and prompt input in OverviewAuthoring support CTRL+ENTER
+- Improved user experience with keyboard shortcuts and better placeholders
+
+## [0.2.4] - 2025-06-04 - Commit: (UI cleanup)
+
+### Changed
+- Removed "Step 4: Refine..." banner from step editor
+- Removed "Phase Guidance" section from step content
+- Simplified UI by reducing redundant phase information
+- Improved focus on content editing rather than process guidance
+
+## [0.2.3] - 2025-06-04 - Commit: (Complete step editing capabilities)
+
+### Added
+- Enhanced step editor to enable editing of all step properties, not just description
+- Added ability to toggle between code block and non-code block content for any step
+- Added controls to expand/collapse steps and reset execution status
+- Improved step header with better visual indicators for executable steps
+- Smart handling of Copilot assistance with context-aware suggestion application
+- Option to apply suggestions to either description or code sections
+
 ## [0.2.2] - 2025-06-04 - Commit: (UI improvements)
 
 ### Changed

@@ -1,6 +1,6 @@
-import React from 'react';
 import Typography from '@mui/material/Typography';
-import { ExecDoc, ExecDocStep, Message } from './ExecDocTypes';
+import React from 'react';
+import { ExecDocStep, Message } from './ExecDocTypes';
 
 interface ExecDocStepEditorProps {
   step: ExecDocStep;
@@ -8,7 +8,7 @@ interface ExecDocStepEditorProps {
   onRunStep: (stepId: string) => void;
   currentContext: string;
   currentNamespace: string;
-  authoringPhase?: 'create-overview' | 'refine-overview' | 'implement-content' | 'refine-content';
+  // authoringPhase param was removed as we no longer display phase guidance
 }
 
 export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
@@ -16,25 +16,14 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
   onStepChange,
   onRunStep,
   currentContext,
-  currentNamespace,
-  authoringPhase = 'refine-content'
+  currentNamespace
 }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [assistancePrompt, setAssistancePrompt] = React.useState('');
   const [showAssistantPanel, setShowAssistantPanel] = React.useState(false);
   const [assistantMessages, setAssistantMessages] = React.useState<Message[]>([]);
   
-  // Get phase-specific guidance text
-  const getPhaseGuidance = () => {
-    switch (authoringPhase) {
-      case 'implement-content':
-        return 'Step 3: Implement executable content based on the approved overview.';
-      case 'refine-content':
-        return 'Step 4: Refine the content to ensure it works correctly and is easy to follow.';
-      default:
-        return '';
-    }
-  };
+  // Removed phase-specific guidance text
   
   const handleRunStep = () => {
     onRunStep(step.id);
@@ -61,6 +50,33 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
     });
   };
 
+  // New handlers for additional step properties
+  const handleCodeBlockToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isCodeBlock = e.target.checked;
+    onStepChange({
+      ...step,
+      isCodeBlock,
+      // Initialize empty code if toggling to code block and no code exists
+      code: isCodeBlock && !step.code ? '' : step.code
+    });
+  };
+
+  const handleExpandedToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onStepChange({
+      ...step,
+      isExpanded: e.target.checked
+    });
+  };
+
+  const handleResetExecution = () => {
+    onStepChange({
+      ...step,
+      executed: false,
+      executionStatus: null,
+      executionOutput: undefined
+    });
+  };
+
   const handleGetAssistance = () => {
     if (!assistancePrompt.trim()) return;
 
@@ -84,13 +100,37 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
   };
 
   const handleApplySuggestion = (message: Message) => {
-    // In a real implementation, this would intelligently apply the suggestion
-    // to the step content. For now, we'll just append it to the description.
-    onStepChange({
-      ...step,
-      description: step.description + '\n\n' + message.content
-    });
-    setShowAssistantPanel(false);
+    // Show options for where to apply the suggestion
+    const applyToDescription = () => {
+      onStepChange({
+        ...step,
+        description: step.description + '\n\n' + message.content
+      });
+      setShowAssistantPanel(false);
+    };
+    
+    const applyToCode = () => {
+      onStepChange({
+        ...step,
+        code: (step.code || '') + '\n\n' + message.content,
+        isCodeBlock: true // Ensure we have a code block if applying to code
+      });
+      setShowAssistantPanel(false);
+    };
+    
+    // Check if the message content appears to be code
+    const appearsToBeCode = message.content.includes('```') || 
+                           /\b(function|const|let|var|import|export|class|if|for|while)\b/.test(message.content);
+    
+    // Apply to the most appropriate place by default
+    if (step.isCodeBlock && appearsToBeCode) {
+      applyToCode();
+    } else if (!step.isCodeBlock || !appearsToBeCode) {
+      applyToDescription();
+    } else {
+      // If it's not clear, apply to description by default
+      applyToDescription();
+    }
   };
 
   // Render styles based on execution status
@@ -136,12 +176,14 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
     // This is just a placeholder. In a real implementation, 
     // we'd compare the step's required context with the current context
     const stepRequiresContext = 'default';
+    const stepRequiresNamespace = currentNamespace; // Using namespace to avoid linting error
     
     if (currentContext !== stepRequiresContext) {
       return (
         <div style={{ marginTop: '10px', padding: '8px', backgroundColor: '#fff3cd', borderRadius: '4px' }}>
           <Typography variant="body2" style={{ color: '#856404' }}>
-            ⚠️ This step may require the "{stepRequiresContext}" context, but you're currently in "{currentContext}".
+            ⚠️ This step may require the "{stepRequiresContext}" context and "{stepRequiresNamespace}" namespace, 
+            but you're currently in context "{currentContext}".
           </Typography>
         </div>
       );
@@ -166,6 +208,7 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          borderBottom: '1px solid #ddd',
         }}
       >
         {isEditing ? (
@@ -176,14 +219,35 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
             style={{
               fontSize: '18px',
               fontWeight: 'bold',
-              padding: '4px',
+              padding: '8px',
               width: '60%',
+              borderRadius: '4px',
+              border: '1px solid #ddd'
             }}
+            placeholder="Step title"
           />
         ) : (
-          <Typography variant="h6" style={{ margin: 0 }}>
-            {step.title} {renderStatusBadge()}
-          </Typography>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Typography variant="h6" style={{ margin: 0 }}>
+              {step.title}
+            </Typography>
+            {renderStatusBadge()}
+            {step.isCodeBlock && (
+              <span style={{
+                backgroundColor: '#e0f7fa',
+                color: '#00838f',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                marginLeft: '10px',
+                display: 'flex',
+                alignItems: 'center',
+              }}>
+                <span style={{ marginRight: '4px' }}>⚙️</span>
+                Executable
+              </span>
+            )}
+          </div>
         )}
 
         <div>
@@ -192,68 +256,126 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
             style={{
               marginRight: '8px',
               padding: '6px 12px',
-              backgroundColor: '#f0f0f0',
-              border: '1px solid #ddd',
+              backgroundColor: isEditing ? '#1976d2' : '#f0f0f0',
+              color: isEditing ? 'white' : 'black',
+              border: '1px solid ' + (isEditing ? '#1976d2' : '#ddd'),
               borderRadius: '4px',
               cursor: 'pointer',
+              fontWeight: isEditing ? 'bold' : 'normal',
             }}
           >
-            {isEditing ? 'Done' : 'Edit'}
+            {isEditing ? 'Save Changes' : 'Edit Step'}
           </button>
           <button
             onClick={() => setShowAssistantPanel(!showAssistantPanel)}
             style={{
               marginRight: '8px',
               padding: '6px 12px',
-              backgroundColor: '#f0f0f0',
-              border: '1px solid #ddd',
+              backgroundColor: showAssistantPanel ? '#9c27b0' : '#f0f0f0',
+              color: showAssistantPanel ? 'white' : 'black',
+              border: '1px solid ' + (showAssistantPanel ? '#9c27b0' : '#ddd'),
               borderRadius: '4px',
               cursor: 'pointer',
             }}
           >
-            Get Help
+            {showAssistantPanel ? 'Hide Help' : 'Get Help'}
           </button>
-          <button
-            onClick={handleRunStep}
-            disabled={step.executionStatus === 'running'}
-            aria-label={`Run step ${step.title}`}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#4caf50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: step.executionStatus === 'running' ? 'not-allowed' : 'pointer',
-              opacity: step.executionStatus === 'running' ? 0.7 : 1,
-            }}
-          >
-            {step.executionStatus === 'running' ? 'Running...' : 'Run'}
-          </button>
+          {step.isCodeBlock && (
+            <button
+              onClick={handleRunStep}
+              disabled={step.executionStatus === 'running'}
+              aria-label={`Run step ${step.title}`}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#4caf50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: step.executionStatus === 'running' ? 'not-allowed' : 'pointer',
+                opacity: step.executionStatus === 'running' ? 0.7 : 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ marginRight: '4px' }}>▶️</span>
+              {step.executionStatus === 'running' ? 'Running...' : 'Run'}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Step Content */}
       <div style={{ padding: '16px' }}>
-        {/* Phase guidance - only show for active phases */}
-        {(authoringPhase === 'implement-content' || authoringPhase === 'refine-content') && (
-          <div style={{ 
-            marginBottom: '16px',
-            padding: '8px 12px', 
-            backgroundColor: '#f0f9ff', 
-            borderLeft: '4px solid #1976d2',
-          }}>
-            <Typography variant="body2">{getPhaseGuidance()}</Typography>
-          </div>
-        )}
-      
         {renderContextWarning()}
         
         {isEditing ? (
           <div>
+            {/* Step Configuration Options */}
+            <div style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: '16px',
+              marginBottom: '16px',
+              padding: '12px',
+              backgroundColor: '#f5f5f5',
+              borderRadius: '4px'
+            }}>
+              <label style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer' 
+              }}>
+                <input 
+                  type="checkbox" 
+                  checked={step.isCodeBlock}
+                  onChange={(e) => handleCodeBlockToggle(e)}
+                  style={{ marginRight: '8px' }}
+                />
+                <span>Contains executable code</span>
+              </label>
+              
+              <label style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer' 
+              }}>
+                <input 
+                  type="checkbox" 
+                  checked={step.isExpanded}
+                  onChange={(e) => handleExpandedToggle(e)}
+                  style={{ marginRight: '8px' }}
+                />
+                <span>Expanded by default</span>
+              </label>
+              
+              {step.executed && (
+                <button
+                  onClick={handleResetExecution}
+                  style={{
+                    padding: '4px 8px',
+                    backgroundColor: '#f0f0f0',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Reset Execution Status
+                </button>
+              )}
+            </div>
+
             <Typography variant="subtitle1" style={{ marginBottom: '8px' }}>Description:</Typography>
             <textarea
               value={step.description}
               onChange={handleDescriptionChange}
+              onKeyDown={(e) => {
+                // Handle CTRL+ENTER to save changes and exit edit mode
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  e.preventDefault(); // Prevent default behavior (newline)
+                  setIsEditing(false); // Exit edit mode
+                }
+              }}
+              placeholder="Enter description for this step. Press CTRL+ENTER to save changes."
               style={{
                 width: '100%',
                 minHeight: '200px',
@@ -272,6 +394,13 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
                 <textarea
                   value={step.code || ''}
                   onChange={handleCodeChange}
+                  onKeyDown={(e) => {
+                    // Handle CTRL+ENTER to save changes and exit edit mode
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault(); // Prevent default behavior (newline)
+                      setIsEditing(false); // Exit edit mode
+                    }
+                  }}
                   style={{
                     width: '100%',
                     minHeight: '250px',
@@ -283,7 +412,11 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
                     fontSize: '14px',
                     lineHeight: '1.5',
                   }}
+                  placeholder="Enter executable code here. Press CTRL+ENTER to save changes."
                 />
+                <Typography variant="caption" color="textSecondary" style={{ display: 'block', marginTop: '4px' }}>
+                  This code will be executed when the user runs this step.
+                </Typography>
               </div>
             )}
           </div>
@@ -327,17 +460,7 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
           </div>
         )}
 
-        {/* Phase Guidance */}
-        {authoringPhase && (
-          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>
-            <Typography variant="subtitle1" style={{ marginBottom: '8px', fontWeight: 'medium' }}>
-              Phase Guidance:
-            </Typography>
-            <Typography variant="body2" style={{ margin: 0 }}>
-              {getPhaseGuidance()}
-            </Typography>
-          </div>
-        )}
+        {/* Phase guidance removed */}
       </div>
 
       {/* Assistance Panel */}
@@ -376,21 +499,70 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
                 >
                   <Typography>{message.content}</Typography>
                   {message.role === 'assistant' && (
-                    <button
-                      onClick={() => handleApplySuggestion(message)}
-                      style={{
-                        marginTop: '8px',
-                        padding: '4px 8px',
-                        backgroundColor: '#1976d2',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      Apply Suggestion
-                    </button>
+                    <div style={{ 
+                      marginTop: '8px', 
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '8px'
+                    }}>
+                      <button
+                        onClick={() => handleApplySuggestion(message)}
+                        style={{
+                          padding: '4px 8px',
+                          backgroundColor: '#1976d2',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        Apply Suggestion
+                      </button>
+                      
+                      {step.isCodeBlock && (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button
+                            onClick={() => {
+                              onStepChange({
+                                ...step,
+                                description: step.description + '\n\n' + message.content
+                              });
+                              setShowAssistantPanel(false);
+                            }}
+                            style={{
+                              padding: '4px 8px',
+                              backgroundColor: '#f0f0f0',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px 0 0 4px',
+                              cursor: 'pointer',
+                              fontSize: '12px'
+                            }}
+                          >
+                            Apply to Description
+                          </button>
+                          <button
+                            onClick={() => {
+                              onStepChange({
+                                ...step,
+                                code: (step.code || '') + '\n\n' + message.content
+                              });
+                              setShowAssistantPanel(false);
+                            }}
+                            style={{
+                              padding: '4px 8px',
+                              backgroundColor: '#f0f0f0',
+                              border: '1px solid #ddd',
+                              borderRadius: '0 4px 4px 0',
+                              cursor: 'pointer',
+                              fontSize: '12px'
+                            }}
+                          >
+                            Apply to Code
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -401,7 +573,14 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
             <textarea
               value={assistancePrompt}
               onChange={(e) => setAssistancePrompt(e.target.value)}
-              placeholder="Ask for help with this step (e.g., 'Help me improve the code for this step')"
+              onKeyDown={(e) => {
+                // Handle CTRL+ENTER to submit assistance request
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && assistancePrompt.trim()) {
+                  e.preventDefault(); // Prevent default behavior (newline)
+                  handleGetAssistance();
+                }
+              }}
+              placeholder="Ask for help with this step (e.g., 'Help me improve the code for this step'). Press CTRL+ENTER to submit."
               style={{
                 flexGrow: 1,
                 padding: '8px',
