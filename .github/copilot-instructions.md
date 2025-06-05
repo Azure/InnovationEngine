@@ -13,6 +13,12 @@
 - Do not ask for a review until a unity of work is complete, tested, and ready for review.
 - Ask for a review of work done as soon as possible, even if it is not complete, so that feedback can be incorporated early.
 
+## Testing
+- Write unit tests for all components and functions.
+- Use integration tests to verify end-to-end functionality of user flows.
+- Ensure all tests pass before merging any changes.
+- When work is complete do not start the application, instead inform the user that all tests have passed and they should start the application if necessary and verify the work
+
 ## Version Management
 
 - Use semantic versioning (e.g., v1.0.0) for releases.

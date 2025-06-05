@@ -108,7 +108,14 @@ The Executable Document authoring process follows a streamlined three-step appro
 - **Preview Panel**:
   - Formatted Markdown preview of the overview
   - Edit button to switch to raw Markdown editing
+  - "Get Help" button to access Copilot assistance for overview improvement
   - "Generate Steps" button to directly create steps from the overview
+  
+- **Overview Help Panel**:
+  - Conversation interface to discuss the overview with Copilot
+  - Message history between user and Copilot
+  - Apply suggestion button to incorporate Copilot's improvements
+  - Text area for asking Copilot specific questions about the overview
 
 #### Exec Doc Editor UI
 - **Document Structure**:
@@ -164,6 +171,11 @@ The Executable Document authoring process follows a streamlined three-step appro
   - Enhanced `OverviewAuthoring.tsx` to display different UI elements and instructions based on current phase
   - Simplified the overview creation process by merging overview creation and refinement into a single step
   - Renamed the main action button from "Approve & Create Overview" to "Generate Steps" to streamline the workflow
+  - Added "Get Help" functionality to the overview editing interface:
+    - Implemented a Copilot assistance panel similar to the step editor
+    - Created a conversation interface for discussing the overview with Copilot
+    - Added ability to apply Copilot's suggestions directly to the overview content
+    - Consistent UI/UX between overview editing and step editing assistance
   - Extended `ExecDocStepEditor.tsx` to show phase-specific guidance for implementing or refining content
   - Implemented comprehensive step property editing in `ExecDocStepEditor.tsx` for all step attributes
   - Added intelligent suggestion handling with contextual application to appropriate step sections
@@ -173,10 +185,14 @@ The Executable Document authoring process follows a streamlined three-step appro
     - Description and code textareas in `ExecDocStepEditor.tsx` support CTRL+ENTER to save changes
     - Assistance prompt textarea in `ExecDocStepEditor.tsx` uses CTRL+ENTER to submit requests
     - Overview textarea and prompt inputs in `OverviewAuthoring.tsx` handle CTRL+ENTER for submitting
+    - Overview help panel prompt textarea supports CTRL+ENTER to submit requests
 
 - **Version Management**:
-  - Updated version in `package.json` from 0.2.0 to 0.2.1
-  - Added new version entry in `CHANGELOG.md` detailing the structured authoring process implementation
+  - Updated version in `package.json` from 0.2.0 to 0.2.7
+  - Added new version entries in `CHANGELOG.md` detailing:
+    - Keyboard shortcut enhancements (v0.2.5)
+    - Streamlined UI workflow (v0.2.6)
+    - Help feature for overview editing (v0.2.7)
 
 ## Testing
 

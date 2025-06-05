@@ -1,6 +1,6 @@
 {
   "name": "innovation-engine",
-  "version": "0.2.6",
+  "version": "0.2.8",
   "description": "Your Headlamp plugin",
   "scripts": {
     "start": "headlamp-plugin start",

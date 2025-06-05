@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2025-06-05 - Commit: (Bug fix for overview suggestions)
+
+### Fixed
+- Fixed issue with "Apply Suggestions" button in overview help panel deleting existing content
+- Improved suggestion handling to always append rather than replace content
+- Enhanced user experience by preserving existing overview text when applying Copilot suggestions
+
+## [0.2.7] - 2025-06-05 - Commit: (Help feature for overview editing)
+
+### Added
+- Added "Get Help" button to the overview editing interface
+- Implemented a Copilot assistance panel for discussing and improving the overview
+- Added functionality to apply Copilot suggestions directly to the overview content
+- Enhanced the overview editing experience with AI assistance similar to step editing
+
 ## [0.2.6] - 2025-06-05 - Commit: (Streamlined UI workflow)
 
 ### Changed
