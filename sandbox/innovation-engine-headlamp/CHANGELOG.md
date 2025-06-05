@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2025-06-04 - Commit: (UI improvements)
+
+### Changed
+- Increased height of text editing areas throughout the application for better usability:
+  - Overview editor now has a minimum height of 400px
+  - Step description editor increased to 200px minimum height
+  - Code editor increased to 250px minimum height
+  - Assistance prompt textarea increased to 150px
+- Simplified export options to only support Markdown format, removed HTML and PDF export options
+
 ## [0.2.1] - 2025-06-04 - Commit: (structured authoring process)
 
 ### Added

@@ -7,7 +7,7 @@ interface FileOperationsProps {
   execDoc: ExecDoc | null;
   onSave: (execDoc: ExecDoc) => void;
   onLoad: () => void;
-  onExport: (format: 'markdown' | 'html' | 'pdf') => void;
+  onExport: (format: 'markdown') => void;
   autoSaveEnabled: boolean;
   onToggleAutoSave: () => void;
   autoSaveInterval: number;
@@ -102,9 +102,9 @@ export const FileOperations: React.FC<FileOperationsProps> = ({
         </div>
       </div>
       
-      {/* Export Options */}
+      {/* Save as Markdown */}
       <div style={{ marginTop: '12px' }}>
-        <Typography variant="subtitle2" style={{ marginBottom: '8px' }}>Export as:</Typography>
+        <Typography variant="subtitle2" style={{ marginBottom: '8px' }}>Save as:</Typography>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={() => onExport('markdown')}
@@ -119,34 +119,6 @@ export const FileOperations: React.FC<FileOperationsProps> = ({
             }}
           >
             Markdown
-          </button>
-          <button
-            onClick={() => onExport('html')}
-            disabled={!execDoc}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#f0f0f0',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              cursor: !execDoc ? 'not-allowed' : 'pointer',
-              opacity: !execDoc ? 0.7 : 1
-            }}
-          >
-            HTML
-          </button>
-          <button
-            onClick={() => onExport('pdf')}
-            disabled={!execDoc}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#f0f0f0',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              cursor: !execDoc ? 'not-allowed' : 'pointer',
-              opacity: !execDoc ? 0.7 : 1
-            }}
-          >
-            PDF
           </button>
         </div>
       </div>

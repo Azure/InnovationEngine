@@ -256,11 +256,13 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
               onChange={handleDescriptionChange}
               style={{
                 width: '100%',
-                minHeight: '100px',
+                minHeight: '200px',
                 padding: '8px',
                 marginBottom: '16px',
                 borderRadius: '4px',
                 border: '1px solid #ddd',
+                fontSize: '14px',
+                lineHeight: '1.5',
               }}
             />
 
@@ -272,12 +274,14 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
                   onChange={handleCodeChange}
                   style={{
                     width: '100%',
-                    minHeight: '120px',
+                    minHeight: '250px',
                     padding: '8px',
                     fontFamily: 'monospace',
                     backgroundColor: '#f8f8f8',
                     borderRadius: '4px',
                     border: '1px solid #ddd',
+                    fontSize: '14px',
+                    lineHeight: '1.5',
                   }}
                 />
               </div>
@@ -403,7 +407,9 @@ export const ExecDocStepEditor: React.FC<ExecDocStepEditorProps> = ({
                 padding: '8px',
                 borderRadius: '4px',
                 border: '1px solid #ddd',
-                minHeight: '80px'
+                minHeight: '150px',
+                fontSize: '14px',
+                lineHeight: '1.5'
               }}
             />
             <button

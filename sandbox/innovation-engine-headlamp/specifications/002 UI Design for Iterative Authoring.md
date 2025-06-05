@@ -120,7 +120,7 @@ The Executable Document authoring process follows a structured four-step approac
   - Step execution controls and status indicators
 
 - **Step Editing**:
-  - Rich text/Markdown editor for each step
+  - Full-height rich text/Markdown editor for each step (minimum 10-12 lines visible)
   - Copilot assistance button to get help with specific steps
   - Syntax highlighting for code blocks
   - Preview toggle to see rendered content
@@ -136,7 +136,7 @@ The Executable Document authoring process follows a structured four-step approac
   - File browser dialog for selecting save location or file to load
   - Recent files list for quick access
   - Auto-save toggle with interval selection
-  - Export options (Markdown, HTML, PDF)
+  - Save as Markdown format only
 
 - **Kubernetes Context Control**:
   - Context selector dropdown with current selection highlighted

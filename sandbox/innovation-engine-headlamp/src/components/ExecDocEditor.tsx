@@ -212,9 +212,9 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
     alert('In a full implementation, a file picker would open here.');
   };
 
-  const handleExportExecDoc = (format: 'markdown' | 'html' | 'pdf') => {
+  const handleExportExecDoc = (format: 'markdown') => {
     if (!execDoc) return;
-    alert(`Doc would be exported as: ${execDoc.title}.${format}`);
+    alert(`Doc would be saved as: ${execDoc.title}.${format}`);
   };
 
   // Render overview authoring view

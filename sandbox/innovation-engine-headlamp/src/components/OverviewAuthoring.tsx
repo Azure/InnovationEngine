@@ -308,11 +308,13 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
                 style={{
                   width: '100%',
                   height: '100%',
+                  minHeight: '400px',
                   padding: '8px',
                   borderRadius: '4px',
                   border: '1px solid #ddd',
                   fontFamily: 'monospace',
                   fontSize: '14px',
+                  lineHeight: '1.5',
                   resize: 'none'
                 }}
               />
