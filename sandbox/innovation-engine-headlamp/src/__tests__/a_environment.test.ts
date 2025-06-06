@@ -45,10 +45,19 @@ describe('Environment Setup Validation', () => {
       };
     };
     
-    // Debug: Log the values of the environment variables we're checking
+        // Debug: Log the values of the environment variables we're checking
     console.log('Debug - AZURE_OPENAI_API_KEY:', process.env.AZURE_OPENAI_API_KEY ? 'Set (length: ' + process.env.AZURE_OPENAI_API_KEY.length + ')' : 'Not set');
     console.log('Debug - AZURE_OPENAI_ENDPOINT:', process.env.AZURE_OPENAI_ENDPOINT ? 'Set (length: ' + process.env.AZURE_OPENAI_ENDPOINT.length + ')' : 'Not set');
     console.log('Debug - AZURE_OPENAI_DEPLOYMENT_ID:', process.env.AZURE_OPENAI_DEPLOYMENT_ID ? 'Set (length: ' + process.env.AZURE_OPENAI_DEPLOYMENT_ID.length + ')' : 'Not set');
+    
+    // Validate the format of the environment variables
+    if (process.env.AZURE_OPENAI_API_KEY && !process.env.AZURE_OPENAI_API_KEY.match(/^[a-zA-Z0-9]+$/)) {
+      console.warn('Warning: AZURE_OPENAI_API_KEY may contain invalid characters.');
+    }
+    
+    if (process.env.AZURE_OPENAI_ENDPOINT && !process.env.AZURE_OPENAI_ENDPOINT.startsWith('https://')) {
+      console.warn('Warning: AZURE_OPENAI_ENDPOINT should start with https://');
+    }
     
     // Check environment variables
     const { isConfigured, missingVars } = checkAzureOpenAIEnvironment();

@@ -1,6 +1,6 @@
 // Unit tests for AzureAI service
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { AzureAIService } from '../services/azureAI';
-import { vi, describe, test, expect, beforeEach } from 'vitest';
 
 // Mock fetch for testing
 global.fetch = vi.fn();
@@ -198,5 +198,188 @@ describe('AzureAIService', () => {
     
     // Verify that fetch was called twice (initial + retry)
     expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  test('should fail after exceeding maximum rate limit retries', async () => {
+    // Mock multiple rate limit responses to exceed the maxRateLimitRetries
+    (global.fetch as unknown as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'Retry-After': '1' }),
+        text: async () => 'Too many requests'
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'Retry-After': '1' }),
+        text: async () => 'Too many requests'
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'Retry-After': '1' }),
+        text: async () => 'Too many requests'
+      } as Response);
+    
+    // Spy on setTimeout to make the test run faster
+    vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
+      fn();
+      return 0 as any;
+    });
+    
+    // Test messages
+    const messages = [{ role: 'user' as const, content: 'Hello with excessive rate limit' }];
+    
+    // Set a low maxRateLimitRetries value to make the test fail faster
+    const options = {
+      maxRateLimitRetries: 2
+    };
+    
+    // Expect the getCompletion method to throw a rate limit error after exceeding retries
+    await expect(service.getCompletion(messages, options)).rejects.toThrow('rate limit exceeded');
+    
+    // Verify that fetch was called the expected number of times (initial + maxRateLimitRetries)
+    expect(global.fetch).toHaveBeenCalledTimes(options.maxRateLimitRetries + 1);
+  });
+
+  test('should respect configurable retry settings', async () => {
+    // Mock a successful response after several failures
+    (global.fetch as unknown as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: async () => 'Internal server error'
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: async () => 'Internal server error'
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 'response-after-server-errors',
+          choices: [{
+            message: { role: 'assistant', content: 'Response after multiple server errors' },
+            finish_reason: 'stop',
+            index: 0
+          }],
+          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 }
+        })
+      } as Response);
+      
+    // Spy on setTimeout to verify it's called with the correct delay
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
+      fn();
+      return 0 as any;
+    });
+    
+    // Test messages and custom retry settings
+    const messages = [{ role: 'user' as const, content: 'Test with custom retry settings' }];
+    const options = {
+      maxRetries: 5,
+      retryDelay: 2000
+    };
+    
+    // Call the getCompletion method with custom options
+    const result = await service.getCompletion(messages, options);
+    
+    // Verify the result
+    expect(result).toBe('Response after multiple server errors');
+    
+    // Verify that fetch was called the expected number of times
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    
+    // Verify that setTimeout was called with the expected delays
+    // First retry: 2000ms * 1, Second retry: 2000ms * 2
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
+    expect(setTimeoutSpy).toHaveBeenNthCalledWith(1, expect.any(Function), 2000);
+    expect(setTimeoutSpy).toHaveBeenNthCalledWith(2, expect.any(Function), 4000);
+  });
+  
+  test('should fail after exceeding maximum rate limit retries', async () => {
+    // Mock multiple rate limit responses to exceed the maxRateLimitRetries
+    (global.fetch as unknown as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'Retry-After': '1' }),
+        text: async () => 'Too many requests'
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'Retry-After': '1' }),
+        text: async () => 'Too many requests'
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'Retry-After': '1' }),
+        text: async () => 'Too many requests'
+      } as Response);
+    
+    // Spy on setTimeout to make the test run faster
+    vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
+      fn();
+      return 0 as any;
+    });
+    
+    // Test messages
+    const messages = [{ role: 'user' as const, content: 'Hello with excessive rate limit' }];
+    
+    // Set a low maxRateLimitRetries value to make the test fail faster
+    const options = {
+      maxRateLimitRetries: 2
+    };
+    
+    // Expect the getCompletion method to throw a rate limit error after exceeding retries
+    await expect(service.getCompletion(messages, options)).rejects.toThrow('rate limit exceeded');
+    
+    // Verify that fetch was called the expected number of times (initial + maxRateLimitRetries)
+    expect(global.fetch).toHaveBeenCalledTimes(options.maxRateLimitRetries + 1);
+  });
+  
+  // This test is marked to skip in CI environments where rate limits may be a concern
+  test.runIf(!process.env.CI)('should respect Retry-After header for rate limiting', async () => {
+    // Mock rate limit response with a specific retry-after header
+    (global.fetch as unknown as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'Retry-After': '2' }), // 2 seconds
+        text: async () => 'Too many requests'
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 'response-after-specific-delay',
+          choices: [{
+            message: { role: 'assistant', content: 'Response after specific delay' },
+            finish_reason: 'stop',
+            index: 0
+          }],
+          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 }
+        })
+      } as Response);
+    
+    // Spy on setTimeout to verify it's called with the correct delay from Retry-After
+    const setTimeoutSpy = vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
+      fn();
+      return 0 as any;
+    });
+    
+    // Test messages
+    const messages = [{ role: 'user' as const, content: 'Test Retry-After header' }];
+    
+    // Call the getCompletion method
+    const result = await service.getCompletion(messages);
+    
+    // Verify the result
+    expect(result).toBe('Response after specific delay');
+    
+    // Verify that setTimeout was called with the expected delay (2000ms from Retry-After header)
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 2000);
   });
 });

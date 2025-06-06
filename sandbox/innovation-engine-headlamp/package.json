@@ -20,6 +20,9 @@
     "validate-env:dev": "NODE_ENV=development npx vitest run src/__tests__/a_environment.test.ts",
     "validate-env:prod": "NODE_ENV=production npx vitest run src/__tests__/a_environment.test.ts",
     "validate-env": "npm run validate-env:prod",
+    "test:rate-limits": "npx vitest run src/__tests__/azureAI.test.ts -t 'rate limit'",
+    "test:ci": "CI=true npx vitest run",
+    "test:ci-rate-limits": "CI=true npx vitest run src/__tests__/azureAI.test.ts -t 'rate limit'",
     "start": "npm run validate-env:prod && npm run start-no-validation",
     "dev": "npm run validate-env:dev && npm run dev-no-validation"
   },

@@ -56,7 +56,7 @@ export class AzureAIService {
   }
 
   /**
-   * Get a completion from Azure OpenAI API with retry logic
+   * Get a completion from Azure OpenAI API with advanced retry logic
    * @param messages Array of messages representing the conversation
    * @param options Optional parameters for the completion
    * @returns A promise with the completion response
@@ -72,6 +72,7 @@ export class AzureAIService {
       stop?: string[];
       maxRetries?: number;
       retryDelay?: number;
+      maxRateLimitRetries?: number;
     } = {}
   ): Promise<string> {
     const requestBody: ChatCompletionRequest = {
@@ -86,7 +87,9 @@ export class AzureAIService {
 
     const maxRetries = options.maxRetries || 3;
     const retryDelay = options.retryDelay || 1000;
+    const maxRateLimitRetries = options.maxRateLimitRetries || 2;
     let lastError: Error | null = null;
+    let rateLimitRetryCount = 0;
 
     // Implement retry logic for resilience
     for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -109,11 +112,18 @@ export class AzureAIService {
           }
         );
 
-        // Handle rate limiting (429) with exponential backoff
+        // Handle rate limiting (429) with exponential backoff and maximum retries
         if (response.status === 429) {
+          rateLimitRetryCount++;
+          
+          // Check if we've exceeded the maximum rate limit retries
+          if (rateLimitRetryCount > maxRateLimitRetries) {
+            throw new Error(`Azure AI API rate limit exceeded after ${maxRateLimitRetries} retries. Please try again later.`);
+          }
+          
           const retryAfter = response.headers.get('Retry-After');
           const retryMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : retryDelay * Math.pow(2, attempt);
-          console.log(`Rate limited by Azure AI API. Retrying after ${retryMs}ms...`);
+          console.log(`Rate limited by Azure AI API. Retrying after ${retryMs}ms... (${rateLimitRetryCount}/${maxRateLimitRetries})`);
           await new Promise(resolve => setTimeout(resolve, retryMs));
           continue;
         }
@@ -134,9 +144,21 @@ export class AzureAIService {
 
         const data = (await response.json()) as ChatCompletionResponse;
         return data.choices[0].message.content;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error getting completion from Azure AI:', error);
-        throw error;
+        
+        // If it's a rate limiting error, propagate it immediately
+        if (error.message && error.message.includes('rate limit exceeded')) {
+          throw error;
+        }
+        
+        // For other errors on the last retry attempt, throw the error
+        if (attempt === maxRetries - 1) {
+          throw error;
+        }
+        
+        // Otherwise, store the error and continue retrying
+        lastError = error;
       }
     }
     

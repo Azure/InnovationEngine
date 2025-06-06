@@ -40,6 +40,25 @@ The Assistant feature now integrates with Azure OpenAI to provide intelligent re
    npm run dev
    ```
 
+#### Rate Limiting Considerations
+
+The application includes built-in handling for Azure OpenAI API rate limits:
+
+- Automatic retries with exponential backoff when rate limits are hit
+- Respects the `Retry-After` header when provided by the Azure API
+- Configurable maximum retry attempts to prevent excessive retries
+- Detailed logging of rate limiting events for debugging
+- Clear failure after maximum retries with descriptive error messages
+- Tests that validate the rate limiting behavior
+
+If you encounter rate limiting errors, you can modify the retry behavior in `/src/services/azureAI.ts` by adjusting:
+
+- `maxRetries`: Maximum number of retry attempts for any error (default: 3)
+- `retryDelay`: Base delay in milliseconds before retrying (default: 1000)
+- `maxRateLimitRetries`: Maximum retries specifically for rate limiting errors (default: 2)
+
+When tests run in CI mode (with `CI=true` environment variable), certain intensive rate limiting tests are automatically skipped to prevent unnecessary API calls.
+
 ### Installing Backend Dependencies
 
 Before starting the plugin, you must install the required dependencies:
@@ -83,6 +102,39 @@ After confirming your environment is properly configured:
 ```bash
 # Run all tests
 npm test
+
+# Run specific test suites
+npm run test:rate-limits   # Run only the rate limiting tests
+```
+
+#### Rate Limiting Tests
+
+The rate limiting tests have been specifically designed to:
+
+1. Respect Azure OpenAI's rate limitations
+2. Fail when there's a persistent rate limiting problem
+3. Skip intensive tests in CI environments
+
+To run only the rate limit tests:
+
+```bash
+npm run test:rate-limits
+```
+
+These tests verify that:
+- The application correctly backs off when receiving 429 responses
+- It respects the Retry-After header from Azure
+- It fails with an appropriate error after exceeding maximum retry attempts
+- It handles exponential backoff correctly
+
+When running in CI environments, you can use these commands:
+
+```bash
+# Run all tests with CI flag to skip intensive tests
+npm run test:ci
+
+# Run only rate limit tests with CI flag to skip intensive ones
+npm run test:ci-rate-limits
 ```
 
 The `start` and `dev` commands now run environment validation by default with these behaviors:
