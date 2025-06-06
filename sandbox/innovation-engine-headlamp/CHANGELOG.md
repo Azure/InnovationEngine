@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] - 2025-06-06 - Commit: (UI enhancement for improved authoring)
+
+### Added
+- Implemented side-by-side layout with document content on the left and Copilot panel on the right
+- Added draggable divider between document and Copilot panels for flexible workspace sizing
+- Made Copilot panel always visible by default, removing the need for the "Get Help" button
+- Added collapsible Copilot panel functionality with expand/collapse controls
+
+### Changed
+- Improved authoring workflow by providing constant access to AI assistance
+- Enhanced user interface for better collaboration between human author and AI assistant
+- Moved "Ask Copilot" button below the text entry area for better usability
+- Implemented CSS Grid layout to ensure panels maintain synchronized heights
+- Added responsive behavior to maintain consistent panel heights during window resize
+- Applied consistent styling to input areas and improved text area sizing
+
 ## [0.2.8] - 2025-06-05 - Commit: (Bug fix for overview suggestions)
 
 ### Fixed

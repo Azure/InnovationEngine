@@ -22,10 +22,37 @@ export const OverviewAuthoring: React.FC<OverviewAuthoringProps> = ({
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [activePanel, setActivePanel] = React.useState<'prompt' | 'preview'>('prompt');
   
-  // Add state for help discussion
-  const [showHelpPanel, setShowHelpPanel] = React.useState(false);
+  // State for help panel and draggable divider
+  const [isHelpPanelCollapsed, setIsHelpPanelCollapsed] = React.useState(false);
   const [helpMessages, setHelpMessages] = React.useState<Message[]>([]);
   const [helpPrompt, setHelpPrompt] = React.useState('');
+  const [dividerPosition, setDividerPosition] = React.useState(70); // Default 70% for document, 30% for help panel
+  const [isDragging, setIsDragging] = React.useState(false);
+  
+  // Use ref to maintain a consistent container height
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  // Add effect to handle resize events and maintain panel heights
+  React.useEffect(() => {
+    // Function to ensure panels maintain equal heights
+    const handleResize = () => {
+      if (containerRef.current) {
+        // Force grid layout recalculation
+        containerRef.current.style.display = 'grid';
+      }
+    };
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', handleResize);
+    
+    // Initial call to set proper heights
+    handleResize();
+    
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
   
   // Handle sending prompt to Copilot
   const handleSendPrompt = () => {
@@ -127,8 +154,39 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
     }
   };
   
-  // Note: We use the direct setShowHelpPanel(!showHelpPanel) in the button click handler
-  // instead of this function to maintain consistency with the step editor pattern
+  // Handle divider drag operation
+  const handleDividerMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Calculate divider position as percentage of parent width
+      const container = document.getElementById('overview-authoring-container');
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const newPosition = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+        
+        // Limit the range to keep both panels visible (min 30% for each)
+        if (newPosition > 30 && newPosition < 70) {
+          setDividerPosition(newPosition);
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Toggle help panel collapse state - used by the collapse/expand buttons
+  const toggleHelpPanelCollapse = () => {
+    setIsHelpPanelCollapsed(prev => !prev);
+  };
   
   // Get phase-appropriate button text
   const getActionButtonText = () => {
@@ -194,240 +252,320 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
         </button>
       </div>
       
-      {/* Main Content Area - Conditionally render based on active panel */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* Prompt Panel */}
+      {/* Main Content Area with side-by-side layout using CSS Grid for equal heights */}
+      <div 
+        id="overview-authoring-container"
+        ref={containerRef}
+        style={{ 
+          flex: 1, 
+          display: 'grid',
+          gridTemplateColumns: `${dividerPosition}% 6px calc(${100-dividerPosition-0.6}%)`,
+          gridTemplateRows: '1fr', // Force all rows to be the same height (full height)
+          overflow: 'hidden',
+          position: 'relative',
+          minHeight: '600px' // Set a good baseline minimum height
+        }}
+      >
+        {/* Main Panel Area - conditionally display prompt or preview on the left side */}
         <div 
           style={{ 
-            flex: activePanel === 'prompt' ? 1 : 0,
-            display: activePanel === 'prompt' ? 'flex' : 'none',
+            height: '100%',
+            display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden'
           }}
         >
-          <div style={{ marginBottom: '16px' }}>
-            <Typography variant="subtitle1">
-              What kind of Executable Document do you want to create?
-            </Typography>
-            <div style={{ display: 'flex', marginTop: '8px', gap: '8px' }}>
-              <input
-                type="text"
-                value={promptInput}
-                onChange={(e) => setPromptInput(e.target.value)}
-                onKeyDown={(e) => {
-                  // Handle CTRL+ENTER to submit prompt
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && promptInput.trim()) {
-                    handleSendPrompt();
-                  }
-                }}
-                placeholder="E.g., Create a deployment for a Node.js application"
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc'
-                }}
-              />
-              <button
-                onClick={handleSendPrompt}
-                disabled={isGenerating || !promptInput.trim()}
-                style={{
-                  padding: '10px 16px',
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: isGenerating || !promptInput.trim() ? 'not-allowed' : 'pointer',
-                  opacity: isGenerating || !promptInput.trim() ? 0.7 : 1
-                }}
-              >
-                {isGenerating ? 'Generating...' : 'Generate'}
-              </button>
-            </div>
-          </div>
-          
-          {/* Conversation History */}
-          <div 
-            style={{ 
-              flex: 1,
-              overflowY: 'auto',
-              border: '1px solid #e0e0e0',
-              borderRadius: '4px',
-              padding: '12px',
-              backgroundColor: '#f9f9f9'
-            }}
-          >
-            {messages.length === 0 && (
-              <Typography color="textSecondary" align="center" style={{ marginTop: '20px' }}>
-                Enter a prompt above to start generating your Executable Document
-              </Typography>
-            )}
-            
-            {messages.map((message, index) => (
-              <div 
-                key={index} 
-                style={{
-                  marginBottom: '10px',
-                  textAlign: message.role === 'user' ? 'right' : 'left',
-                }}
-              >
-                <div 
-                  style={{
-                    display: 'inline-block',
-                    maxWidth: '80%',
-                    padding: '10px',
-                    borderRadius: '8px',
-                    backgroundColor: message.role === 'user' ? '#1976d2' : '#ffffff',
-                    color: message.role === 'user' ? 'white' : 'black',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                    border: message.role === 'assistant' ? '1px solid #e0e0e0' : 'none'
-                  }}
-                >
-                  <Typography>{message.content}</Typography>
+          {/* Conditional content for left side - either Prompt or Preview panel */}
+          {activePanel === 'prompt' ? (
+            // Prompt Panel
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <Typography variant="subtitle1">
+                  What kind of Executable Document do you want to create?
+                </Typography>
+                <div style={{ display: 'flex', marginTop: '8px', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={promptInput}
+                    onChange={(e) => setPromptInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      // Handle CTRL+ENTER to submit prompt
+                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && promptInput.trim()) {
+                        handleSendPrompt();
+                      }
+                    }}
+                    placeholder="E.g., Create a deployment for a Node.js application"
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: '4px',
+                      border: '1px solid #ccc'
+                    }}
+                  />
+                  <button
+                    onClick={handleSendPrompt}
+                    disabled={isGenerating || !promptInput.trim()}
+                    style={{
+                      padding: '10px 16px',
+                      backgroundColor: '#1976d2',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: isGenerating || !promptInput.trim() ? 'not-allowed' : 'pointer',
+                      opacity: isGenerating || !promptInput.trim() ? 0.7 : 1
+                    }}
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate'}
+                  </button>
                 </div>
               </div>
-            ))}
-            
-            {isGenerating && (
-              <div style={{ textAlign: 'center', padding: '10px' }}>
-                <Typography color="textSecondary">Generating overview...</Typography>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Preview Panel */}
-        <div 
-          style={{ 
-            flex: activePanel === 'preview' ? 1 : 0,
-            display: activePanel === 'preview' ? 'flex' : 'none',
-            flexDirection: 'column',
-            overflow: 'hidden'
-          }}
-        >
-          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="subtitle1">
-              {isEditingOverview ? 'Edit Overview' : 'Preview Overview'}
-            </Typography>
-            <div>
-              <button
-                onClick={() => setIsEditingOverview(!isEditingOverview)}
-                style={{
-                  marginRight: '8px',
-                  padding: '6px 12px',
-                  backgroundColor: '#f0f0f0',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                {isEditingOverview ? 'Preview' : 'Edit'}
-              </button>
               
-              <button
-                onClick={() => setShowHelpPanel(!showHelpPanel)}
-                style={{
-                  marginRight: '8px',
-                  padding: '6px 12px',
-                  backgroundColor: showHelpPanel ? '#9c27b0' : '#f0f0f0',
-                  color: showHelpPanel ? 'white' : 'black',
-                  border: '1px solid ' + (showHelpPanel ? '#9c27b0' : '#ddd'),
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                {showHelpPanel ? 'Hide Help' : 'Get Help'}
-              </button>
-              
-              <button
-                onClick={handleProceedToSteps}
-                disabled={!generatedOverview.trim()}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#4caf50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: !generatedOverview.trim() ? 'not-allowed' : 'pointer',
-                  opacity: !generatedOverview.trim() ? 0.7 : 1
-                }}
-              >
-                {getActionButtonText()}
-              </button>
-            </div>
-          </div>
-          
-          <div 
-            style={{ 
-              flex: 1,
-              border: '1px solid #e0e0e0',
-              borderRadius: '4px',
-              padding: '12px',
-              backgroundColor: '#ffffff',
-              overflowY: 'auto'
-            }}
-          >
-            {isEditingOverview ? (
-              <textarea
-                value={generatedOverview}
-                onChange={(e) => setGeneratedOverview(e.target.value)}
-                onKeyDown={(e) => {
-                  // Handle CTRL+ENTER to save changes and exit edit mode
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && generatedOverview.trim()) {
-                    e.preventDefault(); // Prevent default behavior (newline)
-                    setIsEditingOverview(false); // Exit edit mode
-                  }
-                }}
-                placeholder="Enter your document overview content. Press CTRL+ENTER to save changes."
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  minHeight: '400px',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ddd',
-                  fontFamily: 'monospace',
-                  fontSize: '14px',
-                  lineHeight: '1.5',
-                  resize: 'none'
-                }}
-              />
-            ) : (
+              {/* Conversation History */}
               <div 
                 style={{ 
-                  padding: '16px', 
-                  maxWidth: '800px', 
-                  margin: '0 auto',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  lineHeight: 1.6
+                  flex: 1,
+                  overflowY: 'auto',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '4px',
+                  padding: '12px',
+                  backgroundColor: '#f9f9f9'
                 }}
               >
-                {generatedOverview.split('\n').map((line, i) => {
-                  if (line.startsWith('# ')) {
-                    return <Typography key={i} variant="h4" style={{ marginBottom: '16px' }}>{line.substring(2)}</Typography>;
-                  } else if (line.startsWith('## ')) {
-                    return <Typography key={i} variant="h5" style={{ marginTop: '24px', marginBottom: '12px' }}>{line.substring(3)}</Typography>;
-                  } else if (line.startsWith('- ')) {
-                    return <Typography key={i} component="li" style={{ marginLeft: '20px', marginBottom: '8px' }}>{line.substring(2)}</Typography>;
-                  } else if (line === '') {
-                    return <br key={i} />;
-                  } else {
-                    return <Typography key={i} paragraph>{line}</Typography>;
-                  }
-                })}
+                {messages.length === 0 && (
+                  <Typography color="textSecondary" align="center" style={{ marginTop: '20px' }}>
+                    Enter a prompt above to start generating your Executable Document
+                  </Typography>
+                )}
+                
+                {messages.map((message, index) => (
+                  <div 
+                    key={index} 
+                    style={{
+                      marginBottom: '10px',
+                      textAlign: message.role === 'user' ? 'right' : 'left',
+                    }}
+                  >
+                    <div 
+                      style={{
+                        display: 'inline-block',
+                        maxWidth: '80%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        backgroundColor: message.role === 'user' ? '#1976d2' : '#ffffff',
+                        color: message.role === 'user' ? 'white' : 'black',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                        border: message.role === 'assistant' ? '1px solid #e0e0e0' : 'none'
+                      }}
+                    >
+                      <Typography>{message.content}</Typography>
+                    </div>
+                  </div>
+                ))}
+                
+                {isGenerating && (
+                  <div style={{ textAlign: 'center', padding: '10px' }}>
+                    <Typography color="textSecondary">Generating overview...</Typography>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            // Preview Panel
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="subtitle1">
+                  {isEditingOverview ? 'Edit Overview' : 'Preview Overview'}
+                </Typography>
+                <div>
+                  <button
+                    onClick={() => setIsEditingOverview(!isEditingOverview)}
+                    style={{
+                      marginRight: '8px',
+                      padding: '6px 12px',
+                      backgroundColor: '#f0f0f0',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {isEditingOverview ? 'Preview' : 'Edit'}
+                  </button>
+                  
+                  <button
+                    onClick={handleProceedToSteps}
+                    disabled={!generatedOverview.trim()}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#4caf50',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: !generatedOverview.trim() ? 'not-allowed' : 'pointer',
+                      opacity: !generatedOverview.trim() ? 0.7 : 1
+                    }}
+                  >
+                    {getActionButtonText()}
+                  </button>
+                </div>
+              </div>
+              
+              <div 
+                style={{ 
+                  flex: 1,
+                  display: 'flex', // Add flex display
+                  flexDirection: 'column',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '4px',
+                  padding: '12px',
+                  backgroundColor: '#ffffff',
+                  overflowY: 'auto'
+                }}
+              >
+                {isEditingOverview ? (
+                  <textarea
+                    value={generatedOverview}
+                    onChange={(e) => setGeneratedOverview(e.target.value)}
+                    onKeyDown={(e) => {
+                      // Handle CTRL+ENTER to save changes and exit edit mode
+                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && generatedOverview.trim()) {
+                        e.preventDefault(); // Prevent default behavior (newline)
+                        setIsEditingOverview(false); // Exit edit mode
+                      }
+                    }}
+                    placeholder="Enter your document overview content. Press CTRL+ENTER to save changes."
+                    style={{
+                      width: '100%',
+                      height: '100%', 
+                      padding: '8px',
+                      borderRadius: '4px',
+                      border: '1px solid #ddd',
+                      fontFamily: 'monospace',
+                      fontSize: '14px',
+                      lineHeight: '1.5',
+                      resize: 'none'
+                    }}
+                  />
+                ) : (
+                  <div 
+                    style={{ 
+                      padding: '16px',
+                      flex: 1, // Add flex: 1 to fill available space
+                      maxWidth: '800px', 
+                      margin: '0 auto',
+                      fontFamily: 'system-ui, -apple-system, sans-serif',
+                      lineHeight: 1.6,
+                      overflow: 'auto' // Add overflow to handle content exceeding dimensions
+                    }}
+                  >
+                    {generatedOverview.split('\n').map((line, i) => {
+                      if (line.startsWith('# ')) {
+                        return <Typography key={i} variant="h4" style={{ marginBottom: '16px' }}>{line.substring(2)}</Typography>;
+                      } else if (line.startsWith('## ')) {
+                        return <Typography key={i} variant="h5" style={{ marginTop: '24px', marginBottom: '12px' }}>{line.substring(3)}</Typography>;
+                      } else if (line.startsWith('- ')) {
+                        return <Typography key={i} component="li" style={{ marginLeft: '20px', marginBottom: '8px' }}>{line.substring(2)}</Typography>;
+                      } else if (line === '') {
+                        return <br key={i} />;
+                      } else {
+                        return <Typography key={i} paragraph>{line}</Typography>;
+                      }
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-      
-      {/* Copilot Help Panel */}
-      {showHelpPanel && (
-        <div style={{ padding: '16px', borderTop: '1px solid #e0e0e0', marginTop: '16px' }}>
-          <Typography variant="h6" style={{ marginBottom: '12px' }}>Copilot Assistance</Typography>
+        
+        {/* Draggable Divider */}
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize panels"
+          style={{
+            width: '6px',
+            height: '100%',
+            background: '#e0e0e0',
+            cursor: 'col-resize',
+            userSelect: 'none',
+            transition: isDragging ? 'none' : 'background 0.2s',
+            position: 'relative'
+          }}
+          onMouseDown={handleDividerMouseDown}
+          onKeyDown={(e) => {
+            // Handle keyboard resizing with arrow keys
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+              e.preventDefault();
+              const step = e.key === 'ArrowLeft' ? -2 : 2;
+              const newPosition = dividerPosition + step;
+              if (newPosition > 30 && newPosition < 70) {
+                setDividerPosition(newPosition);
+              }
+            }
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.background = '#1976d2';
+            e.currentTarget.style.outline = '2px solid #1976d2';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.background = '#e0e0e0';
+            e.currentTarget.style.outline = 'none';
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              height: '30px',
+              width: '4px',
+              background: isDragging ? '#1976d2' : '#aaa',
+              borderRadius: '2px'
+            }}
+          />
+        </div>
+
+        {/* Copilot Help Panel on the right side */}
+        <div 
+          style={{ 
+            height: '100%', 
+            display: isHelpPanelCollapsed ? 'none' : 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            padding: '8px',
+            backgroundColor: '#fafafa',
+            borderLeft: '1px solid #e0e0e0',
+          }}
+        >
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '12px' 
+          }}>
+            <Typography variant="h6">Copilot Assistance</Typography>
+            <button
+              onClick={toggleHelpPanelCollapse}
+              aria-label="Collapse Copilot assistance panel"
+              title="Collapse Copilot assistance panel"
+              style={{
+                padding: '3px 6px',
+                backgroundColor: '#f0f0f0',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Collapse
+            </button>
+          </div>
           
           <div style={{ 
-            maxHeight: '200px', 
+            flex: 1, 
+            display: 'flex',
+            flexDirection: 'column',
             overflowY: 'auto',
             marginBottom: '16px',
             padding: '8px',
@@ -490,7 +628,7 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <textarea
               value={helpPrompt}
               onChange={(e) => setHelpPrompt(e.target.value)}
@@ -503,13 +641,14 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
               }}
               placeholder="Ask Copilot for help with your overview (e.g., 'Could you suggest a better structure for this overview?'). Press CTRL+ENTER to submit."
               style={{
-                flexGrow: 1,
+                width: '100%',
                 padding: '8px',
                 borderRadius: '4px',
                 border: '1px solid #ddd',
-                minHeight: '150px',
+                minHeight: '100px', // Increased height for better usability
                 fontSize: '14px',
-                lineHeight: '1.5'
+                lineHeight: '1.5',
+                fontFamily: 'monospace' // Match the overview editor font
               }}
             />
             <button
@@ -530,7 +669,39 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
             </button>
           </div>
         </div>
-      )}
+        
+        {/* Collapsed panel toggle button */}
+        {isHelpPanelCollapsed && (
+          <div 
+            style={{ 
+              position: 'absolute',
+              right: '0',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 1
+            }}
+          >
+            <button
+              onClick={toggleHelpPanelCollapse}
+              aria-label="Open Copilot assistance panel"
+              title="Open Copilot assistance panel"
+              style={{
+                padding: '8px',
+                backgroundColor: '#1976d2',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px 0 0 4px',
+                cursor: 'pointer',
+                boxShadow: '-2px 0 4px rgba(0,0,0,0.1)'
+              }}
+            >
+              ≪ Open Copilot
+            </button>
+          </div>
+        )}
+      </div>
+      
+      {/* We no longer need the bottom Copilot panel since it's now side-by-side */}
     </div>
   );
 };
