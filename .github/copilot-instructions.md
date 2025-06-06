@@ -16,8 +16,10 @@
 ## Testing
 - Write unit tests for all components and functions.
 - Use integration tests to verify end-to-end functionality of user flows.
+- If new tests require the user to configure environment variables or similar stop work and give the user instructions.
 - Ensure all tests pass before merging any changes.
 - When work is complete do not start the application, instead inform the user that all tests have passed and they should start the application if necessary and verify the work
+- When running tests ensure that the CI environment varable is true so that the tests return control to you when they are complete
 
 ## Version Management
 
