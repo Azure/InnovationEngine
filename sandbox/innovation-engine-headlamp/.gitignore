@@ -1,3 +1,5 @@
 node_modules
 ie.log
 .env
+.env.test
+.env.*
