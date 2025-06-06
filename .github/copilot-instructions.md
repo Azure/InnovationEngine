@@ -16,6 +16,7 @@
 ## Testing
 - Write unit tests for all components and functions.
 - Use integration tests to verify end-to-end functionality of user flows.
+- The first test should always be one that checks all required configuration (e.g. environment variables) have been set by the user. This should run first and if it fails all subsequent tests should be aborted.
 - If new tests require the user to configure environment variables or similar stop work and give the user instructions.
 - Ensure all tests pass before merging any changes.
 - When work is complete do not start the application, instead inform the user that all tests have passed and they should start the application if necessary and verify the work

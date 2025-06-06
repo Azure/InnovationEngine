@@ -203,25 +203,52 @@ registerRoute({
     }, [chatHistory]);
 
     // Handle sending a new query to the assistant
-    const handleSendQuery = () => {
+    const handleSendQuery = async () => {
       if (!userQuery.trim()) return;
       
+      // Store the query for later use
+      const query = userQuery;
+      
       // Add user query to chat history
-      setChatHistory(prev => [...prev, { role: 'user', content: userQuery }]);
+      setChatHistory(prev => [...prev, { role: 'user', content: query }]);
       
       // Set processing state to show loading
       setIsProcessing(true);
+      setUserQuery(''); // Clear input field immediately for better UX
       
-      // Simulate a response (this would be replaced with actual GitHub Copilot API call)
-      setTimeout(() => {
-        // Add simulated response
+      try {
+        // Call the API to send the query to Azure AI
+        const response = await fetch('http://localhost:4000/api/assistant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            messages: chatHistory.concat({ role: 'user', content: query })
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Add the response to the chat history
         setChatHistory(prev => [...prev, { 
           role: 'assistant', 
-          content: `I received your request: "${userQuery}". This is a placeholder response. In the full implementation, this would be processed by GitHub Copilot.`
+          content: data.response
         }]);
-        setUserQuery('');
+      } catch (err: any) {
+        console.error('Error communicating with Azure AI:', err);
+        setError(err.message || 'Failed to communicate with the assistant service');
+        
+        // Add error message to chat as assistant message
+        setChatHistory(prev => [...prev, { 
+          role: 'assistant', 
+          content: `I'm sorry, I encountered an error while processing your request. Please try again later.`
+        }]);
+      } finally {
         setIsProcessing(false);
-      }, 1000);
+      }
     };
 
     return (

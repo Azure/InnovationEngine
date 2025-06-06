@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-06-06 - Commit: (Azure AI Integration)
+
+### Added
+- Integrated Azure AI for Assistant chat completions
+- Created API service for communication with Azure OpenAI
+- Added backend Express server to handle API requests
+- Implemented error handling for Azure AI service failures
+- Added environment variable configuration for Azure OpenAI credentials
+- Created dev script to run frontend and backend concurrently
+
+### Changed
+- Updated Assistant UI to display errors when Azure AI communication fails
+- Modified chat interface to use real AI completions instead of simulated responses
+- Updated package.json with new dependencies for backend server
+- Improved error handling in chat functionality
+
 ## [0.2.9] - 2025-06-06 - Commit: (UI enhancement for improved authoring)
 
 ### Added

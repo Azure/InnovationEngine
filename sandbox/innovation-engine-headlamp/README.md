@@ -17,6 +17,28 @@ DO NOT USE IN PRODUCTION - see note on security in the Developer Notes below
 - Node.js (for the backend service)
 - Go (for building the Innovation Engine CLI)
 - Headlamp with this plugin installed
+- Azure OpenAI API credentials (for AI Assistant functionality)
+
+### Azure AI Integration
+
+The Assistant feature now integrates with Azure OpenAI to provide intelligent responses. To configure the Azure AI integration:
+
+1. Copy the `env.example` file to `.env` in the project root:
+   ```bash
+   cp env.example .env
+   ```
+
+2. Edit `.env` and add your Azure OpenAI credentials:
+   ```
+   AZURE_OPENAI_API_KEY=your_api_key
+   AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+   AZURE_OPENAI_DEPLOYMENT_ID=your_deployment_name
+   ```
+
+3. Start the development server with both frontend and backend (includes environment validation):
+   ```bash
+   npm run dev
+   ```
 
 ### Installing Backend Dependencies
 
@@ -40,6 +62,65 @@ From the root of the Innovation Engine repository:
    ```
    The resulting binary will be at `bin/ie` in the repository root.
 
+### Running Tests
+
+Before deploying or using the plugin, you should run the tests to ensure everything is configured correctly:
+
+```bash
+# Run environment validation tests first to check your setup
+npx vitest run src/__tests__/a_environment.test.ts
+```
+
+The environment validation test will check if all required Azure OpenAI environment variables are properly set. If they are missing, you'll see a warning message with instructions on how to set them up.
+
+**Important:** The validation test requires the `.env` file to be present and properly formatted. If you experience issues with environment validation failing despite having a `.env` file, ensure that:
+1. The file is properly formatted with no extra spaces or special characters
+2. The file is in the root directory of the project
+3. The variables are named exactly as expected: `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, and `AZURE_OPENAI_DEPLOYMENT_ID`
+
+After confirming your environment is properly configured:
+
+```bash
+# Run all tests
+npm test
+```
+
+The `start` and `dev` commands now run environment validation by default with these behaviors:
+
+- `npm run start`: Runs in **production** mode - validation will **fail and prevent execution** if Azure OpenAI credentials are missing
+- `npm run dev`: Runs in **development** mode - validation will show warnings but continue even if credentials are missing
+
+**Troubleshooting:**
+If you're seeing validation failures with `npm run start` even though you have credentials in your `.env` file:
+
+1. Make sure your `.env` file is properly formatted and contains the correct environment variables
+2. Try running the validation test directly with: `NODE_ENV=production npx vitest run src/__tests__/a_environment.test.ts --reporter=verbose`
+3. If the test passes directly but fails with npm scripts, it might be a shell environment issue - try modifying the scripts in package.json to use a different method of setting NODE_ENV
+
+In both modes, the server itself will also check for credentials:
+- In production mode: Returns 500 errors if credentials are missing
+- In development mode: Returns fallback responses if credentials are missing
+
+If you want to skip validation entirely (not recommended for production), use:
+
+```bash
+# Start the frontend without any environment validation
+npm run start-without-validation
+
+# Start both frontend and backend without any environment validation
+npm run dev-without-validation
+```
+
+You can also run the validation separately:
+
+```bash
+# Check environment with production requirements (fails if not configured)
+npm run validate-env:prod
+
+# Check environment with development requirements (warns only)
+npm run validate-env:dev
+```
+
 ### Running the Shell Exec Backend and the Headlamp Plugin
 
 The backend service provides a secure API for executing allowlisted shell commands—by default, only the Innovation Engine CLI (`ie`)—from the Headlamp UI. This allows users to interact with Innovation Engine features directly in the browser, while ensuring that only approved commands can be run for security. By default, the backend listens on port 4000.
@@ -47,11 +128,30 @@ The backend service provides a secure API for executing allowlisted shell comman
 In a terminal, from anywhere in the repository, start the backend service:
 
 ```bash
-pushd sandbox/innovation-engine-headlamp/src
-node shell-exec-backend.js &
-cd ..
+# Development mode - environment validation warnings only
+pushd sandbox/innovation-engine-headlamp/
+npm run dev
+popd
+
+# Production mode - will fail if environment not properly configured
+pushd sandbox/innovation-engine-headlamp/
+npm run start
+popd
+
+# Or start them separately:
+pushd sandbox/innovation-engine-headlamp/
+# Start the backend API server in development mode
+npm run server:dev &
+# Start the frontend development server (with validation)
 npm run start &
 popd
+
+# Start the backend API server in production mode
+npm run server:prod
+
+# Skip validation entirely (not recommended for production):
+npm run start-without-validation
+npm run dev-without-validation
 ```
 
 The backend will automatically discover the Innovation Engine binary at `../../bin/ie` (relative to the plugin directory) and allow it as a allowlisted command if present.
