@@ -11,6 +11,9 @@ import React from 'react';
 // Import the routes for Executable Document editor
 import './execDocRoutes';
 
+// Import the Overview Generator component
+import OverviewGenerator from './components/OverviewGenerator';
+
 // Add an entry to the home sidebar (not in cluster).
 registerSidebarEntry({
   name: 'mypluginsidebar',
@@ -193,6 +196,7 @@ registerRoute({
       { role: 'assistant', content: 'Hello! I\'m the Innovation Engine Assistant. How can I help you with your Kubernetes or Executable Document needs?' }
     ]);
     const [isProcessing, setIsProcessing] = React.useState(false);
+    const [error, setError] = React.useState('');
     const chatContainerRef = React.useRef(null);
 
     // Auto-scroll to bottom of chat when history changes
@@ -382,4 +386,26 @@ registerRoute({
       </SectionBox>
     );
   },
+});
+
+// Adding the Overview Generator route and sidebar entry to index.tsx
+registerSidebarEntry({
+  name: 'overview-generator',
+  label: 'Azure Architecture',
+  url: '/overview-generator',
+  icon: 'mdi:cloud-outline',
+  sidebar: 'Innovation-engine',
+});
+
+registerRoute({
+  path: '/overview-generator',
+  sidebar: {
+    item: 'overview-generator',
+    sidebar: 'Innovation-engine',
+  },
+  useClusterURL: false,
+  noAuthRequired: true,
+  name: 'overview-generator',
+  exact: true,
+  component: OverviewGenerator,
 });

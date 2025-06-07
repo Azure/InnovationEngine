@@ -10,7 +10,7 @@ dotenv.config();
 
 // Create Express app
 const app = express();
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 4001; // Changed to 4001 to avoid conflict with shell-exec-backend.js
 
 // Middleware
 app.use(cors());
@@ -101,9 +101,72 @@ app.post('/api/assistant', async (req, res) => {
   }
 });
 
+// Overview generation endpoint
+app.post('/api/overview', async (req, res) => {
+  try {
+    const { topic } = req.body;
+    
+    if (!topic || typeof topic !== 'string') {
+      return res.status(400).json({ error: 'Invalid request: missing or invalid topic' });
+    }
+    
+    // Check for environment variables based on NODE_ENV
+    const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+    
+    if (!process.env.AZURE_OPENAI_API_KEY || 
+        !process.env.AZURE_OPENAI_ENDPOINT || 
+        !process.env.AZURE_OPENAI_DEPLOYMENT_ID) {
+      
+      // In production mode, return an error response
+      if (!isDevelopment) {
+        console.error('CRITICAL: Azure OpenAI credentials not configured in production mode.');
+        return res.status(500).json({ 
+          error: `Azure OpenAI is not properly configured. 
+                  This application requires Azure OpenAI credentials in production mode.
+                  Please set the environment variables and restart the application.`
+        });
+      }
+      
+      // In development mode, use a fallback response
+      console.warn('Azure OpenAI credentials not configured in development mode. Using fallback response for overview.');
+      return res.json({ 
+        overview: `This is a fallback overview of "${topic}" because the Azure OpenAI API is not configured. 
+                  Please set the AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, and 
+                  AZURE_OPENAI_DEPLOYMENT_ID environment variables.` 
+      });
+    }
+    
+    // Get overview from Azure AI
+    // Check if this is an executable document request based on the topic
+    const isExecDocRequest = topic.toLowerCase().includes('kubernetes executable document') ||
+                             topic.toLowerCase().includes('k8s executable document') ||
+                             topic.toLowerCase().includes('exec doc');
+    
+    // Choose the appropriate prompt file based on the request type
+    const promptFile = isExecDocRequest ? 'execDoc.txt' : 'overview.txt';
+    
+    // Generate the overview with the selected prompt
+    const overview = await azureAIService.generateOverview(topic, {
+      systemPromptFile: promptFile
+    });
+    
+    res.json({ overview });
+  } catch (error: any) {
+    console.error('Error generating overview:', error);
+    res.status(500).json({ error: error.message || 'An unknown error occurred' });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  console.log('Health check endpoint called');
   res.status(200).json({ status: 'ok' });
+});
+
+// Simple test endpoint for debugging
+app.get('/test', (req, res) => {
+  console.log('Test endpoint called');
+  res.status(200).send('Server is working!');
 });
 
 // Start server

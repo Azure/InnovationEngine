@@ -21,7 +21,13 @@ DO NOT USE IN PRODUCTION - see note on security in the Developer Notes below
 
 ### Azure AI Integration
 
-The Assistant feature now integrates with Azure OpenAI to provide intelligent responses. To configure the Azure AI integration:
+The plugin now includes three AI-powered features that integrate with Azure OpenAI:
+
+1. **Assistant** - Provides intelligent responses to questions about Kubernetes and Innovation Engine.
+2. **Azure Architecture Overview Generator** - Creates comprehensive architectural overviews for Azure workloads and solutions.
+3. **Executable Document Overview Generator** - Automatically creates detailed overviews for Kubernetes-focused executable documents.
+
+To configure the Azure AI integration:
 
 1. Copy the `env.example` file to `.env` in the project root:
    ```bash
@@ -39,6 +45,25 @@ The Assistant feature now integrates with Azure OpenAI to provide intelligent re
    ```bash
    npm run dev
    ```
+
+### Executable Document Overview Generator
+
+The Executable Document Editor now includes an AI-powered overview generator that can automatically create detailed overviews for Kubernetes-focused operations. To use this feature:
+
+1. Open the ExecDoc Editor component
+2. In the "Create & Edit Document Overview" section, find the "Generate with Azure AI" panel
+3. Enter a Kubernetes-related topic (e.g., "Deploy a stateful application with persistent storage")
+4. Click "Generate Overview"
+5. Review and edit the generated overview as needed
+6. Click "Generate Steps" to continue building your executable document
+
+The generated overview includes:
+- A clear title for your document
+- A concise overview of the process
+- Prerequisites needed to follow the document
+- Expected outcome after completing the steps
+- Major steps involved in the process
+- Additional considerations or warnings
 
 #### Rate Limiting Considerations
 

@@ -1,6 +1,6 @@
 {
   "name": "innovation-engine",
-  "version": "0.2.9",
+  "version": "0.3.1",
   "description": "Your Headlamp plugin",
   "scripts": {
     "start-no-validation": "headlamp-plugin start",
@@ -13,10 +13,11 @@
     "storybook": "headlamp-plugin storybook",
     "storybook-build": "headlamp-plugin storybook-build",
     "test": "headlamp-plugin test",
-    "server:dev": "NODE_ENV=development ts-node src/server.ts",
-    "server:prod": "NODE_ENV=production ts-node src/server.ts",
+    "server:dev": "NODE_ENV=development PORT=4001 ts-node src/server.ts",
+    "server:prod": "NODE_ENV=production PORT=4001 ts-node src/server.ts",
     "server": "npm run server:prod",
     "dev-no-validation": "concurrently \"npm run start-no-validation\" \"npm run server:dev\"",
+    "dev-port-fix": "PORT=4001 concurrently \"npm run start-no-validation\" \"npm run server:dev\"",
     "validate-env:dev": "NODE_ENV=development npx vitest run src/__tests__/a_environment.test.ts",
     "validate-env:prod": "NODE_ENV=production npx vitest run src/__tests__/a_environment.test.ts",
     "validate-env": "npm run validate-env:prod",

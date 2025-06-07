@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-06-06 - Commit: (Generate Overview feature)
+
+### Added
+- Implemented Generate Overview feature in ExecDocEditor component using Azure OpenAI integration
+- Created new system prompt template specifically for Kubernetes executable documents
+- Added Azure AI integration to the OverviewAuthoring component
+- Added UI elements for Azure AI-powered overview generation
+- Added automatic title extraction from generated overview content
+- Created new tests for executable document generation features
+- Added intelligent prompt selection based on document context
+- Expanded server API to support executable document generation
+
+### Changed
+- Enhanced OverviewAuthoring UI with direct Azure AI generation capabilities
+- Improved document title handling with automatic extraction from headings
+- Updated server endpoint to detect different types of overview requests
+- Enhanced error handling for overview generation
+
 ## [0.3.0] - 2025-06-06 - Commit: (Azure AI Integration)
 
 ### Added
@@ -14,12 +32,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented error handling for Azure AI service failures
 - Added environment variable configuration for Azure OpenAI credentials
 - Created dev script to run frontend and backend concurrently
+- Added Azure Architecture Overview Generator feature
+- Created system prompt for Azure architecture overviews
+- Implemented frontend component for generating architecture overviews
+- Added API endpoint for overview generation
+- Created utility functions for loading system prompts from files
 
 ### Changed
 - Updated Assistant UI to display errors when Azure AI communication fails
 - Modified chat interface to use real AI completions instead of simulated responses
 - Updated package.json with new dependencies for backend server
 - Improved error handling in chat functionality
+- Enhanced documentation with Azure Architecture Overview Generator usage instructions
 
 ## [0.2.9] - 2025-06-06 - Commit: (UI enhancement for improved authoring)
 

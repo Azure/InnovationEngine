@@ -1,6 +1,7 @@
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import { Message } from './ExecDocTypes';
+import { API } from '../api'; // Import the API utility
 
 interface OverviewAuthoringProps {
   initialOverview?: string;
@@ -21,6 +22,11 @@ export const OverviewAuthoring: React.FC<OverviewAuthoringProps> = ({
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [activePanel, setActivePanel] = React.useState<'prompt' | 'preview'>('prompt');
+  
+  // State for Azure AI integration
+  const [azureAITopic, setAzureAITopic] = React.useState('');
+  const [isAzureAIGenerating, setIsAzureAIGenerating] = React.useState(false);
+  const [azureAIError, setAzureAIError] = React.useState<string | null>(null);
   
   // State for help panel and draggable divider
   const [isHelpPanelCollapsed, setIsHelpPanelCollapsed] = React.useState(false);
@@ -128,6 +134,48 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
       ]);
       setHelpPrompt('');
     }, 1000);
+  };
+
+  // Handle generating overview with Azure AI
+  const handleGenerateWithAzureAI = async () => {
+    if (!azureAITopic.trim()) return;
+    
+    setIsAzureAIGenerating(true);
+    setAzureAIError(null);
+    
+    try {
+      // Create a customized topic for executable documentation
+      const formattedTopic = `Kubernetes executable document for: ${azureAITopic}`;
+      
+      // Call the Azure AI service to generate an overview with the executable document prompt
+      const overview = await API.generateOverview(formattedTopic);
+      
+      // Update the generated overview
+      setGeneratedOverview(overview);
+      
+      // Add assistant message
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: `I've generated an executable document overview for "${azureAITopic}" using Azure AI. You can edit it directly or ask me to make changes.`
+      }]);
+      
+      // Reset states
+      setAzureAITopic('');
+      setActivePanel('preview');
+      
+      // If not in editing mode, switch to editing mode to show the changes
+      setIsEditingOverview(true);
+    } catch (error: any) {
+      setAzureAIError(error.message || 'An error occurred while generating the overview');
+      
+      // Add error message to conversation
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: `I encountered an error while generating the overview: ${error.message || 'Unknown error'}. Please try again or use a different approach.`
+      }]);
+    } finally {
+      setIsAzureAIGenerating(false);
+    }
   };
 
   // Apply Copilot's suggestion to the overview
@@ -250,6 +298,69 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
         >
           Preview & Edit
         </button>
+      </div>
+      
+      {/* Azure AI Overview Generation Section */}
+      <div style={{ 
+        padding: '12px',
+        backgroundColor: '#e3f2fd', 
+        borderRadius: '4px',
+        marginBottom: '16px',
+        border: '1px solid #bbdefb'
+      }}>
+        <Typography variant="subtitle1" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+          Generate with Azure AI
+        </Typography>
+        <Typography variant="body2" style={{ marginBottom: '12px' }}>
+          Use Azure OpenAI to generate an architectural overview for your document.
+        </Typography>
+        
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ flex: 1 }}>
+            <input
+              type="text"
+              value={azureAITopic}
+              onChange={(e) => setAzureAITopic(e.target.value)}
+              placeholder="E.g., Kubernetes Deployment with Service Mesh"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+              disabled={isAzureAIGenerating}
+            />
+          </div>
+          <button
+            onClick={handleGenerateWithAzureAI}
+            disabled={isAzureAIGenerating || !azureAITopic.trim()}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#0078d4',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: isAzureAIGenerating || !azureAITopic.trim() ? 'not-allowed' : 'pointer',
+              opacity: isAzureAIGenerating || !azureAITopic.trim() ? 0.7 : 1
+            }}
+          >
+            {isAzureAIGenerating ? 'Generating...' : 'Generate Overview'}
+          </button>
+        </div>
+        
+        {azureAIError && (
+          <div style={{ 
+            marginTop: '8px', 
+            padding: '8px', 
+            backgroundColor: '#ffebee', 
+            border: '1px solid #ffcdd2',
+            borderRadius: '4px',
+            color: '#c62828'
+          }}>
+            <Typography variant="body2">{azureAIError}</Typography>
+          </div>
+        )}
       </div>
       
       {/* Main Content Area with side-by-side layout using CSS Grid for equal heights */}

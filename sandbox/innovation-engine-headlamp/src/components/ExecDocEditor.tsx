@@ -60,9 +60,13 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
   const handleSaveOverview = (overview: string) => {
     if (!execDoc) {
       // Create new doc - we're in the create-overview phase
+      // Extract title from the first heading if available (# Title)
+      const titleMatch = overview.match(/^# (.+)$/m);
+      const title = titleMatch ? titleMatch[1] : 'Untitled Document';
+      
       setExecDoc({
         id: `doc-${Date.now()}`,
-        title: overview.split('\n')[0].replace(/^# /, '') || 'Untitled Document',
+        title,
         overview,
         steps: [],
         createdAt: new Date(),
@@ -74,8 +78,14 @@ export const ExecDocEditor: React.FC<ExecDocEditorProps> = ({
       // The user can directly generate steps from here
     } else {
       // Update existing doc
+      
+      // Extract title from the first heading if available (# Title)
+      const titleMatch = overview.match(/^# (.+)$/m);
+      const title = titleMatch ? titleMatch[1] : execDoc.title;
+      
       setExecDoc({
         ...execDoc,
+        title,
         overview,
         updatedAt: new Date()
       });

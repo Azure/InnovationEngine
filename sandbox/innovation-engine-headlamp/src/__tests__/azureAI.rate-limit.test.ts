@@ -166,8 +166,8 @@ describe('AzureAIService Rate Limiting', () => {
         })
       } as Response);
     
-    // Use actual setTimeout (not mocked) for this test
-    vi.restoreAllMocks();
+    // Use actual setTimeout but keep fetch mocked
+    vi.spyOn(global, 'setTimeout').mockRestore();
     
     // Test messages
     const messages = [{ role: 'user' as const, content: 'Test real rate limiting delays' }];
