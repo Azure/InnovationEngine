@@ -1,7 +1,7 @@
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { Message } from './ExecDocTypes';
 import { API } from '../api'; // Import the API utility
+import { Message } from './ExecDocTypes';
 
 interface OverviewAuthoringProps {
   initialOverview?: string;
@@ -16,12 +16,8 @@ export const OverviewAuthoring: React.FC<OverviewAuthoringProps> = ({
   onGenerateSteps,
   authoringPhase = 'create-overview'
 }) => {
-  const [promptInput, setPromptInput] = React.useState('');
   const [generatedOverview, setGeneratedOverview] = React.useState(initialOverview);
   const [isEditingOverview, setIsEditingOverview] = React.useState(false);
-  const [messages, setMessages] = React.useState<Message[]>([]);
-  const [isGenerating, setIsGenerating] = React.useState(false);
-  const [activePanel, setActivePanel] = React.useState<'prompt' | 'preview'>('prompt');
   
   // State for Azure AI integration
   const [azureAITopic, setAzureAITopic] = React.useState('');
@@ -60,55 +56,7 @@ export const OverviewAuthoring: React.FC<OverviewAuthoringProps> = ({
     };
   }, []);
   
-  // Handle sending prompt to Copilot
-  const handleSendPrompt = () => {
-    if (!promptInput.trim()) return;
-    
-    // Add user message to conversation
-    setMessages(prev => [...prev, { role: 'user', content: promptInput }]);
-    
-    // Set generating state
-    setIsGenerating(true);
-    
-    // Simulate Copilot response (this would be replaced with actual API call)
-    setTimeout(() => {
-      // Generate a simple overview based on the prompt
-      const newOverview = `
-# ${promptInput}
-
-## Overview
-
-This is an Executable Document that will guide you through the process of ${promptInput.toLowerCase()}. 
-Follow the steps below to complete this task in your Kubernetes environment.
-
-## Prerequisites
-
-- Kubernetes cluster
-- kubectl configured to access your cluster
-- Necessary permissions to deploy resources
-
-## Expected Outcome
-
-Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
-      `.trim();
-      
-      // Update the overview
-      setGeneratedOverview(newOverview);
-      
-      // Add assistant message
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: `I've generated an overview for "${promptInput}". You can edit it directly or ask me to make changes.`
-      }]);
-      
-      // Reset states
-      setPromptInput('');
-      setIsGenerating(false);
-      
-      // Switch to preview panel after generating
-      setActivePanel('preview');
-    }, 1000);
-  };
+  // Removed unused handleSendPrompt function
   
   // Handle proceeding to step generation
   const handleProceedToSteps = () => {
@@ -153,26 +101,17 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
       // Update the generated overview
       setGeneratedOverview(overview);
       
-      // Add assistant message
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: `I've generated an executable document overview for "${azureAITopic}" using Azure AI. You can edit it directly or ask me to make changes.`
-      }]);
+      // No need to add messages since we removed the messages panel
       
       // Reset states
       setAzureAITopic('');
-      setActivePanel('preview');
       
       // If not in editing mode, switch to editing mode to show the changes
       setIsEditingOverview(true);
     } catch (error: any) {
       setAzureAIError(error.message || 'An error occurred while generating the overview');
       
-      // Add error message to conversation
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: `I encountered an error while generating the overview: ${error.message || 'Unknown error'}. Please try again or use a different approach.`
-      }]);
+      // Error is already displayed in the UI via azureAIError
     } finally {
       setIsAzureAIGenerating(false);
     }
@@ -266,40 +205,6 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
         </Typography>
       </div>
       
-      {/* Panel Toggle Buttons */}
-      <div style={{ display: 'flex', marginBottom: '16px' }}>
-        <button
-          onClick={() => setActivePanel('prompt')}
-          style={{
-            flex: 1,
-            padding: '8px',
-            backgroundColor: activePanel === 'prompt' ? '#1976d2' : '#f1f1f1',
-            color: activePanel === 'prompt' ? 'white' : 'black',
-            border: 'none',
-            borderRadius: '4px 0 0 4px',
-            cursor: 'pointer',
-            fontWeight: activePanel === 'prompt' ? 'bold' : 'normal'
-          }}
-        >
-          Prompt & Conversation
-        </button>
-        <button
-          onClick={() => setActivePanel('preview')}
-          style={{
-            flex: 1,
-            padding: '8px',
-            backgroundColor: activePanel === 'preview' ? '#1976d2' : '#f1f1f1',
-            color: activePanel === 'preview' ? 'white' : 'black',
-            border: 'none',
-            borderRadius: '0 4px 4px 0',
-            cursor: 'pointer',
-            fontWeight: activePanel === 'preview' ? 'bold' : 'normal'
-          }}
-        >
-          Preview & Edit
-        </button>
-      </div>
-      
       {/* Azure AI Overview Generation Section */}
       <div style={{ 
         padding: '12px',
@@ -315,7 +220,7 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
           Use Azure OpenAI to generate an architectural overview for your document.
         </Typography>
         
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
           <div style={{ flex: 1 }}>
             <input
               type="text"
@@ -349,18 +254,40 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
           </button>
         </div>
         
-        {azureAIError && (
-          <div style={{ 
-            marginTop: '8px', 
-            padding: '8px', 
-            backgroundColor: '#ffebee', 
-            border: '1px solid #ffcdd2',
-            borderRadius: '4px',
-            color: '#c62828'
-          }}>
-            <Typography variant="body2">{azureAIError}</Typography>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+          <div>
+            {azureAIError && (
+              <div style={{ 
+                padding: '8px', 
+                backgroundColor: '#ffebee', 
+                border: '1px solid #ffcdd2',
+                borderRadius: '4px',
+                color: '#c62828'
+              }}>
+                <Typography variant="body2">{azureAIError}</Typography>
+              </div>
+            )}
           </div>
-        )}
+          
+          {generatedOverview.trim() && (
+            <button
+              onClick={handleProceedToSteps}
+              disabled={!generatedOverview.trim()}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#4caf50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: !generatedOverview.trim() ? 'not-allowed' : 'pointer',
+                opacity: !generatedOverview.trim() ? 0.7 : 1,
+                fontWeight: 'bold'
+              }}
+            >
+              {getActionButtonText()}
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Main Content Area with side-by-side layout using CSS Grid for equal heights */}
@@ -377,7 +304,7 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
           minHeight: '600px' // Set a good baseline minimum height
         }}
       >
-        {/* Main Panel Area - conditionally display prompt or preview on the left side */}
+        {/* Main Panel Area - now only shows the preview/edit panel */}
         <div 
           style={{ 
             height: '100%',
@@ -386,206 +313,93 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
             overflow: 'hidden'
           }}
         >
-          {/* Conditional content for left side - either Prompt or Preview panel */}
-          {activePanel === 'prompt' ? (
-            // Prompt Panel
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <Typography variant="subtitle1">
-                  What kind of Executable Document do you want to create?
-                </Typography>
-                <div style={{ display: 'flex', marginTop: '8px', gap: '8px' }}>
-                  <input
-                    type="text"
-                    value={promptInput}
-                    onChange={(e) => setPromptInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      // Handle CTRL+ENTER to submit prompt
-                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && promptInput.trim()) {
-                        handleSendPrompt();
-                      }
-                    }}
-                    placeholder="E.g., Create a deployment for a Node.js application"
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: '4px',
-                      border: '1px solid #ccc'
-                    }}
-                  />
-                  <button
-                    onClick={handleSendPrompt}
-                    disabled={isGenerating || !promptInput.trim()}
-                    style={{
-                      padding: '10px 16px',
-                      backgroundColor: '#1976d2',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: isGenerating || !promptInput.trim() ? 'not-allowed' : 'pointer',
-                      opacity: isGenerating || !promptInput.trim() ? 0.7 : 1
-                    }}
-                  >
-                    {isGenerating ? 'Generating...' : 'Generate'}
-                  </button>
-                </div>
-              </div>
-              
-              {/* Conversation History */}
-              <div 
-                style={{ 
-                  flex: 1,
-                  overflowY: 'auto',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '4px',
-                  padding: '12px',
-                  backgroundColor: '#f9f9f9'
-                }}
-              >
-                {messages.length === 0 && (
-                  <Typography color="textSecondary" align="center" style={{ marginTop: '20px' }}>
-                    Enter a prompt above to start generating your Executable Document
-                  </Typography>
-                )}
-                
-                {messages.map((message, index) => (
-                  <div 
-                    key={index} 
-                    style={{
-                      marginBottom: '10px',
-                      textAlign: message.role === 'user' ? 'right' : 'left',
-                    }}
-                  >
-                    <div 
-                      style={{
-                        display: 'inline-block',
-                        maxWidth: '80%',
-                        padding: '10px',
-                        borderRadius: '8px',
-                        backgroundColor: message.role === 'user' ? '#1976d2' : '#ffffff',
-                        color: message.role === 'user' ? 'white' : 'black',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                        border: message.role === 'assistant' ? '1px solid #e0e0e0' : 'none'
-                      }}
-                    >
-                      <Typography>{message.content}</Typography>
-                    </div>
-                  </div>
-                ))}
-                
-                {isGenerating && (
-                  <div style={{ textAlign: 'center', padding: '10px' }}>
-                    <Typography color="textSecondary">Generating overview...</Typography>
-                  </div>
-                )}
+          {/* Preview Panel */}
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="subtitle1">
+                {isEditingOverview ? 'Edit Overview' : 'Preview Overview'}
+              </Typography>
+              <div>
+                <button
+                  onClick={() => setIsEditingOverview(!isEditingOverview)}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#f0f0f0',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {isEditingOverview ? 'Preview' : 'Edit'}
+                </button>
               </div>
             </div>
-          ) : (
-            // Preview Panel
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="subtitle1">
-                  {isEditingOverview ? 'Edit Overview' : 'Preview Overview'}
-                </Typography>
-                <div>
-                  <button
-                    onClick={() => setIsEditingOverview(!isEditingOverview)}
-                    style={{
-                      marginRight: '8px',
-                      padding: '6px 12px',
-                      backgroundColor: '#f0f0f0',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isEditingOverview ? 'Preview' : 'Edit'}
-                  </button>
-                  
-                  <button
-                    onClick={handleProceedToSteps}
-                    disabled={!generatedOverview.trim()}
-                    style={{
-                      padding: '6px 12px',
-                      backgroundColor: '#4caf50',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: !generatedOverview.trim() ? 'not-allowed' : 'pointer',
-                      opacity: !generatedOverview.trim() ? 0.7 : 1
-                    }}
-                  >
-                    {getActionButtonText()}
-                  </button>
-                </div>
-              </div>
               
-              <div 
-                style={{ 
-                  flex: 1,
-                  display: 'flex', // Add flex display
-                  flexDirection: 'column',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '4px',
-                  padding: '12px',
-                  backgroundColor: '#ffffff',
-                  overflowY: 'auto'
-                }}
-              >
-                {isEditingOverview ? (
-                  <textarea
-                    value={generatedOverview}
-                    onChange={(e) => setGeneratedOverview(e.target.value)}
-                    onKeyDown={(e) => {
-                      // Handle CTRL+ENTER to save changes and exit edit mode
-                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && generatedOverview.trim()) {
-                        e.preventDefault(); // Prevent default behavior (newline)
-                        setIsEditingOverview(false); // Exit edit mode
-                      }
-                    }}
-                    placeholder="Enter your document overview content. Press CTRL+ENTER to save changes."
-                    style={{
-                      width: '100%',
-                      height: '100%', 
-                      padding: '8px',
-                      borderRadius: '4px',
-                      border: '1px solid #ddd',
-                      fontFamily: 'monospace',
-                      fontSize: '14px',
-                      lineHeight: '1.5',
-                      resize: 'none'
-                    }}
-                  />
-                ) : (
-                  <div 
-                    style={{ 
-                      padding: '16px',
-                      flex: 1, // Add flex: 1 to fill available space
-                      maxWidth: '800px', 
-                      margin: '0 auto',
-                      fontFamily: 'system-ui, -apple-system, sans-serif',
-                      lineHeight: 1.6,
-                      overflow: 'auto' // Add overflow to handle content exceeding dimensions
-                    }}
-                  >
-                    {generatedOverview.split('\n').map((line, i) => {
-                      if (line.startsWith('# ')) {
-                        return <Typography key={i} variant="h4" style={{ marginBottom: '16px' }}>{line.substring(2)}</Typography>;
-                      } else if (line.startsWith('## ')) {
-                        return <Typography key={i} variant="h5" style={{ marginTop: '24px', marginBottom: '12px' }}>{line.substring(3)}</Typography>;
-                      } else if (line.startsWith('- ')) {
-                        return <Typography key={i} component="li" style={{ marginLeft: '20px', marginBottom: '8px' }}>{line.substring(2)}</Typography>;
-                      } else if (line === '') {
-                        return <br key={i} />;
-                      } else {
-                        return <Typography key={i} paragraph>{line}</Typography>;
-                      }
-                    })}
-                  </div>
-                )}
-              </div>
+            <div 
+              style={{ 
+                flex: 1,
+                display: 'flex', // Add flex display
+                flexDirection: 'column',
+                border: '1px solid #e0e0e0',
+                borderRadius: '4px',
+                padding: '12px',
+                backgroundColor: '#ffffff',
+                overflowY: 'auto'
+              }}
+            >
+              {isEditingOverview ? (
+                <textarea
+                  value={generatedOverview}
+                  onChange={(e) => setGeneratedOverview(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Handle CTRL+ENTER to save changes and exit edit mode
+                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && generatedOverview.trim()) {
+                      e.preventDefault(); // Prevent default behavior (newline)
+                      setIsEditingOverview(false); // Exit edit mode
+                    }
+                  }}
+                  placeholder="Enter your document overview content. Press CTRL+ENTER to save changes."
+                  style={{
+                    width: '100%',
+                    height: '100%', 
+                    padding: '8px',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd',
+                    fontFamily: 'monospace',
+                    fontSize: '14px',
+                    lineHeight: '1.5',
+                    resize: 'none'
+                  }}
+                />
+              ) : (
+                <div 
+                  style={{ 
+                    padding: '16px',
+                    flex: 1, // Add flex: 1 to fill available space
+                    maxWidth: '800px', 
+                    margin: '0 auto',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    lineHeight: 1.6,
+                    overflow: 'auto' // Add overflow to handle content exceeding dimensions
+                  }}
+                >
+                  {generatedOverview.split('\n').map((line, i) => {
+                    if (line.startsWith('# ')) {
+                      return <Typography key={i} variant="h4" style={{ marginBottom: '16px' }}>{line.substring(2)}</Typography>;
+                    } else if (line.startsWith('## ')) {
+                      return <Typography key={i} variant="h5" style={{ marginTop: '24px', marginBottom: '12px' }}>{line.substring(3)}</Typography>;
+                    } else if (line.startsWith('- ')) {
+                      return <Typography key={i} component="li" style={{ marginLeft: '20px', marginBottom: '8px' }}>{line.substring(2)}</Typography>;
+                    } else if (line === '') {
+                      return <br key={i} />;
+                    } else {
+                      return <Typography key={i} paragraph>{line}</Typography>;
+                    }
+                  })}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
         
         {/* Draggable Divider */}
@@ -811,8 +625,6 @@ Successfully ${promptInput.toLowerCase()} in your Kubernetes cluster.
           </div>
         )}
       </div>
-      
-      {/* We no longer need the bottom Copilot panel since it's now side-by-side */}
     </div>
   );
 };
