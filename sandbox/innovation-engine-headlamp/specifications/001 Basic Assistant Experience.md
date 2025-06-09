@@ -1,6 +1,6 @@
 # Assistant Plugin: Basic User Experience Specification
 
-**Status:** DONE
+**Status:** In Progress
 
 ## Introduction
 
