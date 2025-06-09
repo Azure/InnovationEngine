@@ -1,5 +1,7 @@
 # Test Reports
 
+**Status:** IN PROGRESS
+
 ## Summary
 
 When users are testing their executable documentation using `ie test`, being

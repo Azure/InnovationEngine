@@ -1,5 +1,7 @@
 # Specification: Execute Shell Command from Headlamp Plugin via Backend API
 
+**Status:** IMPLEMENTED
+
 ## Overview
 Enable a Headlamp plugin to trigger the execution of a shell command on a backend server and display the result in the plugin UI. The plugin communicates with a backend REST API, which performs the command execution and returns the output.
 
