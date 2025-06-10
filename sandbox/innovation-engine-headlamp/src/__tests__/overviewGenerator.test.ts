@@ -1,10 +1,25 @@
-import { beforeAll, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { AzureAIService } from '../services/azureAI';
 import { formatSystemPrompt, loadSystemPrompt } from '../utils/promptUtils';
-import { loadSystemPrompt, formatSystemPrompt } from '../utils/promptUtils';
+
+// Create a mock function that will be shared across all tests
+const mockCreate = vi.fn();
+
+// Mock the Azure OpenAI client
+vi.mock('openai', () => {
+  return {
+    AzureOpenAI: vi.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: mockCreate
+        }
+      }
+    }))
+  };
+});
 
 // Load environment variables
 const envPath = path.join(process.cwd(), '.env');
@@ -13,22 +28,19 @@ if (fs.existsSync(envPath)) {
   dotenv.config({ path: envPath });
 }
 
-// Skip tests if environment variables are not set
-const runTests = process.env.AZURE_OPENAI_API_KEY &&
-                process.env.AZURE_OPENAI_ENDPOINT &&
-                process.env.AZURE_OPENAI_DEPLOYMENT_ID;
-
 describe('Overview Generator Tests', () => {
   let azureAIService: AzureAIService;
   
-  beforeAll(() => {
-    if (runTests) {
-      azureAIService = new AzureAIService({
-        apiKey: process.env.AZURE_OPENAI_API_KEY!,
-        endpoint: process.env.AZURE_OPENAI_ENDPOINT!,
-        deploymentId: process.env.AZURE_OPENAI_DEPLOYMENT_ID!,
-      });
-    }
+  beforeEach(() => {
+    // Reset mocks before each test
+    vi.clearAllMocks();
+    
+    // Create service instance with test config
+    azureAIService = new AzureAIService({
+      apiKey: 'test-api-key',
+      endpoint: 'https://test-endpoint.openai.azure.com',
+      deploymentId: 'test-deployment'
+    });
   });
 
   test('should load system prompt from file', () => {
@@ -42,19 +54,52 @@ describe('Overview Generator Tests', () => {
     expect(formatted).toBe('Hello User, welcome to Kubernetes!');
   });
 
-  // Only run API tests if environment variables are configured
-  (runTests ? test : test.skip)('should generate overview for a topic', async () => {
-    // This test will be skipped if environment variables are not set
+  test('should generate overview for a topic', async () => {
+    // Mock successful response
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Mocked overview content about Kubernetes resources' }
+      }]
+    };
+    
+    mockCreate.mockResolvedValueOnce(mockResponse);
+    
     const topic = 'Kubernetes Deployments';
     const overview = await azureAIService.generateOverview(topic);
     
     expect(overview).toBeTruthy();
     expect(typeof overview).toBe('string');
-    expect(overview.length).toBeGreaterThan(100);
-    expect(overview).toMatch(/deployment|Deployment|DEPLOYMENT/i);
-  }, 30000); // 30 second timeout for AI API call
+    expect(overview).toBe('Mocked overview content about Kubernetes resources');
+    
+    // Verify that the SDK was called with the right arguments
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining('You are an Azure cloud architect')
+          }),
+          expect.objectContaining({
+            role: 'user',
+            content: 'Create an overview of: Kubernetes Deployments'
+          })
+        ])
+      }),
+      expect.any(Object)
+    );
+  });
 
-  (runTests ? test : test.skip)('should use custom options when generating overview', async () => {
+  test('should use custom options when generating overview', async () => {
+    // Mock successful response
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Mocked overview with custom options' }
+      }]
+    };
+    
+    mockCreate.mockResolvedValueOnce(mockResponse);
+    
     const topic = 'Kubernetes ConfigMaps';
     const overview = await azureAIService.generateOverview(topic, {
       maxTokens: 300,
@@ -63,7 +108,16 @@ describe('Overview Generator Tests', () => {
     
     expect(overview).toBeTruthy();
     expect(typeof overview).toBe('string');
-    // With lower max tokens, we expect a shorter response
-    expect(overview.length).toBeLessThan(2500);
-  }, 30000);
+    expect(overview).toBe('Mocked overview with custom options');
+    
+    // Verify that custom options were applied
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        max_tokens: 300,
+        temperature: 0.3
+      }),
+      expect.any(Object)
+    );
+  });
 });

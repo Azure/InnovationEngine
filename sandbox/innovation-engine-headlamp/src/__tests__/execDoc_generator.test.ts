@@ -1,7 +1,23 @@
 // Unit tests for Azure AI exec doc generation
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { AzureAIService } from '../services/azureAI';
 import { loadSystemPrompt } from '../utils/promptUtils';
+
+// Create a mock function that will be shared across all tests
+const mockCreate = vi.fn();
+
+// Mock the Azure OpenAI client
+vi.mock('openai', () => {
+  return {
+    AzureOpenAI: vi.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: mockCreate
+        }
+      }
+    }))
+  };
+});
 
 // Mock fetch for testing
 global.fetch = vi.fn();
@@ -11,35 +27,13 @@ describe('ExecDoc Generator Tests', () => {
   
   beforeEach(() => {
     // Reset mocks before each test
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     
     // Create service instance with test config
     azureAIService = new AzureAIService({
       apiKey: 'test-api-key',
       endpoint: 'https://test-endpoint.openai.azure.com',
       deploymentId: 'test-deployment'
-    });
-    
-    // Mock successful response for tests
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      status: 200,
-      headers: {
-        get: (name: string) => name === 'Retry-After' ? '1' : null
-      },
-      json: async () => ({
-        id: 'response-id',
-        choices: [{
-          message: { role: 'assistant', content: 'Mocked executable document overview' },
-          finish_reason: 'stop',
-          index: 0
-        }],
-        usage: {
-          prompt_tokens: 100,
-          completion_tokens: 150,
-          total_tokens: 250
-        }
-      })
     });
   });
   
@@ -50,6 +44,15 @@ describe('ExecDoc Generator Tests', () => {
   });
   
   test('should generate overview for Kubernetes deployment', async () => {
+    // Mock successful response
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Mocked executable document overview' }
+      }]
+    };
+    
+    mockCreate.mockResolvedValueOnce(mockResponse);
+    
     const topic = 'Kubernetes executable document for: Deploy a stateful application';
     const overview = await azureAIService.generateOverview(topic, {
       systemPromptFile: 'execDoc.txt'
@@ -59,34 +62,38 @@ describe('ExecDoc Generator Tests', () => {
     expect(typeof overview).toBe('string');
     expect(overview).toBe('Mocked executable document overview');
     
-    // Verify that fetch was called with the right arguments
-    expect(global.fetch).toHaveBeenCalled();
-    const fetchCall = (global.fetch as any).mock.calls[0];
-    const requestBody = JSON.parse(fetchCall[1].body);
-    
-    // Verify system prompt is for Kubernetes executable documentation
-    expect(requestBody.messages[0].role).toBe('system');
-    expect(requestBody.messages[0].content).toContain('You are an expert in Kubernetes and executable documentation');
-    
-    // Verify user message contains the topic
-    expect(requestBody.messages[1].role).toBe('user');
-    expect(requestBody.messages[1].content).toContain('Create an overview of: Kubernetes executable document for: Deploy a stateful application');
+    // Verify that the SDK was called with the right arguments
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining('You are an expert in Kubernetes and executable documentation')
+          }),
+          expect.objectContaining({
+            role: 'user',
+            content: 'Create an overview of: Kubernetes executable document for: Deploy a stateful application'
+          })
+        ])
+      }),
+      expect.any(Object)
+    );
   });
   
   test('should handle error when generating overview', async () => {
-    // Mock a failed response
-    (global.fetch as any).mockResolvedValue({
-      ok: false,
-      status: 500,
-      text: async () => 'Internal Server Error'
-    });
+    // Mock an error response from the SDK
+    const mockError = new Error('Azure AI API server error (500): Internal server error');
+    (mockError as any).status = 500;
+    
+    mockCreate.mockRejectedValueOnce(mockError);
     
     // Test should throw an error
     await expect(azureAIService.generateOverview('Test topic', {
       systemPromptFile: 'execDoc.txt'
-    })).rejects.toThrow();
+    })).rejects.toThrow('Azure AI API server error (500): Internal server error');
     
-    // Verify that fetch was called
-    expect(global.fetch).toHaveBeenCalled();
+    // Verify that the SDK was called
+    expect(mockCreate).toHaveBeenCalled();
   });
 });

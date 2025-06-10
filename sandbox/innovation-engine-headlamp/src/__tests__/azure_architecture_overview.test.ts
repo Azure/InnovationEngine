@@ -1,7 +1,23 @@
 // Azure Architecture Overview Generator Tests
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { AzureAIService } from '../services/azureAI';
-import { loadSystemPrompt, formatSystemPrompt } from '../utils/promptUtils';
+import { formatSystemPrompt, loadSystemPrompt } from '../utils/promptUtils';
+
+// Create a mock function that will be shared across all tests
+const mockCreate = vi.fn();
+
+// Mock the Azure OpenAI client
+vi.mock('openai', () => {
+  return {
+    AzureOpenAI: vi.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: mockCreate
+        }
+      }
+    }))
+  };
+});
 
 // Mock fetch for testing
 global.fetch = vi.fn();
@@ -11,38 +27,13 @@ describe('Azure Architecture Overview Generator', () => {
   
   beforeEach(() => {
     // Reset mocks before each test
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     
     // Create service instance with test config
     azureAIService = new AzureAIService({
       apiKey: 'test-api-key',
       endpoint: 'https://test-endpoint.openai.azure.com',
       deploymentId: 'test-deployment'
-    });
-    
-    // Mock successful response for tests
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      status: 200,
-      headers: {
-        get: (name: string) => name === 'Retry-After' ? '1' : null
-      },
-      json: async () => ({
-        id: 'response-id',
-        choices: [{
-          message: {
-            content: 'Mocked Azure architecture overview content'
-          },
-          finish_reason: 'stop',
-          index: 0
-        }],
-        usage: {
-          prompt_tokens: 100,
-          completion_tokens: 150,
-          total_tokens: 250
-        }
-      }),
-      text: async () => 'text response'
     });
   });
 
@@ -62,6 +53,15 @@ describe('Azure Architecture Overview Generator', () => {
   });
 
   test('should generate Azure architecture overview for a workload', async () => {
+    // Mock successful response
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Mocked Azure architecture overview content' }
+      }]
+    };
+    
+    mockCreate.mockResolvedValueOnce(mockResponse);
+    
     const topic = 'Web Application with SQL Database';
     const overview = await azureAIService.generateOverview(topic);
     
@@ -69,21 +69,35 @@ describe('Azure Architecture Overview Generator', () => {
     expect(typeof overview).toBe('string');
     expect(overview).toBe('Mocked Azure architecture overview content');
     
-    // Verify that fetch was called with the right arguments
-    expect(global.fetch).toHaveBeenCalled();
-    const fetchCall = (global.fetch as any).mock.calls[0];
-    const requestBody = JSON.parse(fetchCall[1].body);
-    
-    // Verify system prompt is for Azure cloud architecture
-    expect(requestBody.messages[0].role).toBe('system');
-    expect(requestBody.messages[0].content).toContain('You are an Azure cloud architect');
-    
-    // Verify user message contains the topic
-    expect(requestBody.messages[1].role).toBe('user');
-    expect(requestBody.messages[1].content).toContain('Create an overview of: Web Application with SQL Database');
+    // Verify that the SDK was called with the right arguments
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining('You are an Azure cloud architect')
+          }),
+          expect.objectContaining({
+            role: 'user',
+            content: 'Create an overview of: Web Application with SQL Database'
+          })
+        ])
+      }),
+      expect.any(Object)
+    );
   });
 
   test('should use custom options when generating Azure architecture overview', async () => {
+    // Mock successful response
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Mocked Azure architecture overview with custom options' }
+      }]
+    };
+    
+    mockCreate.mockResolvedValueOnce(mockResponse);
+    
     const topic = 'Microservices Architecture on AKS';
     const overview = await azureAIService.generateOverview(topic, {
       maxTokens: 2000,
@@ -92,18 +106,16 @@ describe('Azure Architecture Overview Generator', () => {
     
     expect(overview).toBeTruthy();
     expect(typeof overview).toBe('string');
-    expect(overview).toBe('Mocked Azure architecture overview content');
+    expect(overview).toBe('Mocked Azure architecture overview with custom options');
     
-    // Verify that fetch was called with the right arguments and custom options
-    expect(global.fetch).toHaveBeenCalled();
-    const fetchCall = (global.fetch as any).mock.calls[0];
-    const requestBody = JSON.parse(fetchCall[1].body);
-    
-    // Verify completion options were passed correctly
-    expect(requestBody.max_tokens).toBe(2000);
-    expect(requestBody.temperature).toBe(0.4);
-    
-    // Verify user message contains the topic
-    expect(requestBody.messages[1].content).toContain('Create an overview of: Microservices Architecture on AKS');
+    // Verify that custom options were applied
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        max_tokens: 2000,
+        temperature: 0.4
+      }),
+      expect.any(Object)
+    );
   });
 });

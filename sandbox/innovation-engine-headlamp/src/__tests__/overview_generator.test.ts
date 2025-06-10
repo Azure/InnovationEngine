@@ -6,6 +6,22 @@ import path from 'path';
 import { AzureAIService } from '../services/azureAI';
 import { formatSystemPrompt, loadSystemPrompt } from '../utils/promptUtils';
 
+// Create a mock function that will be shared across all tests
+const mockCreate = vi.fn();
+
+// Mock the Azure OpenAI client
+vi.mock('openai', () => {
+  return {
+    AzureOpenAI: vi.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: mockCreate
+        }
+      }
+    }))
+  };
+});
+
 // Mock fetch for testing
 global.fetch = vi.fn();
 
@@ -21,38 +37,13 @@ describe('Overview Generator Tests', () => {
   
   beforeEach(() => {
     // Reset mocks before each test
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     
     // Create service instance with test config
     azureAIService = new AzureAIService({
       apiKey: 'test-api-key',
       endpoint: 'https://test-endpoint.openai.azure.com',
       deploymentId: 'test-deployment'
-    });
-    
-    // Mock successful response for tests
-    (global.fetch as any).mockResolvedValue({
-      ok: true,
-      status: 200,
-      headers: {
-        get: (name: string) => name === 'Retry-After' ? '1' : null
-      },
-      json: async () => ({
-        id: 'response-id',
-        choices: [{
-          message: {
-            content: 'Mocked overview content about Kubernetes resources'
-          },
-          finish_reason: 'stop',
-          index: 0
-        }],
-        usage: {
-          prompt_tokens: 100,
-          completion_tokens: 150,
-          total_tokens: 250
-        }
-      }),
-      text: async () => 'text response'
     });
   });
 
@@ -68,6 +59,15 @@ describe('Overview Generator Tests', () => {
   });
 
   test('should generate overview for a topic', async () => {
+    // Mock successful response
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Mocked overview content about Kubernetes resources' }
+      }]
+    };
+    
+    mockCreate.mockResolvedValueOnce(mockResponse);
+    
     const topic = 'Kubernetes Deployments';
     const overview = await azureAIService.generateOverview(topic);
     
@@ -75,13 +75,35 @@ describe('Overview Generator Tests', () => {
     expect(typeof overview).toBe('string');
     expect(overview).toBe('Mocked overview content about Kubernetes resources');
     
-    // Verify that fetch was called with the right arguments
-    expect(global.fetch).toHaveBeenCalled();
-    const fetchCall = (global.fetch as any).mock.calls[0];
-    expect(fetchCall[1].body).toContain('Create an overview of: Kubernetes Deployments');
+    // Verify that the SDK was called with the right arguments
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining('You are an Azure cloud architect')
+          }),
+          expect.objectContaining({
+            role: 'user',
+            content: 'Create an overview of: Kubernetes Deployments'
+          })
+        ])
+      }),
+      expect.any(Object)
+    );
   });
 
   test('should use custom options when generating overview', async () => {
+    // Mock successful response
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Mocked overview with custom options' }
+      }]
+    };
+    
+    mockCreate.mockResolvedValueOnce(mockResponse);
+    
     const topic = 'Kubernetes ConfigMaps';
     const overview = await azureAIService.generateOverview(topic, {
       maxTokens: 300,
@@ -90,14 +112,16 @@ describe('Overview Generator Tests', () => {
     
     expect(overview).toBeTruthy();
     expect(typeof overview).toBe('string');
-    expect(overview).toBe('Mocked overview content about Kubernetes resources');
+    expect(overview).toBe('Mocked overview with custom options');
     
-    // Verify that fetch was called with the right arguments and custom options
-    expect(global.fetch).toHaveBeenCalled();
-    const fetchCall = (global.fetch as any).mock.calls[0];
-    const body = JSON.parse(fetchCall[1].body);
-    expect(body.max_tokens).toBe(300);
-    expect(body.temperature).toBe(0.3);
-    expect(body.messages[1].content).toContain('Create an overview of: Kubernetes ConfigMaps');
+    // Verify that custom options were applied
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        max_tokens: 300,
+        temperature: 0.3
+      }),
+      expect.any(Object)
+    );
   });
 });

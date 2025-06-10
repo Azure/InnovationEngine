@@ -1,12 +1,10 @@
 // Unit tests for AzureAI service
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { AzureAIService } from '../services/azureAI';
-
-// Create a mock function that will be shared across all tests
-const mockCreate = vi.fn();
 
 // Mock the Azure OpenAI client
 vi.mock('openai', () => {
+  const mockCreate = vi.fn();
   return {
     AzureOpenAI: vi.fn().mockImplementation(() => ({
       chat: {
@@ -18,15 +16,16 @@ vi.mock('openai', () => {
   };
 });
 
-// Import the mocked module
+// Import the mocked module to access the mock
 import { AzureOpenAI } from 'openai';
 
 describe('AzureAIService', () => {
   let service: AzureAIService;
+  let mockCreate: any;
   
   beforeEach(() => {
-    // Clear all mocks before each test
-    vi.clearAllMocks();
+    // Reset mocks before each test
+    vi.resetAllMocks();
     
     // Create service instance with test config
     service = new AzureAIService({
@@ -34,6 +33,9 @@ describe('AzureAIService', () => {
       endpoint: 'https://test-endpoint.openai.azure.com',
       deploymentId: 'test-deployment'
     });
+    
+    // Get the mock create function
+    mockCreate = (service as any).client.chat.completions.create;
   });
 
   test('should create an instance with the provided configuration', () => {
@@ -56,7 +58,7 @@ describe('AzureAIService', () => {
     
     mockCreate.mockResolvedValueOnce(mockResponse);
     
-    // Test messages
+    // Test messages with explicitly typed role
     const messages = [
       { role: 'system' as const, content: 'You are a helpful assistant.' },
       { role: 'user' as const, content: 'Hello, can you help me?' }
@@ -93,7 +95,7 @@ describe('AzureAIService', () => {
     error.status = 401;
     mockCreate.mockRejectedValueOnce(error);
     
-    // Test messages
+    // Test messages with explicitly typed role
     const messages = [
       { role: 'user' as const, content: 'Hello, can you help me?' }
     ];
@@ -107,7 +109,7 @@ describe('AzureAIService', () => {
     const error = new Error('Network error');
     mockCreate.mockRejectedValueOnce(error);
     
-    // Test messages
+    // Test messages with explicitly typed role
     const messages = [
       { role: 'user' as const, content: 'Hello?' }
     ];
@@ -126,7 +128,7 @@ describe('AzureAIService', () => {
     
     mockCreate.mockResolvedValueOnce(mockResponse);
     
-    // Test messages and custom options
+    // Test messages and custom options with explicitly typed role
     const messages = [{ role: 'user' as const, content: 'Hello with options' }];
     const options = {
       maxTokens: 2000,
@@ -159,114 +161,109 @@ describe('AzureAIService', () => {
     });
   });
 
-  test('should configure retry settings for the SDK', async () => {
-    // Mock successful response to test that retry settings are passed correctly
-    const mockResponse = {
-      choices: [{
-        message: { content: 'Response with retry config' }
-      }]
-    };
-    
-    mockCreate.mockResolvedValueOnce(mockResponse);
-    
-    // Test messages
-    const messages = [{ role: 'user' as const, content: 'Hello with retry config' }];
-    
-    // Call the getCompletion method with custom retry settings
-    const result = await service.getCompletion(messages, { maxRetries: 5 });
-    
-    // Verify the result
-    expect(result).toBe('Response with retry config');
-    
-    // Verify that the SDK create method was called with correct retry configuration
-    expect(mockCreate).toHaveBeenCalledTimes(1);
-    expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        model: 'test-deployment',
-        messages: messages
-      }),
-      expect.objectContaining({
-        maxRetries: 5
-      })
-    );
-  });
-
-  test('should handle SDK retry failures gracefully', async () => {
-    // Mock a rate limit error that the SDK will eventually fail with after retries
+  test('should retry on rate limiting (429) responses', async () => {
+    // Mock rate limit error that the SDK will handle automatically
     const rateLimitError = new Error('Azure AI API rate limit exceeded: Too many requests') as any;
     rateLimitError.status = 429;
     
-    mockCreate.mockRejectedValue(rateLimitError);
+    mockCreate
+      .mockRejectedValueOnce(rateLimitError)
+      .mockResolvedValueOnce({
+        choices: [{
+          message: { content: 'Response after retry' }
+        }]
+      });
     
-    // Test messages and low retry settings to fail quickly
-    const messages = [{ role: 'user' as const, content: 'Test SDK retry handling' }];
-    const options = {
-      maxRetries: 1
-    };
+    // Test messages
+    const messages = [{ role: 'user' as const, content: 'Hello with rate limit' }];
     
-    // Expect the getCompletion method to fail with rate limit error after SDK retries
-    await expect(service.getCompletion(messages, options)).rejects.toThrow('rate limit exceeded');
+    // Call the getCompletion method with custom retry settings
+    const result = await service.getCompletion(messages, { maxRetries: 1 });
     
-    // Verify that the SDK create method was called with correct retry configuration
-    expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        model: 'test-deployment',
-        messages: messages
-      }),
-      expect.objectContaining({
-        maxRetries: 1
-      })
-    );
+    // Verify the result
+    expect(result).toBe('Response after retry');
+    
+    // Verify that the SDK create method was called twice (initial + retry)
+    expect(mockCreate).toHaveBeenCalledTimes(2);
   });
-  
-  test('should handle server errors from SDK', async () => {
-    // Mock server error that the SDK will fail with
+
+  test('should respect configurable retry settings', async () => {
+    // Mock server errors followed by success
     const serverError = new Error('Azure AI API server error (500): Internal server error') as any;
     serverError.status = 500;
     
-    mockCreate.mockRejectedValue(serverError);
+    mockCreate
+      .mockRejectedValueOnce(serverError)
+      .mockRejectedValueOnce(serverError)
+      .mockResolvedValueOnce({
+        choices: [{
+          message: { content: 'Response after multiple server errors' }
+        }]
+      });
+    
+    // Test messages and custom retry settings
+    const messages = [{ role: 'user' as const, content: 'Test with custom retry settings' }];
+    const options = {
+      maxRetries: 5
+    };
+    
+    // Call the getCompletion method with custom options
+    const result = await service.getCompletion(messages, options);
+    
+    // Verify the result
+    expect(result).toBe('Response after multiple server errors');
+    
+    // Verify that the SDK create method was called the expected number of times
+    expect(mockCreate).toHaveBeenCalledTimes(3);
+  });
+  
+  test('should fail after exceeding maximum rate limit retries', async () => {
+    // Mock multiple rate limit errors that exceed the retry limit
+    const rateLimitError = new Error('Azure AI API rate limit exceeded: Too many requests') as any;
+    rateLimitError.status = 429;
+    
+    mockCreate
+      .mockRejectedValueOnce(rateLimitError)
+      .mockRejectedValueOnce(rateLimitError)
+      .mockRejectedValueOnce(rateLimitError);
     
     // Test messages
-    const messages = [{ role: 'user' as const, content: 'Hello with server error' }];
+    const messages = [{ role: 'user' as const, content: 'Hello with excessive rate limit' }];
     
     // Set a low maxRetries value to make the test fail faster
     const options = {
       maxRetries: 2
     };
     
-    // Expect the getCompletion method to throw a server error after SDK handles retries
-    await expect(service.getCompletion(messages, options)).rejects.toThrow('server error (500)');
+    // Expect the getCompletion method to throw a rate limit error after exceeding retries
+    await expect(service.getCompletion(messages, options)).rejects.toThrow('rate limit exceeded');
   });
   
-  // This test verifies that retry configuration is correctly passed to the SDK
-  test.runIf(!process.env.CI)('should pass retry configuration to SDK', async () => {
-    // Mock successful response
-    const mockResponse = {
-      choices: [{
-        message: { content: 'Response with retry configuration' }
-      }]
-    };
+  // This test is marked to skip in CI environments where rate limits may be a concern
+  test.runIf(!process.env.CI)('should respect Retry-After header for rate limiting', async () => {
+    // With the SDK, retry logic including Retry-After headers is handled automatically
+    // We'll test that the SDK properly handles the maxRetries configuration
+    const rateLimitError = new Error('Azure AI API rate limit exceeded: Too many requests') as any;
+    rateLimitError.status = 429;
     
-    mockCreate.mockResolvedValueOnce(mockResponse);
+    mockCreate
+      .mockRejectedValueOnce(rateLimitError)
+      .mockResolvedValueOnce({
+        choices: [{
+          message: { content: 'Response after retry' }
+        }]
+      });
     
     // Test messages
-    const messages = [{ role: 'user' as const, content: 'Test retry configuration' }];
+    const messages = [{ role: 'user' as const, content: 'Test Retry-After header' }];
     
-    // Call the getCompletion method with retry config
-    const result = await service.getCompletion(messages, { maxRetries: 3 });
+    // Call the getCompletion method
+    const result = await service.getCompletion(messages, { maxRetries: 1 });
     
     // Verify the result
-    expect(result).toBe('Response with retry configuration');
+    expect(result).toBe('Response after retry');
     
-    // Verify that the SDK properly received the retry configuration
-    expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        model: 'test-deployment',
-        messages: messages
-      }),
-      expect.objectContaining({
-        maxRetries: 3
-      })
-    );
+    // Verify that the SDK properly retried
+    expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 });

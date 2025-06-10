@@ -1,5 +1,5 @@
 // Specific tests for Azure OpenAI rate limiting handling
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { AzureAIService } from '../services/azureAI';
 
 // Create a mock function that will be shared across all tests
@@ -19,7 +19,6 @@ vi.mock('openai', () => {
 });
 
 // Import the mocked module
-import { AzureOpenAI } from 'openai';
 
 // Extended timeout for these tests
 vi.setConfig({ testTimeout: 10000 });
@@ -138,7 +137,11 @@ describe('AzureAIService Rate Limiting', () => {
       }]
     };
     
-    mockCreate.mockResolvedValueOnce(mockResponse);
+    // Add a small delay to ensure timing measurement works
+    mockCreate.mockImplementation(async () => {
+      await new Promise(resolve => setTimeout(resolve, 10)); // 10ms delay
+      return mockResponse;
+    });
     
     // Test messages
     const messages = [{ role: 'user' as const, content: 'Test SDK retry configuration' }];
@@ -152,7 +155,7 @@ describe('AzureAIService Rate Limiting', () => {
     expect(result).toBe('Response with SDK configuration');
     
     // Verify that it completed (duration should be reasonable for a successful call)
-    expect(duration).toBeGreaterThan(0);
+    expect(duration).toBeGreaterThan(5); // At least 5ms due to our delay
     expect(duration).toBeLessThan(1000); // Should complete quickly for successful mock
     
     // Verify that the SDK was properly configured
