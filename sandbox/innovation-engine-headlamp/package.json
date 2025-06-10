@@ -14,9 +14,11 @@
     "storybook-build": "headlamp-plugin storybook-build",
     "test": "headlamp-plugin test",
     "server:dev": "NODE_ENV=development PORT=4001 ts-node src/server.ts",
+    "server:debug": "NODE_ENV=development PORT=4001 ts-node --inspect-brk src/server.ts",
     "server:prod": "NODE_ENV=production PORT=4001 ts-node src/server.ts",
     "server": "npm run server:prod",
     "dev-no-validation": "concurrently \"npm run start-no-validation\" \"npm run server:dev\"",
+    "debug": "concurrently \"npm run start-no-validation\" \"npm run server:debug\"",
     "dev-port-fix": "PORT=4001 concurrently \"npm run start-no-validation\" \"npm run server:dev\"",
     "validate-env:dev": "NODE_ENV=development npx vitest run src/__tests__/a_environment.test.ts",
     "validate-env:prod": "NODE_ENV=production npx vitest run src/__tests__/a_environment.test.ts",
@@ -60,6 +62,7 @@
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "openai": "^5.3.0"
   }
 }

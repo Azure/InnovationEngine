@@ -127,7 +127,7 @@ Each individual step will conform to the following markdown format. The content 
 
 An introduction detailing the purpose of this step, the resources being deployed and how these fit intot the overall architecture. 
 
-Descripotion of any new environment variables needed, focus on the purpose of the variables and provide brief examples of how the user might choose to change them in productions.
+Description of any new environment variables needed, focus on the purpose of the variables and provide brief examples of how the user might choose to change them in productions.
 
 ```bash
 The content of the terraform configuration for this section.

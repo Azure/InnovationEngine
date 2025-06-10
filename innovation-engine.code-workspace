@@ -1,0 +1,79 @@
+{
+  "folders": [
+    {
+      "name": "Innovation Engine",
+      "path": "."
+    },
+    {
+      "name": "Headlamp Plugin",
+      "path": "./sandbox/innovation-engine-headlamp"
+    }
+  ],
+  "settings": {
+    "typescript.tsdk": "./sandbox/innovation-engine-headlamp/node_modules/typescript/lib",
+    "files.watcherExclude": {
+      "**/node_modules/**": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "ms-vscode.vscode-typescript-next"
+    ]
+  },
+  "launch": {
+    "configurations": [
+      {
+        "name": "Debug Headlamp Server",
+        "type": "node",
+        "request": "launch",
+        "runtimeExecutable": "node",
+        "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
+        "args": ["${workspaceFolder}/sandbox/innovation-engine-headlamp/src/server.ts"],
+        "cwd": "${workspaceFolder}/sandbox/innovation-engine-headlamp",
+        "internalConsoleOptions": "openOnSessionStart",
+        "skipFiles": ["<node_internals>/**", "node_modules/**"],
+        "env": {
+          "NODE_ENV": "development",
+          "PORT": "4001",
+          "TS_NODE_PROJECT": "${workspaceFolder}/sandbox/innovation-engine-headlamp/tsconfig.json"
+        },
+        "console": "integratedTerminal"
+      },
+      {
+        "name": "Debug Headlamp Client",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3000",
+        "webRoot": "${workspaceFolder}/sandbox/innovation-engine-headlamp",
+        "sourceMapPathOverrides": {
+          "webpack:///src/*": "${workspaceFolder}/sandbox/innovation-engine-headlamp/src/*"
+        }
+      },
+      {
+        "name": "Debug Headlamp Tests",
+        "type": "node",
+        "request": "launch",
+        "runtimeExecutable": "${workspaceFolder}/sandbox/innovation-engine-headlamp/node_modules/.bin/vitest",
+        "args": ["run"],
+        "cwd": "${workspaceFolder}/sandbox/innovation-engine-headlamp",
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen",
+        "env": {
+          "CI": "true"
+        }
+      }
+    ],
+    "compounds": [
+      {
+        "name": "Debug Headlamp Full App",
+        "configurations": ["Debug Headlamp Server", "Debug Headlamp Client"]
+      }
+    ]
+  }
+}

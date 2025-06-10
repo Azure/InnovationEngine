@@ -137,13 +137,7 @@ app.post('/api/overview', async (req, res) => {
     }
     
     // Get overview from Azure AI
-    // Check if this is an executable document request based on the topic
-    const isExecDocRequest = topic.toLowerCase().includes('kubernetes executable document') ||
-                             topic.toLowerCase().includes('k8s executable document') ||
-                             topic.toLowerCase().includes('exec doc');
-    
-    // Choose the appropriate prompt file based on the request type
-    const promptFile = isExecDocRequest ? 'execDoc.txt' : 'overview.txt';
+    const promptFile = 'overview.txt';
     
     // Generate the overview with the selected prompt
     const overview = await azureAIService.generateOverview(topic, {

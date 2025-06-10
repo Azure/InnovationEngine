@@ -68,7 +68,7 @@
 
 - Write unit tests for new features and ensure that existing tests are updated and continue to pass as necessary.
 - Ensure that the code is tested thoroughly before merging, including unit tests, integration tests, and any other relevant tests.
-- When running tests always ensure they are running in CI mode using `CI=true` environment variable.
+- Always run tests in CI mode using `CI=true` environment variable.
 
 ## Project Management
 

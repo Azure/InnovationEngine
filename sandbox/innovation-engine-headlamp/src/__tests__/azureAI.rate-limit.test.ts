@@ -2,8 +2,24 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { AzureAIService } from '../services/azureAI';
 
-// Mock fetch for testing
-global.fetch = vi.fn();
+// Create a mock function that will be shared across all tests
+const mockCreate = vi.fn();
+
+// Mock the Azure OpenAI client
+vi.mock('openai', () => {
+  return {
+    AzureOpenAI: vi.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: mockCreate
+        }
+      }
+    }))
+  };
+});
+
+// Import the mocked module
+import { AzureOpenAI } from 'openai';
 
 // Extended timeout for these tests
 vi.setConfig({ testTimeout: 10000 });
@@ -12,8 +28,8 @@ describe('AzureAIService Rate Limiting', () => {
   let service: AzureAIService;
   
   beforeEach(() => {
-    // Reset mocks before each test
-    vi.resetAllMocks();
+    // Clear all mocks before each test
+    vi.clearAllMocks();
     
     // Create service instance with test config
     service = new AzureAIService({
@@ -23,168 +39,131 @@ describe('AzureAIService Rate Limiting', () => {
     });
   });
   
-  test('should handle rate limiting with exponential backoff', async () => {
-    // Mock rate limit response followed by success
-    (global.fetch as unknown as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'response-after-retry',
-          choices: [{
-            message: { role: 'assistant', content: 'Response after backoff' },
-            finish_reason: 'stop',
-            index: 0
-          }],
-          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 }
-        })
-      } as Response);
-    
-    // Use real setTimeout for this test to verify backoff
-    const realSetTimeout = setTimeout;
-    
-    // Create a mock implementation that resolves faster but still respects relative timing
-    vi.spyOn(global, 'setTimeout').mockImplementation((fn, delay) => {
-      // Still use delay but reduce it by a factor of 10 for testing
-      return realSetTimeout(fn as TimerHandler, delay ? Math.min(delay / 10, 100) : 0) as unknown as NodeJS.Timeout;
-    });
-    
-    // Test messages
-    const messages = [{ role: 'user' as const, content: 'Test exponential backoff' }];
-    
-    const startTime = Date.now();
-    const result = await service.getCompletion(messages);
-    const duration = Date.now() - startTime;
-    
-    // Verify that it took some time for backoff (but not the full amount due to our mock)
-    expect(duration).toBeGreaterThan(50);
-    expect(result).toBe('Response after backoff');
-  });
-
-  test('should respect Retry-After header for rate limiting', async () => {
-    // Mock rate limit response with a specific retry-after header
-    (global.fetch as unknown as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '2' }), // 2 seconds
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'response-after-specific-delay',
-          choices: [{
-            message: { role: 'assistant', content: 'Response after specific delay' },
-            finish_reason: 'stop',
-            index: 0
-          }],
-          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 }
-        })
-      } as Response);
-    
-    // Spy on setTimeout to verify it's called with the correct delay from Retry-After
-    const setTimeoutSpy = vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
-      fn();
-      return 0 as any;
-    });
-    
-    // Test messages
-    const messages = [{ role: 'user' as const, content: 'Test Retry-After header' }];
-    
-    // Call the getCompletion method
-    const result = await service.getCompletion(messages);
-    
-    // Verify the result
-    expect(result).toBe('Response after specific delay');
-    
-    // Verify that setTimeout was called with the expected delay (2000ms from Retry-After header)
-    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 2000);
-  });
-
-  test('should fail cleanly with appropriate error when rate limit consistently exceeded', async () => {
-    // Mock consistent rate limit responses
-    (global.fetch as unknown as ReturnType<typeof vi.fn>)
-      .mockResolvedValue({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response);
-    
-    // Make setTimeout instant for this test
-    vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
-      fn();
-      return 0 as any;
-    });
-    
-    // Test messages with low maxRateLimitRetries to fail quickly
-    const messages = [{ role: 'user' as const, content: 'Test rate limit failure' }];
-    const options = {
-      maxRateLimitRetries: 2
+  test('should configure SDK to handle rate limiting with retries', async () => {
+    // Mock successful response to test rate limiting configuration
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Response after SDK handles rate limiting' }
+      }]
     };
     
-    // Expect the getCompletion method to fail with a specific error message
-    await expect(service.getCompletion(messages, options)).rejects.toThrow('Azure AI API rate limit exceeded');
+    mockCreate.mockResolvedValueOnce(mockResponse);
     
-    // Verify that fetch was called the correct number of times (initial + maxRateLimitRetries)
-    expect(global.fetch).toHaveBeenCalledTimes(options.maxRateLimitRetries + 1);
+    // Test messages
+    const messages = [{ role: 'user' as const, content: 'Test SDK rate limiting config' }];
+    
+    // Call the getCompletion method with retry configuration
+    const result = await service.getCompletion(messages, { maxRetries: 3 });
+    
+    // Verify the result
+    expect(result).toBe('Response after SDK handles rate limiting');
+    
+    // Verify that the SDK properly received retry configuration for rate limiting
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: messages
+      }),
+      expect.objectContaining({
+        maxRetries: 3
+      })
+    );
+  });
+
+  test('should pass retry configuration to SDK for rate limiting', async () => {
+    // Mock successful response to verify SDK retry configuration
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Response with SDK retry configuration' }
+      }]
+    };
+    
+    mockCreate.mockResolvedValueOnce(mockResponse);
+    
+    // Test messages
+    const messages = [{ role: 'user' as const, content: 'Test SDK Retry-After handling' }];
+    
+    // Call the getCompletion method with retry settings
+    const result = await service.getCompletion(messages, { maxRetries: 2 });
+    
+    // Verify the result
+    expect(result).toBe('Response with SDK retry configuration');
+    
+    // Verify that the SDK properly received retry configuration
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: messages
+      }),
+      expect.objectContaining({
+        maxRetries: 2
+      })
+    );
+  });
+
+  test('should fail with rate limit error when SDK retries are exhausted', async () => {
+    // Mock consistent rate limit errors that will cause SDK to fail
+    const rateLimitError = new Error('Azure AI API rate limit exceeded: Too many requests') as any;
+    rateLimitError.status = 429;
+    
+    mockCreate.mockRejectedValue(rateLimitError);
+    
+    // Test messages with low maxRetries to fail quickly
+    const messages = [{ role: 'user' as const, content: 'Test rate limit failure' }];
+    const options = {
+      maxRetries: 1
+    };
+    
+    // Expect the getCompletion method to fail with a rate limit error after SDK retries
+    await expect(service.getCompletion(messages, options)).rejects.toThrow('rate limit exceeded');
+    
+    // Verify that the SDK was called with proper retry configuration
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: messages
+      }),
+      expect.objectContaining({
+        maxRetries: 1
+      })
+    );
   });
 
   // This test is marked as 'skipIfCI' to skip in CI environments where rate limits may be a concern
-  test.skipIf(process.env.CI === 'true')('should handle real rate limiting with actual delays', async () => {
-    // This test will use real timeouts to simulate actual rate limiting behavior
-    // Mock multiple rate limit responses followed by success
-    (global.fetch as unknown as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '2' }),
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'response-after-real-delays',
-          choices: [{
-            message: { role: 'assistant', content: 'Response after real delays' },
-            finish_reason: 'stop',
-            index: 0
-          }],
-          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 }
-        })
-      } as Response);
+  test.skipIf(process.env.CI === 'true')('should configure SDK for retry behavior', async () => {
+    // Mock successful response to test SDK configuration
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Response with SDK configuration' }
+      }]
+    };
     
-    // Use actual setTimeout but keep fetch mocked
-    vi.spyOn(global, 'setTimeout').mockRestore();
+    mockCreate.mockResolvedValueOnce(mockResponse);
     
     // Test messages
-    const messages = [{ role: 'user' as const, content: 'Test real rate limiting delays' }];
+    const messages = [{ role: 'user' as const, content: 'Test SDK retry configuration' }];
     
-    // Measure the time it takes to complete
+    // Measure the time it takes to complete (basic timing test)
     const startTime = Date.now();
-    const result = await service.getCompletion(messages, { 
-      retryDelay: 100 // Use smaller delay for test, but still measurable 
-    });
+    const result = await service.getCompletion(messages, { maxRetries: 3 });
     const duration = Date.now() - startTime;
     
     // Verify the result
-    expect(result).toBe('Response after real delays');
+    expect(result).toBe('Response with SDK configuration');
     
-    // Verify that it took a significant amount of time due to the delays
-    // First retry: 1s, Second retry: 2s, so at least 3s total
-    // But we've reduced the retryDelay for testing, so adjust expectations
-    expect(duration).toBeGreaterThan(300); // Should be at least 300ms with our test settings
+    // Verify that it completed (duration should be reasonable for a successful call)
+    expect(duration).toBeGreaterThan(0);
+    expect(duration).toBeLessThan(1000); // Should complete quickly for successful mock
+    
+    // Verify that the SDK was properly configured
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: messages
+      }),
+      expect.objectContaining({
+        maxRetries: 3
+      })
+    );
   });
 });

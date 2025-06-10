@@ -2,15 +2,31 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { AzureAIService } from '../services/azureAI';
 
-// Mock fetch for testing
-global.fetch = vi.fn();
+// Create a mock function that will be shared across all tests
+const mockCreate = vi.fn();
+
+// Mock the Azure OpenAI client
+vi.mock('openai', () => {
+  return {
+    AzureOpenAI: vi.fn().mockImplementation(() => ({
+      chat: {
+        completions: {
+          create: mockCreate
+        }
+      }
+    }))
+  };
+});
+
+// Import the mocked module
+import { AzureOpenAI } from 'openai';
 
 describe('AzureAIService', () => {
   let service: AzureAIService;
   
   beforeEach(() => {
-    // Reset mocks before each test
-    vi.resetAllMocks();
+    // Clear all mocks before each test
+    vi.clearAllMocks();
     
     // Create service instance with test config
     service = new AzureAIService({
@@ -19,34 +35,28 @@ describe('AzureAIService', () => {
       deploymentId: 'test-deployment'
     });
   });
-  
+
   test('should create an instance with the provided configuration', () => {
     expect(service).toBeDefined();
+    expect(AzureOpenAI).toHaveBeenCalledWith({
+      apiKey: 'test-api-key',
+      endpoint: 'https://test-endpoint.openai.azure.com',
+      apiVersion: '2023-12-01-preview',
+      dangerouslyAllowBrowser: true
+    });
   });
-  
+
   test('getCompletion should make a request to Azure OpenAI API', async () => {
     // Mock successful response
     const mockResponse = {
-      id: 'response-id',
       choices: [{
-        message: { role: 'assistant', content: 'Test response' },
-        finish_reason: 'stop',
-        index: 0
-      }],
-      usage: {
-        prompt_tokens: 10,
-        completion_tokens: 20,
-        total_tokens: 30
-      }
+        message: { content: 'Test response' }
+      }]
     };
     
-    // Setup the mock fetch
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockResponse
-    } as Response);
+    mockCreate.mockResolvedValueOnce(mockResponse);
     
-    // Test messages with explicitly typed role
+    // Test messages
     const messages = [
       { role: 'system' as const, content: 'You are a helpful assistant.' },
       { role: 'user' as const, content: 'Hello, can you help me?' }
@@ -58,46 +68,46 @@ describe('AzureAIService', () => {
     // Verify the result
     expect(result).toBe('Test response');
     
-    // Verify that fetch was called with the right parameters
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('https://test-endpoint.openai.azure.com/openai/deployments/test-deployment/chat/completions'),
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          'Content-Type': 'application/json',
-          'api-key': 'test-api-key'
-        })
-      })
-    );
-  });
-  
-  test('getCompletion should handle API errors', async () => {
-    // Override the error check in the service to make tests pass
-    vi.spyOn(service, 'getCompletion').mockImplementation(async () => {
-      throw new Error('Azure AI API error: 401 Unauthorized access');
+    // Verify that the SDK create method was called with the right parameters
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledWith({
+      model: 'test-deployment',
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user', content: 'Hello, can you help me?' }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+      top_p: 0.95,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      stop: undefined
+    }, {
+      maxRetries: 3
     });
+  });
+
+  test('getCompletion should handle API errors', async () => {
+    // Mock API error from the SDK
+    const error = new Error('Azure AI API client error (401): Unauthorized access') as any;
+    error.status = 401;
+    mockCreate.mockRejectedValueOnce(error);
     
-    // Test messages with explicitly typed role
+    // Test messages
     const messages = [
       { role: 'user' as const, content: 'Hello, can you help me?' }
     ];
     
     // Expect the getCompletion method to throw an error
-    await expect(service.getCompletion(messages)).rejects.toThrow('Azure AI API error: 401');
+    await expect(service.getCompletion(messages)).rejects.toThrow('Azure AI API client error (401)');
   });
-  
+
   test('getCompletion should handle network errors', async () => {
-    // Mock network error
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
+    // Mock network error from the SDK
+    const error = new Error('Network error');
+    mockCreate.mockRejectedValueOnce(error);
     
-    // Make sure the error is propagated and not retried
-    vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
-      fn();
-      return 0 as any;
-    });
-    
-    // Test messages with explicitly typed role
+    // Test messages
     const messages = [
       { role: 'user' as const, content: 'Hello?' }
     ];
@@ -105,30 +115,18 @@ describe('AzureAIService', () => {
     // Expect the getCompletion method to throw an error
     await expect(service.getCompletion(messages)).rejects.toThrow('Network error');
   });
-  
+
   test('should pass options correctly to the API call', async () => {
     // Mock successful response
     const mockResponse = {
-      id: 'response-id',
       choices: [{
-        message: { role: 'assistant', content: 'Custom options response' },
-        finish_reason: 'stop',
-        index: 0
-      }],
-      usage: {
-        prompt_tokens: 10,
-        completion_tokens: 20,
-        total_tokens: 30
-      }
+        message: { content: 'Custom options response' }
+      }]
     };
     
-    // Setup the mock fetch
-    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockResponse
-    } as Response);
+    mockCreate.mockResolvedValueOnce(mockResponse);
     
-    // Test messages and custom options with explicitly typed role
+    // Test messages and custom options
     const messages = [{ role: 'user' as const, content: 'Hello with options' }];
     const options = {
       maxTokens: 2000,
@@ -145,14 +143,10 @@ describe('AzureAIService', () => {
     // Verify the result
     expect(result).toBe('Custom options response');
     
-    // Verify that fetch was called with the right parameters
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-    
-    // Check that the request body includes the custom options
-    const fetchCallArgs = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1];
-    const requestBody = JSON.parse(fetchCallArgs.body as string);
-    
-    expect(requestBody).toEqual({
+    // Verify that the SDK create method was called with custom options
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledWith({
+      model: 'test-deployment',
       messages: messages,
       max_tokens: 2000,
       temperature: 0.5,
@@ -160,230 +154,119 @@ describe('AzureAIService', () => {
       frequency_penalty: 0.2,
       presence_penalty: 0.2,
       stop: ['###']
+    }, {
+      maxRetries: 3
     });
-  });
-  
-  test('should retry on rate limiting (429) responses', async () => {
-    // Mock rate limit response followed by success
-    (global.fetch as unknown as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'response-after-retry',
-          choices: [{
-            message: { role: 'assistant', content: 'Response after retry' },
-            finish_reason: 'stop',
-            index: 0
-          }],
-          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 }
-        })
-      } as Response);
-    
-    // Spy on setTimeout to make the test run faster
-    vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
-      fn();
-      return 0 as any;
-    });
-    
-    // Test messages
-    const messages = [{ role: 'user' as const, content: 'Hello with rate limit' }];
-    
-    // Call the getCompletion method
-    const result = await service.getCompletion(messages);
-    
-    // Verify the result
-    expect(result).toBe('Response after retry');
-    
-    // Verify that fetch was called twice (initial + retry)
-    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
-  test('should fail after exceeding maximum rate limit retries', async () => {
-    // Mock multiple rate limit responses to exceed the maxRateLimitRetries
-    (global.fetch as unknown as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response);
-    
-    // Spy on setTimeout to make the test run faster
-    vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
-      fn();
-      return 0 as any;
-    });
-    
-    // Test messages
-    const messages = [{ role: 'user' as const, content: 'Hello with excessive rate limit' }];
-    
-    // Set a low maxRateLimitRetries value to make the test fail faster
-    const options = {
-      maxRateLimitRetries: 2
+  test('should configure retry settings for the SDK', async () => {
+    // Mock successful response to test that retry settings are passed correctly
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Response with retry config' }
+      }]
     };
     
-    // Expect the getCompletion method to throw a rate limit error after exceeding retries
-    await expect(service.getCompletion(messages, options)).rejects.toThrow('rate limit exceeded');
+    mockCreate.mockResolvedValueOnce(mockResponse);
     
-    // Verify that fetch was called the expected number of times (initial + maxRateLimitRetries)
-    expect(global.fetch).toHaveBeenCalledTimes(options.maxRateLimitRetries + 1);
+    // Test messages
+    const messages = [{ role: 'user' as const, content: 'Hello with retry config' }];
+    
+    // Call the getCompletion method with custom retry settings
+    const result = await service.getCompletion(messages, { maxRetries: 5 });
+    
+    // Verify the result
+    expect(result).toBe('Response with retry config');
+    
+    // Verify that the SDK create method was called with correct retry configuration
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: messages
+      }),
+      expect.objectContaining({
+        maxRetries: 5
+      })
+    );
   });
 
-  test('should respect configurable retry settings', async () => {
-    // Mock a successful response after several failures
-    (global.fetch as unknown as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        text: async () => 'Internal server error'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        text: async () => 'Internal server error'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'response-after-server-errors',
-          choices: [{
-            message: { role: 'assistant', content: 'Response after multiple server errors' },
-            finish_reason: 'stop',
-            index: 0
-          }],
-          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 }
-        })
-      } as Response);
-      
-    // Spy on setTimeout to verify it's called with the correct delay
-    const setTimeoutSpy = vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
-      fn();
-      return 0 as any;
-    });
+  test('should handle SDK retry failures gracefully', async () => {
+    // Mock a rate limit error that the SDK will eventually fail with after retries
+    const rateLimitError = new Error('Azure AI API rate limit exceeded: Too many requests') as any;
+    rateLimitError.status = 429;
     
-    // Test messages and custom retry settings
-    const messages = [{ role: 'user' as const, content: 'Test with custom retry settings' }];
+    mockCreate.mockRejectedValue(rateLimitError);
+    
+    // Test messages and low retry settings to fail quickly
+    const messages = [{ role: 'user' as const, content: 'Test SDK retry handling' }];
     const options = {
-      maxRetries: 5,
-      retryDelay: 2000
+      maxRetries: 1
     };
     
-    // Call the getCompletion method with custom options
-    const result = await service.getCompletion(messages, options);
-    
-    // Verify the result
-    expect(result).toBe('Response after multiple server errors');
-    
-    // Verify that fetch was called the expected number of times
-    expect(global.fetch).toHaveBeenCalledTimes(3);
-    
-    // Verify that setTimeout was called with the expected delays
-    // First retry: 2000ms * 1, Second retry: 2000ms * 2
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
-    expect(setTimeoutSpy).toHaveBeenNthCalledWith(1, expect.any(Function), 2000);
-    expect(setTimeoutSpy).toHaveBeenNthCalledWith(2, expect.any(Function), 4000);
-  });
-  
-  test('should fail after exceeding maximum rate limit retries', async () => {
-    // Mock multiple rate limit responses to exceed the maxRateLimitRetries
-    (global.fetch as unknown as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '1' }),
-        text: async () => 'Too many requests'
-      } as Response);
-    
-    // Spy on setTimeout to make the test run faster
-    vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
-      fn();
-      return 0 as any;
-    });
-    
-    // Test messages
-    const messages = [{ role: 'user' as const, content: 'Hello with excessive rate limit' }];
-    
-    // Set a low maxRateLimitRetries value to make the test fail faster
-    const options = {
-      maxRateLimitRetries: 2
-    };
-    
-    // Expect the getCompletion method to throw a rate limit error after exceeding retries
+    // Expect the getCompletion method to fail with rate limit error after SDK retries
     await expect(service.getCompletion(messages, options)).rejects.toThrow('rate limit exceeded');
     
-    // Verify that fetch was called the expected number of times (initial + maxRateLimitRetries)
-    expect(global.fetch).toHaveBeenCalledTimes(options.maxRateLimitRetries + 1);
+    // Verify that the SDK create method was called with correct retry configuration
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: messages
+      }),
+      expect.objectContaining({
+        maxRetries: 1
+      })
+    );
   });
   
-  // This test is marked to skip in CI environments where rate limits may be a concern
-  test.runIf(!process.env.CI)('should respect Retry-After header for rate limiting', async () => {
-    // Mock rate limit response with a specific retry-after header
-    (global.fetch as unknown as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        headers: new Headers({ 'Retry-After': '2' }), // 2 seconds
-        text: async () => 'Too many requests'
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'response-after-specific-delay',
-          choices: [{
-            message: { role: 'assistant', content: 'Response after specific delay' },
-            finish_reason: 'stop',
-            index: 0
-          }],
-          usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 }
-        })
-      } as Response);
+  test('should handle server errors from SDK', async () => {
+    // Mock server error that the SDK will fail with
+    const serverError = new Error('Azure AI API server error (500): Internal server error') as any;
+    serverError.status = 500;
     
-    // Spy on setTimeout to verify it's called with the correct delay from Retry-After
-    const setTimeoutSpy = vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => {
-      fn();
-      return 0 as any;
-    });
+    mockCreate.mockRejectedValue(serverError);
     
     // Test messages
-    const messages = [{ role: 'user' as const, content: 'Test Retry-After header' }];
+    const messages = [{ role: 'user' as const, content: 'Hello with server error' }];
     
-    // Call the getCompletion method
-    const result = await service.getCompletion(messages);
+    // Set a low maxRetries value to make the test fail faster
+    const options = {
+      maxRetries: 2
+    };
+    
+    // Expect the getCompletion method to throw a server error after SDK handles retries
+    await expect(service.getCompletion(messages, options)).rejects.toThrow('server error (500)');
+  });
+  
+  // This test verifies that retry configuration is correctly passed to the SDK
+  test.runIf(!process.env.CI)('should pass retry configuration to SDK', async () => {
+    // Mock successful response
+    const mockResponse = {
+      choices: [{
+        message: { content: 'Response with retry configuration' }
+      }]
+    };
+    
+    mockCreate.mockResolvedValueOnce(mockResponse);
+    
+    // Test messages
+    const messages = [{ role: 'user' as const, content: 'Test retry configuration' }];
+    
+    // Call the getCompletion method with retry config
+    const result = await service.getCompletion(messages, { maxRetries: 3 });
     
     // Verify the result
-    expect(result).toBe('Response after specific delay');
+    expect(result).toBe('Response with retry configuration');
     
-    // Verify that setTimeout was called with the expected delay (2000ms from Retry-After header)
-    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 2000);
+    // Verify that the SDK properly received the retry configuration
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'test-deployment',
+        messages: messages
+      }),
+      expect.objectContaining({
+        maxRetries: 3
+      })
+    );
   });
 });

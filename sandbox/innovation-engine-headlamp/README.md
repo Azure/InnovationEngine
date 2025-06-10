@@ -19,6 +19,10 @@ DO NOT USE IN PRODUCTION - see note on security in the Developer Notes below
 - Headlamp with this plugin installed
 - Azure OpenAI API credentials (for AI Assistant functionality)
 
+### Debugging
+
+For detailed instructions on how to debug this plugin, please refer to the [DEBUG.md](./DEBUG.md) file.
+
 ### Azure AI Integration
 
 The plugin now includes three AI-powered features that integrate with Azure OpenAI:

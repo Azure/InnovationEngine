@@ -1,0 +1,66 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": "explicit"
+        },
+        "debug.javascript.autoAttachFilter": "smart",
+        "javascript.suggestionActions.enabled": false
+    },
+    "launch": {
+        "configurations": [
+            {
+                "name": "Debug Server",
+                "type": "node",
+                "request": "launch",
+                "runtimeExecutable": "node",
+                "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
+                "args": ["src/server.ts"],
+                "cwd": "${workspaceFolder}",
+                "internalConsoleOptions": "openOnSessionStart",
+                "skipFiles": ["<node_internals>/**", "node_modules/**"],
+                "env": {
+                    "NODE_ENV": "development",
+                    "PORT": "4001",
+                    "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.json"
+                },
+                "console": "integratedTerminal"
+            },
+            {
+                "name": "Debug Client",
+                "type": "chrome",
+                "request": "launch", 
+                "url": "http://localhost:3000",
+                "webRoot": "${workspaceFolder}",
+                "sourceMapPathOverrides": {
+                    "webpack:///src/*": "${webRoot}/src/*"
+                }
+            },
+            {
+                "name": "Debug Tests",
+                "type": "node",
+                "request": "launch",
+                "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/vitest",
+                "args": ["run"],
+                "cwd": "${workspaceFolder}",
+                "console": "integratedTerminal",
+                "internalConsoleOptions": "neverOpen",
+                "env": {
+                    "CI": "true"
+                }
+            }
+        ],
+        "compounds": [
+            {
+                "name": "Debug Full App",
+                "configurations": ["Debug Server", "Debug Client"]
+            }
+        ]
+    }
+}
