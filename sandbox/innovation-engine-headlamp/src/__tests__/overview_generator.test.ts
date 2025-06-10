@@ -1,8 +1,8 @@
 // Unit tests for Overview Generator functionality
-import { beforeEach, describe, expect, test, vi } from 'vitest';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { AzureAIService } from '../services/azureAI';
 import { formatSystemPrompt, loadSystemPrompt } from '../utils/promptUtils';
 
