@@ -1,9 +1,6 @@
 # Python
 __pycache__
 
-#VS Code
-.vscode
-
 # Ignore all binaries.
 bin/
 
