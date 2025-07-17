@@ -37,8 +37,14 @@
     "@kinvolk/headlamp-plugin": "^0.12.0"
   },
   "dependencies": {
-    "express": "^5.1.0",
+    "@fluentui/react": "^8.123.1",
+    "@xterm/addon-attach": "^0.11.0",
+    "axios": "^1.10.0",
     "body-parser": "^1.20.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "node-pty": "^1.0.0",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0"
   }
 }
