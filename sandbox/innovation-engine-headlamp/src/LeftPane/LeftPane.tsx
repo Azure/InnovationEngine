@@ -27,6 +27,7 @@ const LeftPane = () => {
                 />
                 <BaseButton
                     text="Run"
+                    primary={true}
                     disabled={executableDocsContext.selectedTutorial === ''}
                     onClick={() => {
                         executableDocsContext.setConfirmSelection(true);
@@ -48,7 +49,7 @@ const LeftPane = () => {
 
     return (
         <div>
-            
+
         </div>
     );
 };
