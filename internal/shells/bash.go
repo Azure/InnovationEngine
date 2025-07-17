@@ -59,6 +59,7 @@ func executeBashCommandImpl(
 		command,
 		"IE_LAST_COMMAND_EXIT_CODE=\"$?\"",
 		"env > " + lib.DefaultEnvironmentStateFile,
+		"pwd > " + lib.DefaultWorkingDirectoryStateFile,
 		"exit $IE_LAST_COMMAND_EXIT_CODE",
 	}
 
@@ -82,11 +83,13 @@ func executeBashCommandImpl(
 		commandToExecute.Env = os.Environ()
 	}
 
-	// Sharing environment variable state between isolated shell executions is a
-	// bit tough, but how we handle it is by storing the environment variables
-	// after a command is executed within a file and then loading that file
-	// before executing the next command. This allows us to share state between
-	// isolated command calls.
+	// Sharing environment variables and the working directory between isolated
+	// shell executions is a bit tough, but how we handle it is by storing the
+	// environment variables after a command is executed within a file and then
+	// loading that file before executing the next command. This allows us to
+	// share state between isolated command calls.
+
+	// Restore env variables
 	envFromPreviousStep, err := lib.LoadEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
 	if err == nil {
 		merged := lib.MergeMaps(config.EnvironmentVariables, envFromPreviousStep)
@@ -97,6 +100,13 @@ func executeBashCommandImpl(
 		for k, v := range config.EnvironmentVariables {
 			commandToExecute.Env = append(commandToExecute.Env, fmt.Sprintf("%s=%s", k, v))
 		}
+	}
+	// Restore working directory
+	workingDirFromPreviousStep, err := lib.LoadWorkingDirectoryStateFile(lib.DefaultWorkingDirectoryStateFile)
+	if err == nil {
+		commandToExecute.Dir = workingDirFromPreviousStep
+	} else {
+		commandToExecute.Dir = ""
 	}
 
 	if config.WriteToHistory {

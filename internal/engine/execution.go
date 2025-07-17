@@ -316,8 +316,18 @@ func (e *Engine) ExecuteAndRenderSteps(steps []common.Step, env map[string]strin
 			return err
 		}
 
+		logging.GlobalLogger.Info(
+			"Cleaning working directory file located at /tmp/working-dir",
+		)
+		err = lib.DeleteWorkingDirectoryStateFile(lib.DefaultWorkingDirectoryStateFile)
+		if err != nil {
+			logging.GlobalLogger.Errorf("Error cleaning working directory: %s", err.Error())
+			return err
+		}
+
 	default:
 		lib.DeleteEnvironmentStateFile(lib.DefaultEnvironmentStateFile)
+		lib.DeleteWorkingDirectoryStateFile(lib.DefaultWorkingDirectoryStateFile)
 	}
 
 	return nil
