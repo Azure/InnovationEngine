@@ -23,9 +23,10 @@ func GetEnvironmentVariables() map[string]string {
 	return envMap
 }
 
-// Location where the environment state from commands are to be captured
-// and sent to for being able to share state across commands.
+// Location where the environment and working directory state from commands are
+// to be captured and sent to for being able to share state across commands.
 var DefaultEnvironmentStateFile = "/tmp/env-vars"
+var DefaultWorkingDirectoryStateFile = "/tmp/working-dir"
 
 // Loads a file that contains environment variables
 func LoadEnvironmentStateFile(path string) (map[string]string, error) {
@@ -95,5 +96,25 @@ func filterInvalidKeys(envMap map[string]string) map[string]string {
 
 // Deletes the stored environment variables file.
 func DeleteEnvironmentStateFile(path string) error {
+	return os.Remove(path)
+}
+
+// Loads a file that contains the working directory
+func LoadWorkingDirectoryStateFile(path string) (string, error) {
+	if !fs.FileExists(path) {
+		return "", fmt.Errorf("working directory file '%s' does not exist", path)
+	}
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read working directory file '%s': %w", path, err)
+	}
+
+	workingDir := strings.TrimSpace(string(content))
+	return workingDir, nil
+}
+
+// Deletes the stored working directory file.
+func DeleteWorkingDirectoryStateFile(path string) error {
 	return os.Remove(path)
 }
