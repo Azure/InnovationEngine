@@ -1,13 +1,18 @@
 // Terminal.js
 
-import { BaseButton, Dropdown } from '@fluentui/react';
+import {
+    BaseButton,
+    Dropdown,
+    TextField
+} from '@fluentui/react';
 import { ExecutableDocsScenarioStatus, IExecutableDocsContext, useExecutableDocsContext } from "../Context/ExecutableDocsContext";
 import { useTutorials } from '../Hooks/useTutorials';
+import { getConfigurableParameters } from '../Metadata/MetadataHelper';
+import Accordion from './Accordion';
 
 const LeftPane = () => {
     const executableDocsContext: IExecutableDocsContext = useExecutableDocsContext();
     const { tutorials } = useTutorials();
-
     if (!executableDocsContext.selectedTutorial || !executableDocsContext.confirmSelection || executableDocsContext.scenarioStatus === ExecutableDocsScenarioStatus.NOTSTARTED) {
         // return a dropdown with all of the
         return (
@@ -22,19 +27,49 @@ const LeftPane = () => {
                     selectedKey={executableDocsContext.selectedTutorial}
                     onChange={(event, option) => {
                         executableDocsContext.setSelectedTutorial(option.key as string);
-                        executableDocsContext.setScenarioStatus(ExecutableDocsScenarioStatus.EXECUTING);
                     }}
                 />
+                <div style={{ width: '60%', marginBottom: '12px' }}>
+                    <TextField
+                        label={"Subscription ID"}
+                        value={executableDocsContext.deploymentSubscriptionId || ''}
+                        onChange={(e) => {
+                            executableDocsContext.setDeploymentSubscriptionId(e.target.value);
+                        }}
+                    />
+                </div>
+                {getConfigurableParameters(executableDocsContext.selectedTutorial).map((param) => {
+                    return (
+                        <div style={{ width: '60%', marginBottom: '12px' }}>
+                            <TextField
+                                label={param.title}
+                                value={executableDocsContext.configurableParams.get(param.commandKey) || ''}
+                                onChange={(e) => {
+                                    executableDocsContext.setConfigurableParams(new Map(executableDocsContext.configurableParams).set(param.commandKey, e.target.value));
+                                }}
+                            />
+                        </div>
+
+                    );
+                })}
                 <BaseButton
                     text="Run"
-                    primary={true}
-                    disabled={executableDocsContext.selectedTutorial === ''}
+                    disabled={executableDocsContext.selectedTutorial === '' || executableDocsContext.deploymentSubscriptionId === ''}
                     onClick={() => {
                         executableDocsContext.setConfirmSelection(true);
-                        // add ie execute command here
-                        executableDocsContext.terminalSocket?.send(`ie execute ${executableDocsContext.selectedTutorial}`);
+                        executableDocsContext.setScenarioStatus(ExecutableDocsScenarioStatus.EXECUTING);
+
+                        let command = `./InnovationEngine/bin/ie interactive scenarios/${executableDocsContext.selectedTutorial} --subscription ${executableDocsContext.deploymentSubscriptionId} --correlation-id ${crypto.randomUUID()} `;
+                        const tutorialDirectory = `${executableDocsContext.selectedTutorial.substring(0, executableDocsContext.selectedTutorial.lastIndexOf("/"))}`;
+                        const configurableParamKeys = Array.from(executableDocsContext.configurableParams.keys()) || [];
+                        for (const key of configurableParamKeys) {
+                            command += `--var ${key}=${executableDocsContext.configurableParams.get(key as string)} `;
+                        }
+                        command += `--environment azure --working-directory scenarios/${tutorialDirectory} && source /tmp/env-vars\n`;
+
+
+                        executableDocsContext.terminalSocket?.send(command);
                     }}
-                    color='primary'
                 />
             </>
         );
@@ -42,9 +77,13 @@ const LeftPane = () => {
 
     if (executableDocsContext.confirmSelection && (executableDocsContext.scenarioStatus === ExecutableDocsScenarioStatus.EXECUTING || executableDocsContext.scenarioStatus === ExecutableDocsScenarioStatus.FAILED)) {
         // return the progress pane
-        return <div>
+        // add a button to run all of the steps
+        return (
+            <div style={{ overflowY: 'auto', maxHeight: "500px" }}>
+                <Accordion items={executableDocsContext.steps} />
+            </div>
 
-        </div>
+        );
     }
 
     return (

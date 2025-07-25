@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React from 'react';
+import { IExecutableDocsContext, ExecutableDocsScenarioStatus } from '../Context/ExecutableDocsContext';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 
@@ -12,7 +13,24 @@ function getDelimitterCount(data: string) {
     return matchLength;
 }
 
-export const configureTerminalSocket = (terminalInstance: React.RefObject<Terminal>) => {
+const parseStatusData = (data: string, execDocsContext: IExecutableDocsContext) => {
+    try {
+        const statusData = JSON.parse(data);
+
+        if (statusData.status === 'Executing') execDocsContext.setScenarioStatus?.(ExecutableDocsScenarioStatus.EXECUTING);
+        if (statusData.status === 'Succeeded') execDocsContext.setScenarioStatus?.(ExecutableDocsScenarioStatus.SUCCESS);
+        if (statusData.status === 'Failed') execDocsContext.setScenarioStatus?.(ExecutableDocsScenarioStatus.FAILED);
+
+        execDocsContext.setCurrentStep?.(statusData.currentStep);
+        execDocsContext.setError?.(statusData.error || null);
+        execDocsContext.setResourceURI?.(statusData.resourceURIs || null);
+        execDocsContext.setSteps?.((statusData.steps || []));
+    } catch (e) {
+        console.error('Error parsing status data:', e);
+    }
+}
+
+export const configureTerminalSocket = (terminalInstance: React.RefObject<Terminal>, execDocsContext: IExecutableDocsContext) => {
     const terminalSocket = new WebSocket("ws://localhost:4001/ws/term");
 
     terminalSocket.onopen = () => {
@@ -20,9 +38,11 @@ export const configureTerminalSocket = (terminalInstance: React.RefObject<Termin
         const innovationEngineVersion = 'v0.2.3';
         const scenariosVersion = 'v1.0.14764361219';
 
-        terminalSocket.send('rm -rf ExecDocs && mkdir ExecDocs && cd ExecDocs\n');
-        terminalSocket.send(`wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/$VERSION/ie\n`);
-        terminalSocket.send('chmod +x ie && mkdir -p ~/.local/bin && mv ie ~/.local/bin\n')
+        terminalSocket.send('rm -rf scenarios\n');
+        // install scenarios
+        terminalSocket.send(`curl -Lks https://raw.githubusercontent.com/MicrosoftDocs/executable-docs/main/scripts/install_docs_from_release.sh | /bin/bash -s -- en-us ${scenariosVersion}\n`);
+        // install Innovation Engine
+        terminalSocket.send('git clone https://github.com/Azure/InnovationEngine && cd InnovationEngine && make build-ie && cd ..\n');
 
     };
 
@@ -49,14 +69,10 @@ export const configureTerminalSocket = (terminalInstance: React.RefObject<Termin
             const statusData = jsonData.split('ie_us')[1].split('ie_ue', 2)[0];
             const indexOfFirstEndDelimitter = jsonData.indexOf('ie_ue') + 5;
             // add parsing logic here
+            parseStatusData(statusData, execDocsContext);
             jsonData = jsonData.slice(indexOfFirstEndDelimitter);
         }
     };
-
-    terminalInstance.current.onData(data => {
-        // to be implemented
-    });
-
     return terminalSocket;
 }
 
