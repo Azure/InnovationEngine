@@ -30,7 +30,7 @@ registerRoute({
       <ExecutableDocsContextProvider>
         <div style={{ height: '100%' }}>
           <title style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: "10px", display: "block" }}>Executable Docs Headlamp Integration</title>
-          <div style={{ display: 'flex', height: '100%' }}>
+          <div style={{ display: 'flex' }}>
             <div style={{ width: "50%" }}>
               <LeftPane />
             </div>
