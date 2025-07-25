@@ -341,10 +341,12 @@ func (model InteractiveModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		nextCodeBlockState := model.codeBlockState[model.currentCodeBlock]
 
 		if codeBlockState.StepName != nextCodeBlockState.StepName {
-			logging.GlobalLogger.Debugf("Step name has changed, incrementing step for Azure")
+			logging.GlobalLogger.Debugf("Step name has changed, incrementing step & resetting codeblock count for Azure")
 			model.azureStatus.CurrentStep++
+			model.azureStatus.CurrentCodeBlock = 0
 		} else {
-			logging.GlobalLogger.Debugf("Step name has not changed, not incrementing step for Azure")
+			logging.GlobalLogger.Debugf("Step name has not changed, incrementing codeblock count for azure.")
+			model.azureStatus.CurrentCodeBlock++
 		}
 
 		model.stepsToBeExecuted--
