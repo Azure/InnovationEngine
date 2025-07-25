@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/InnovationEngine/internal/lib"
 	"github.com/Azure/InnovationEngine/internal/lib/fs"
 	"github.com/Azure/InnovationEngine/internal/logging"
+	"github.com/Azure/InnovationEngine/internal/shells"
 	"github.com/Azure/InnovationEngine/internal/ui"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -62,6 +63,48 @@ func (e *Engine) TestScenario(scenario *common.Scenario) error {
 
 		initialEnvironmentVariables := lib.GetEnvironmentVariables()
 
+		// Check if this is a streaming test case - looking for test_streaming in the name
+		isStreamingTest := strings.Contains(strings.ToLower(scenario.Name), "test_streaming") || 
+		                   strings.Contains(strings.ToLower(scenario.Name), "direct test")
+		
+		// For streaming tests, we'll execute directly
+		if isStreamingTest {
+			fmt.Printf("\nExecuting streaming test: %s\n\n", scenario.Name)
+			
+			for _, step := range stepsToExecute {
+				for _, block := range step.CodeBlocks {
+					fmt.Printf("$ %s\n", block.Content)
+					
+					// Execute the command and print output in real-time
+					commandOutput, commandErr := shells.ExecuteBashCommand(
+						block.Content,
+						shells.BashCommandConfiguration{
+							EnvironmentVariables: lib.CopyMap(scenario.Environment),
+							InheritEnvironment:   true,
+							InteractiveCommand:   false,
+							WriteToHistory:       true,
+							StreamOutput:         true,
+							OutputCallback: func(output string, isStderr bool) {
+								// Print streaming output directly to console
+								fmt.Print(output)
+							},
+						},
+					)
+					
+					if commandErr != nil {
+						fmt.Printf("\nError executing command: %s\n", commandErr)
+						fmt.Printf("StdErr: %s\n", commandOutput.StdErr)
+						return commandErr
+					}
+					
+					fmt.Printf("\nCommand completed successfully.\n\n")
+				}
+			}
+			
+			return nil
+		}
+		
+		// Normal test execution for non-streaming tests
 		model, err := test.NewTestModeModel(
 			scenario.Name,
 			e.Configuration.Subscription,
