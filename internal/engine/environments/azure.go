@@ -27,6 +27,7 @@ type AzureStep struct {
 type AzureDeploymentStatus struct {
 	Steps              []AzureStep `json:"steps"`
 	CurrentStep        int         `json:"currentStep"`
+	CurrentCodeBlock   int         `json:"currentCodeBlock"`
 	Status             string      `json:"status"`
 	ResourceURIs       []string    `json:"resourceURIs"`
 	Error              string      `json:"error"`
@@ -38,6 +39,7 @@ func NewAzureDeploymentStatus() AzureDeploymentStatus {
 	return AzureDeploymentStatus{
 		Steps:              []AzureStep{},
 		CurrentStep:        0,
+		CurrentCodeBlock:   0,
 		Status:             "Executing",
 		ResourceURIs:       []string{},
 		Error:              "",
