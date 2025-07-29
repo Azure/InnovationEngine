@@ -10,7 +10,7 @@ fi
 
 # Download the binary
 echo "Installing IE from the $RELEASE release..."
-wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/"$RELEASE"/ie >/dev/null
+wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/"$RELEASE"/ie-$(uname -m) >/dev/null
 
 # Setup permissions & move to the local bin
 chmod +x ie >/dev/null

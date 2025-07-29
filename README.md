@@ -23,7 +23,7 @@ You can find all releases [here](https://github.com/Azure/InnovationEngine/relea
 
 ```bash
 VERSION="latest"
-wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/$VERSION/ie
+wget -q -O ie https://github.com/Azure/InnovationEngine/releases/download/$VERSION/ie-$(uname -m)
 
 # Setup permissions & move to the local bin
 chmod +x ie
