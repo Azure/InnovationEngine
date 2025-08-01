@@ -28,13 +28,12 @@ registerRoute({
   component: () => {
     return (
       <ExecutableDocsContextProvider>
-        <div style={{ height: '100%' }}>
-          <title style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: "10px", display: "block" }}>Executable Docs Headlamp Integration</title>
-          <div style={{ display: 'flex' }}>
-            <div style={{ width: "50%" }}>
-              <LeftPane />
-            </div>
-            <div style={{ flex: 1, width: "50%" }}><XTermTerminal /></div>
+        <div style={{ height: '100vh', display: 'flex', gap: '10px' }}>
+          <div style={{ width: "calc(50% - 5px)", height: "100%" }}>
+            <LeftPane />
+          </div>
+          <div style={{ width: "calc(50% - 5px)", height: "100%" }}>
+            <XTermTerminal />
           </div>
         </div>
       </ExecutableDocsContextProvider>

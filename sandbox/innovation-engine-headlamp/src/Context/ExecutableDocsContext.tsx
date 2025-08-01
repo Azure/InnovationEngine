@@ -35,6 +35,10 @@ export type IExecutableDocsContext = {
   error: string | null;
   resourceURI: Array<string> | null;
   steps: Array<Step>;
+  currentCodeblock: number;
+  runAllSteps: boolean;
+  setRunAllSteps?: React.Dispatch<React.SetStateAction<boolean>>;
+  setCurrentCodeblock?: React.Dispatch<React.SetStateAction<number>>;
   setError?: React.Dispatch<React.SetStateAction<string | null>>;
   setCurrentStep?: React.Dispatch<React.SetStateAction<number>>;
   setResourceURI?: React.Dispatch<React.SetStateAction<Array<string> | null>>;
@@ -65,6 +69,9 @@ export const ExecutableDocsContextProvider: React.FC<{ children: React.ReactNode
   const [selectedTutorial, setSelectedTutorial] = useState<string>(""); // this will be the tutorial id that we will end up executing
   const [confirmSelection, setConfirmSelection] = useState<boolean>(false); // this will be used to confirm the selection of the tutorial
 
+  const [runAllSteps, setRunAllSteps] = useState<boolean>(false);
+
+
   // values needed for making up initial execution command
   const [configurableParams, setConfigurableParams] = useState<Map<string, string>>(new Map<string, string>());
   const [deploymentSubscriptionId, setDeploymentSubscriptionId] = useState<string>('');
@@ -72,6 +79,7 @@ export const ExecutableDocsContextProvider: React.FC<{ children: React.ReactNode
   // values needed for deploying
   const [scenarioStatus, setScenarioStatus] = useState<ExecutableDocsScenarioStatus>(ExecutableDocsScenarioStatus.NOTSTARTED);
   const [currentStep, setCurrentStep] = useState<number>(0); // this tells us which step we are on in the deployment process
+  const [currentCodeblock, setCurrentCodeblock] = useState<number>(0); // this tells us which codeblock we are on in the current step
   const [error, setError] = useState<string | null>(null); // this will be used to display any errors that occur during the deployment process
   const [resourceURI, setResourceURI] = useState<Array<string> | null>(null); // this will be used to display the resource URI of the deployed resource
   const [steps, setSteps] = useState<Array<Step>>([]);
@@ -96,6 +104,10 @@ export const ExecutableDocsContextProvider: React.FC<{ children: React.ReactNode
     error,
     resourceURI,
     steps,
+    currentCodeblock,
+    runAllSteps,
+    setRunAllSteps,
+    setCurrentCodeblock,
     setError,
     setResourceURI,
     setSteps,
@@ -107,7 +119,7 @@ export const ExecutableDocsContextProvider: React.FC<{ children: React.ReactNode
     setTerminalSocket,
     setResizeSocket,
     setDeploymentSubscriptionId
-  }), [currentStep, error, resourceURI, steps, deploymentSubscriptionId, resizeSocket, terminalSocket, scenarioStatus, selectedTutorial, confirmSelection, configurableParams, setConfigurableParams, setScenarioStatus, setConfirmSelection, setSelectedTutorial, setTerminalSocket, setResizeSocket]);
+  }), [runAllSteps, currentCodeblock, currentStep, error, resourceURI, steps, deploymentSubscriptionId, resizeSocket, terminalSocket, scenarioStatus, selectedTutorial, confirmSelection, configurableParams, setConfigurableParams, setScenarioStatus, setConfirmSelection, setSelectedTutorial, setTerminalSocket, setResizeSocket]);
 
 
   return (

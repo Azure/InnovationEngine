@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import React from 'react';
-import { IExecutableDocsContext, ExecutableDocsScenarioStatus } from '../Context/ExecutableDocsContext';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { ExecutableDocsScenarioStatus,IExecutableDocsContext } from '../Context/ExecutableDocsContext';
 
 let jsonData = '';
 
@@ -16,15 +16,17 @@ function getDelimitterCount(data: string) {
 const parseStatusData = (data: string, execDocsContext: IExecutableDocsContext) => {
     try {
         const statusData = JSON.parse(data);
+        console.log('Parsed status data:', statusData);
 
         if (statusData.status === 'Executing') execDocsContext.setScenarioStatus?.(ExecutableDocsScenarioStatus.EXECUTING);
         if (statusData.status === 'Succeeded') execDocsContext.setScenarioStatus?.(ExecutableDocsScenarioStatus.SUCCESS);
         if (statusData.status === 'Failed') execDocsContext.setScenarioStatus?.(ExecutableDocsScenarioStatus.FAILED);
 
-        execDocsContext.setCurrentStep?.(statusData.currentStep);
+        execDocsContext.setCurrentStep?.(statusData.currentStep - 1); // innovation engine steps are 1-indexed so decrement by 1
+        execDocsContext.setCurrentCodeblock?.(statusData.currentCodeBlock);
         execDocsContext.setError?.(statusData.error || null);
         execDocsContext.setResourceURI?.(statusData.resourceURIs || null);
-        execDocsContext.setSteps?.((statusData.steps || []));
+        execDocsContext.setSteps?.(statusData.steps || []);
     } catch (e) {
         console.error('Error parsing status data:', e);
     }
