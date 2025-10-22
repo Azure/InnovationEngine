@@ -28,6 +28,12 @@ install-ie:
 	@echo "Installing the Innovation Engine CLI..."
 	@CGO_ENABLED=0 go install -ldflags "-X $(MODULE_ROOT)/cmd/ie/commands.VERSION=dev -X $(MODULE_ROOT)/cmd/ie/commands.COMMIT=$(LATEST_COMMIT) -X $(MODULE_ROOT)/cmd/ie/commands.DATE=$(BUILD_DATE)" cmd/ie/ie.go
 
+install-ie-home:
+	@echo "Installing the Innovation Engine CLI to ~/bin..."
+	@mkdir -p ~/bin
+	@CGO_ENABLED=0 go build -ldflags "-X $(MODULE_ROOT)/cmd/ie/commands.VERSION=dev -X $(MODULE_ROOT)/cmd/ie/commands.COMMIT=$(LATEST_COMMIT) -X $(MODULE_ROOT)/cmd/ie/commands.DATE=$(BUILD_DATE)" -o ~/bin/ie cmd/ie/ie.go
+	@echo "IE installed to ~/bin/ie"
+
 # ------------------------------ Test targets ----------------------------------
 
 WITH_COVERAGE := false
@@ -80,6 +86,12 @@ test-upstream-scenarios:
 			continue; \
 		fi; \
 		($(MAKE) test-scenario SCENARIO="$${dir}README.md" SUBCRIPTION="$(SUBSCRIPTION)" WORKING_DIRECTORY="$${dir}" ENVIRONMENT="$(ENVIRONMENT)") || exit $$?; \
+	done
+
+test-docs:
+	@echo "Testing all documents in the docs folder"
+	for file in ./docs/*.md; do \
+		($(MAKE) test-scenario SCENARIO="$${file}") || exit $$?; \
 	done
 
 # ------------------------------- Run targets ----------------------------------
