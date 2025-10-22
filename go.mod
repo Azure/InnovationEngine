@@ -13,6 +13,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673
 	github.com/yuin/goldmark v1.5.4
+	github.com/yuin/goldmark-meta v1.1.0
 	golang.org/x/sys v0.16.0
 	gopkg.in/ini.v1 v1.67.0
 )
@@ -42,7 +43,6 @@ require (
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
-	github.com/yuin/goldmark-meta v1.1.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/term v0.16.0 // indirect
