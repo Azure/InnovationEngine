@@ -49,6 +49,20 @@ command:
 ```bash
 ./bin/ie execute tutorial.md
 ```
+
+### Install to ~/bin
+
+If you want to install the Innovation Engine CLI directly to your home bin directory (so it's available system-wide), use:
+
+```bash
+make install-ie-home
+```
+
+This will build and install the `ie` binary to `~/bin/ie`. Make sure `~/bin` is in your `$PATH` by adding this to your shell profile:
+
+```bash
+export PATH="$HOME/bin:$PATH"
+```
 ### Building a Container from Source
 
 ```bash
