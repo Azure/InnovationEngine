@@ -99,6 +99,7 @@ func ExtractCodeBlocksFromAst(
 	var lastExpectedSimilarityScore float64
 	var lastExpectedRegex *regexp.Regexp
 	var lastNode ast.Node
+	var currentParagraphs string
 
 	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering {
@@ -108,6 +109,10 @@ func ExtractCodeBlocksFromAst(
 				lastHeader = string(extractTextFromMarkdown(&n.BaseBlock, source))
 				lastNode = node
 			case *ast.Paragraph:
+				if currentParagraphs != "" {
+					currentParagraphs += "\n\n"
+				}
+				currentParagraphs += string(extractTextFromMarkdown(&n.BaseBlock, source))
 				lastNode = node
 			// Extract the code block if it matches the language.
 			case *ast.HTMLBlock:
@@ -151,7 +156,7 @@ func ExtractCodeBlocksFromAst(
 				if lastNode != nil {
 					switch n := lastNode.(type) {
 					case *ast.Paragraph:
-						description = string(extractTextFromMarkdown(&n.BaseBlock, source))
+						description = currentParagraphs
 					default:
 						logging.GlobalLogger.Warnf("The node before the codeblock `%s` is not a paragraph, it is a %s", content, n.Kind())
 					}
@@ -159,6 +164,7 @@ func ExtractCodeBlocksFromAst(
 					logging.GlobalLogger.Warnf("There are no markdown elements before the last codeblock `%s`", content)
 				}
 
+				currentParagraphs = ""
 				lastNode = node
 				for _, desiredLanguage := range languagesToExtract {
 					if language == desiredLanguage {
@@ -225,6 +231,44 @@ func ExtractScenarioVariablesFromAst(node ast.Node, source []byte) map[string]st
 	})
 
 	return scenarioVariables
+}
+
+// Extracts a list of markdown URLs that are contained within the section that has the title "Prerequisites".
+func ExtractPrerequisiteUrlsFromAst(node ast.Node, source []byte) ([]string, error) {
+	var urls []string
+	var inPrerequisitesSection bool
+
+	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if entering {
+			switch n := node.(type) {
+			case *ast.Heading:
+				if n.Level == 2 {
+					headingText := string(extractTextFromMarkdown(&n.BaseBlock, source))
+					if headingText == "Prerequisites" {
+						inPrerequisitesSection = true
+					} else {
+						inPrerequisitesSection = false
+					}
+				}
+			case *ast.Link:
+				if inPrerequisitesSection {
+					url := string(n.Destination)
+					if strings.HasSuffix(url, ".md") {
+						urls = append(urls, url)
+					}
+				}
+			}
+		}
+		return ast.WalkContinue, nil
+	})
+
+	if len(urls) == 0 {
+		return nil, fmt.Errorf("no URLs found in the Prerequisites section")
+	} else {
+		logging.GlobalLogger.Debugf("Found %d URLs in the Prerequisites section", len(urls))
+	}
+
+	return urls, nil
 }
 
 // Converts a string of shell variable exports into a map of key/value pairs.

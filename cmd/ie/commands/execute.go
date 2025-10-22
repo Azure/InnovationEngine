@@ -37,7 +37,7 @@ func init() {
 var executeCommand = &cobra.Command{
 	Use:   "execute [markdown file]",
 	Args:  cobra.MinimumNArgs(1),
-	Short: "Execute the commands for an Azure deployment scenario.",
+	Short: "Execute the commands in an executable document.",
 	Run: func(cmd *cobra.Command, args []string) {
 		markdownFile := args[0]
 		if markdownFile == "" {

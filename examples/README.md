@@ -1,0 +1,1 @@
+This folder contains incomplete examples of documents. The content here is not intended for publication but rather serve as examples of how to achieve common goals in an Executable Document.

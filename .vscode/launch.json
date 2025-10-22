@@ -5,27 +5,66 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch file",
+      "name": "Debug IE",
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/cmd/ie/ie.go",
-      "console": "integratedTerminal",
+      "program": "${workspaceRoot}/cmd/ie/ie.go",
+      "cwd": "${workspaceRoot}",
+      // Test scenarios
+      //"args": ["test", "${workspaceRoot}/docs/helloWorldDemo.md"],
+      //"args": ["test", "${workspaceRoot}/docs/prerequisitesAndIncludes.md"],
       "args": [
-        "interactive",
-        "--working-directory",
-        "${workspaceFolder}",
-        "${workspaceFolder}/${input:file}"
-      ]
+        "test",
+        "${workspaceRoot}/docs/environmentVariables.md"
+      ],
+      //"args": ["test", "${workspaceRoot}/docs/prerequisitesAndIncludes.md"],
+      "showLog": true,
+      "console": "integratedTerminal"
     },
-  ],
-  "inputs": [
     {
-      "id": "file",
-      "type": "promptString",
-      "description": "Enter the path to the file to process",
-      "default": "tutorial.md"
-    }
+      "name": "Debug EG Ask command",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/examples/eg/main.go",
+      "cwd": "${workspaceRoot}/examples/eg",
+      "args": [
+        "write",
+        "Deploy a basic AKS cluster for testing purposes. This should focus on low cost as it is not intended for production."
+      ],
+      "showLog": true,
+      "console": "integratedTerminal",
+      "envFile": "${workspaceRoot}/examples/eg/.openai"
+    },
+    {
+      "name": "Debug EG Exec Doc",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/cmd/ie/ie.go",
+      "cwd": "${workspaceRoot}/examples/eg",
+      "args": [
+        "execute",
+        "${workspaceRoot}/examples/eg/README.md"
+      ],
+      "showLog": true,
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug WIP Document",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/cmd/ie/ie.go",
+      "cwd": "${workspaceRoot}",
+      "args": [
+        "test",
+        "${workspaceRoot}/examples/AZD/aks-store-demo/aks-store-demo.md"
+      ],
+      //"args": ["test", "${workspaceRoot}/examples/AKS-Automatic/quick-kubernetes-automatic-deploy.md"],
+      "showLog": true,
+      "console": "integratedTerminal"
+    },
   ]
 }
