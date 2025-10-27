@@ -3,6 +3,7 @@ package shells
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -11,6 +12,19 @@ import (
 
 	"github.com/Azure/InnovationEngine/internal/lib"
 )
+
+// streamWriter implements io.Writer to capture and forward command output in real-time
+type streamWriter struct {
+	callback OutputCallback
+	isStderr bool
+}
+
+func (w *streamWriter) Write(p []byte) (n int, err error) {
+	if w.callback != nil {
+		w.callback(string(p), w.isStderr)
+	}
+	return len(p), nil
+}
 
 func appendToBashHistory(command string, filePath string) error {
 	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
@@ -40,11 +54,15 @@ type CommandOutput struct {
 	StdErr string
 }
 
+type OutputCallback func(string, bool)
+
 type BashCommandConfiguration struct {
 	EnvironmentVariables map[string]string
 	InheritEnvironment   bool
 	InteractiveCommand   bool
 	WriteToHistory       bool
+	StreamOutput         bool
+	OutputCallback       OutputCallback
 }
 
 var ExecuteBashCommand = executeBashCommandImpl
@@ -74,6 +92,18 @@ func executeBashCommandImpl(
 		commandToExecute.Stdout = os.Stdout
 		commandToExecute.Stderr = os.Stderr
 		commandToExecute.Stdin = os.Stdin
+	} else if config.StreamOutput && config.OutputCallback != nil {
+		// Create multi-writers to capture output both in buffer and stream it via callback
+		stdoutWriter := io.MultiWriter(&stdoutBuffer, &streamWriter{
+			callback: config.OutputCallback,
+			isStderr: false,
+		})
+		stderrWriter := io.MultiWriter(&stderrBuffer, &streamWriter{
+			callback: config.OutputCallback,
+			isStderr: true,
+		})
+		commandToExecute.Stdout = stdoutWriter
+		commandToExecute.Stderr = stderrWriter
 	} else {
 		commandToExecute.Stdout = &stdoutBuffer
 		commandToExecute.Stderr = &stderrBuffer
