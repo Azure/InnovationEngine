@@ -9,7 +9,7 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Build all targets.
         run: |
           make build-all RELEASE_BUILD=true
@@ -21,7 +21,7 @@ jobs:
           sudo apt install zip
           zip -r scenarios.zip scenarios
       - name: Release Innovation Engine
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           generate_release_notes: true
