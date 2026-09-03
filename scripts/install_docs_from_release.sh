@@ -8,12 +8,29 @@ RELEASE="$2"
 
 # If no release is specified, download the latest release
 if [ "$RELEASE" == "" ]; then
-	RELEASE=$(curl -s "https://api.github.com/repos/MicrosoftDocs/executable-docs/releases/latest" | jq -r ".tag_name")
+	PAGE=1
+	RELEASE=""
+
+	while :; do
+	RESPONSE=$(curl -s "https://api.github.com/repos/MicrosoftDocs/executable-docs/releases?page=$PAGE")
+	if [ "$(echo $RESPONSE | jq '. | length')" -eq 0 ]; then
+		break
+	fi
+
+	RELEASE=$(echo $RESPONSE | jq -r '[.[] | select(.tag_name | startswith("v")) | .tag_name] | .[0]')
+	
+	if [ "$RELEASE" != "null" ] && [ -n "$RELEASE" ]; then
+		break
+	fi
+
+	PAGE=$((PAGE + 1))
+	done
 fi
 
 # Set a default scenarios file
 SCENARIOS="https://github.com/MicrosoftDocs/executable-docs/releases/download/$RELEASE/scenarios.zip"
 
+echo $SCENARIOS
 # If the LANG parameter was set, download appropriate script
 if [ "$LANG" != "" ]; then
 	# Map the language parameter to the corresponding scenarios file
