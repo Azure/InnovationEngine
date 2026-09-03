@@ -182,6 +182,23 @@ func (model TestModeModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			)
 		}
 
+	case common.StreamingOutputMessage:
+		// Handle streaming output as it comes in
+		if message.IsStderr {
+			model.CommandLines = append(
+				model.CommandLines,
+				ui.ErrorMessageStyle.Render(message.Output),
+			)
+		} else {
+			model.CommandLines = append(
+				model.CommandLines,
+				message.Output,
+			)
+		}
+		viewportContentUpdated = true
+		model.components.commandViewport.SetContent(strings.Join(model.CommandLines, ""))
+		model.components.commandViewport.GotoBottom()
+
 	case common.FailedCommandMessage:
 		// Handle failed command executions
 
